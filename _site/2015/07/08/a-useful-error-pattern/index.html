@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>Collecting Results from Collections</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/cover.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="Collecting Results from Collections">
+    
+    
+        <meta name="twitter:description" content="&lt;p&gt;I’ve been playing around with a new project that uses a lot of collections of results, for example &lt;code class=&quot;highlighter-rouge&quot;&gt;Vec&amp;lt;Result&amp;lt;()&amp;gt;&amp;gt;&lt;/code&gt; and asked some folks on Rust if they new a good way of transforming this into a &lt;code class=&quot;highlighter-rouge&quot;&gt;Result&amp;lt;Vec&amp;lt;()&amp;gt;&amp;gt;&lt;/code&gt;.&lt;/p&gt;
+
+">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/cover.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">Collecting Results from Collections</a></h1>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main>
+    <article>
+        <p>I’ve been playing around with a new project that uses a lot of collections of results, for example <code class="highlighter-rouge">Vec&lt;Result&lt;()&gt;&gt;</code> and asked some folks on Rust if they new a good way of transforming this into a <code class="highlighter-rouge">Result&lt;Vec&lt;()&gt;&gt;</code>.</p>
+
+<p>Turns out, <code class="highlighter-rouge">.collect()</code> can do it for you!</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">io</span><span class="p">::{</span><span class="n">Error</span><span class="p">,</span> <span class="n">ErrorKind</span><span class="p">};</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="n">results</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span>
+        <span class="nf">Ok</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+        <span class="nf">Ok</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+        <span class="nf">Ok</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>
+        <span class="nf">Err</span><span class="p">(</span><span class="nn">Error</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="nn">ErrorKind</span><span class="p">::</span><span class="n">Other</span><span class="p">,</span> <span class="s">"I'm an error!"</span><span class="p">)),</span>
+    <span class="p">];</span>
+
+    <span class="k">let</span> <span class="n">error</span> <span class="o">=</span> <span class="n">results</span><span class="nf">.into_iter</span><span class="p">()</span>
+        <span class="py">.collect</span><span class="p">::</span><span class="o">&lt;</span><span class="n">Result</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">usize</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">Error</span><span class="o">&gt;&gt;</span><span class="p">();</span>
+    <span class="nd">println!</span><span class="p">(</span><span class="s">"{:?}"</span><span class="p">,</span> <span class="n">error</span><span class="p">);</span>
+
+    <span class="k">let</span> <span class="n">results</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span>
+        <span class="nf">Ok</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+        <span class="nf">Ok</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+        <span class="nf">Ok</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>
+    <span class="p">];</span>
+    <span class="k">let</span> <span class="n">okay</span> <span class="o">=</span> <span class="n">results</span><span class="nf">.into_iter</span><span class="p">()</span>
+        <span class="py">.collect</span><span class="p">::</span><span class="o">&lt;</span><span class="n">Result</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">usize</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">Error</span><span class="o">&gt;&gt;</span><span class="p">();</span>
+    <span class="nd">println!</span><span class="p">(</span><span class="s">"{:?}"</span><span class="p">,</span> <span class="n">okay</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="c">// Err(Error { repr: Custom(Custom</span>
+<span class="c">//     { kind: Other, error: StringError("I\'m an error!")</span>
+<span class="c">// }) })</span>
+<span class="c">// Ok([0, 1, 2])</span>
+</code></pre></div></div>
+
+<p>Isn’t that handy! I hope this is useful to your in your projects! <a href="http://is.gd/KJ4JVs">Playpen Link</a></p>
+
+    </article>
+
+    <aside class="post-meta">
+  
+    Posted on
+    <time datetime="2015-07-08T00:00:00-07:00">08 Jul 2015</time>
+  
+
+  
+    
+      
+        , into
+        
+        <span><a href="/tags/#rust">Rust</a></span>
+      
+    .
+  
+
+  
+</aside>
+
+</main>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>

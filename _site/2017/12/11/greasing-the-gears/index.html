@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>Greasing the Gears</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/2017/12/engine.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="Greasing the Gears">
+    
+    
+        <meta name="twitter:description" content="&lt;blockquote&gt;
+  &lt;p&gt;It’s been quite a journey so far, but there is still a long ways to go. We can’t stop. We must triage, repair, and replace while the motor is still running. We can’t do it alone, but together, with hard work, we might make it.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/2017/12/engine.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">Greasing the Gears</a></h1>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main>
+    <article>
+        <blockquote>
+  <p>It’s been quite a journey so far, but there is still a long ways to go. We can’t stop. We must triage, repair, and replace while the motor is still running. We can’t do it alone, but together, with hard work, we might make it.</p>
+</blockquote>
+
+<p>During my education, one of the most surprisingly interesting courses I took was <strong>Software Evolution</strong>. I originally took it because I know the professor was great, but it turned out to be hugely inspirational and motivating in the last years.</p>
+
+<p>During that class we didn’t study how to write code, how to write better code, or how to find bad code. We barely even talked about code at all. We talked about teams, pressure, time, and working together. It turned out, that software evolution was mostly not about the software itself, but instead it was about the people who wanted it to do things.</p>
+
+<h1 id="evolution-relativity">Evolution Relativity</h1>
+
+<p><strong>Left alone</strong>, forgotten in a closet, is in many ways the most stable a system can be. The sleepy log server that only ever complains when it runs out of disk space is probably the most reliable system in most clusters. Why? Management never brings feature requests for the log server. Noone ever gets a ticket “Add a new chat feature to the log server,” unless you work at Google (😉). The system <em>evolves</em> at a very slow pace. Once in awhile someone might roll out a routine software update, but it’s rare for those kinds of systems break down.</p>
+
+<p>At the same time, when those kinds of systems fail, they fail <em>hard</em> and they fail <em>fast</em>. The disk fails, and the team realizes they didn’t have backups. No big loss, but it turns out when the log server is down some random worker is failing, and that’s piling up billing jobs, customers can’t pay, orders don’t get processed. Someone gets called on the weekend to fix it. The log server is replaced, and a “new, better” system which noone really understands is installed, and it’s left to fail again eventually.</p>
+
+<p><strong>Constantly developed</strong>, other systems evolve at a rapid page. New features are added, dependencies added or changed, components split apart, and even the occasional redesign occurs. They are systems in constant movement.</p>
+
+<p>#</p>
+
+<hr />
+
+<blockquote>
+  <p>If your data is a flock of sheep, then your code is the dogs (both good and bad), and your team members are the shepherds.</p>
+</blockquote>
+
+<blockquote>
+  <p>My travels, education, career, and network of contacts affords me what I consider a reasonably wide glimpse into the practices of smaller development teams (&lt;50).</p>
+</blockquote>
+
+    </article>
+
+    <aside class="post-meta">
+  
+    Posted on
+    <time datetime="2017-12-11T00:00:00-08:00">11 Dec 2017</time>
+  
+
+  
+    .
+  
+
+  
+    <span class="image-credit">Image by: @rktkn</span>
+  
+</aside>
+
+</main>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>

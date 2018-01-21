@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>About</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/about.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="About">
+    
+    
+        <meta name="twitter:description" content="Exploring, fascinating and amusing">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/about.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">About</a></h1>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="active" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main>
+    <article>
+        <p>Hello,</p>
+
+<p>My name is Andrew Hobden. I’m a forward-looking human who is passionate about open-source, technology, education, and space. I hail from Western Canada with ancestry from Norway, France, England, and the Listuguj Mi’kmaq.</p>
+
+<p>Recently I completed a Computer Science degree at the University of Victoria with a Networking focus. I focused primarily on distributed systems, networking, and systems code. During my time at the university I also got to explore fun topics like Geographical Information Systems (GIS), Music Information Retrieval (MIR), and Computation Physics which broadened my horizons.</p>
+
+<p>I’m still loosely involved with the <a href="http://webhome.cs.uvic.ca/~ycoady/">(Mod)ularity Squad</a>, a distributed systems lab lead by Dr. Yvonne Coady. My research interests are distributed systems, networking, infrastructure, and automation. I am a morally aligned being and seek projects that help, not hurt, people.</p>
+
+<p>Community and education is immensely important to me. For several years I’ve worked with the <a href="http://bcaafc.com/">B.C. Association of Aboriginal Friendship Centres</a> doing special projects and conference organization. During my time at the university I worked with <a href="http://scienceventure.ca/">Science Venture</a> to expand their programming and outreach activities.</p>
+
+    </article>
+
+    <aside class="post-meta">
+  
+
+  
+
+  
+    <span class="image-credit">Image by: Geoff Howe</span>
+  
+</aside>
+
+</main>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>

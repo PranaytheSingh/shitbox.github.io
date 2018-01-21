@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>Raft: Tooling & Infra Update</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/cover.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="Raft: Tooling &amp; Infra Update">
+    
+    
+        <meta name="twitter:description" content="&lt;p&gt;In preparation for the forthcoming 0.0.1 release of Raft we’ve taken several forward steps to improve our (already pretty darn cool!) tooling and infrastructure. If you attempt to set up any of these on your own and have issues let me know! I’d be more than happy to help. You can find our &lt;a href=&quot;https://github.com/Hoverbear/raft/blob/master/.travis.yml&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;.travis.yml&lt;/code&gt; here&lt;/a&gt;.&lt;/p&gt;
+
+">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/cover.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">Raft: Tooling & Infra Update</a></h1>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main>
+    <article>
+        <p>In preparation for the forthcoming 0.0.1 release of Raft we’ve taken several forward steps to improve our (already pretty darn cool!) tooling and infrastructure. If you attempt to set up any of these on your own and have issues let me know! I’d be more than happy to help. You can find our <a href="https://github.com/Hoverbear/raft/blob/master/.travis.yml"><code class="highlighter-rouge">.travis.yml</code> here</a>.</p>
+
+<h2 id="sudo-less"><code class="highlighter-rouge">sudo</code>-less</h2>
+
+<p>Travis CI released <a href="http://blog.travis-ci.com/2014-12-17-faster-builds-with-container-based-infrastructure/">their container infrastructure</a> last year, and we finally started using it! We’d tried before however we struggled with packages, as Cap’n Proto has rather demanding dependencies for a C++11 compiler.</p>
+
+<p>In case anyone is looking, here is the secret sauce on how to build Cap’n Proto on Travis CI without root:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">addons</span><span class="pi">:</span>
+  <span class="na">apt</span><span class="pi">:</span>
+    <span class="na">sources</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">ubuntu-toolchain-r-test</span>
+    <span class="na">packages</span><span class="pi">:</span>
+        <span class="c1"># Needed for building Cap'n Proto.</span>
+      <span class="pi">-</span> <span class="s">gcc-4.8</span>
+      <span class="pi">-</span> <span class="s">g++-4.8</span>
+
+<span class="c1"># We need to install Cap'n Proto.</span>
+<span class="na">install</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">git clone https://github.com/kentonv/capnproto.git</span>
+    <span class="pi">-</span> <span class="s">cd capnproto/c++</span>
+    <span class="pi">-</span> <span class="s">./setup-autotools.sh</span>
+    <span class="pi">-</span> <span class="s">autoreconf -i</span>
+    <span class="pi">-</span> <span class="s">./configure --disable-shared</span>
+    <span class="pi">-</span> <span class="s">make -j5</span>
+    <span class="pi">-</span> <span class="s">export PATH="$PATH:$(pwd)"</span>
+    <span class="pi">-</span> <span class="s">export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$(pwd)"</span>
+    <span class="pi">-</span>  <span class="s">cd ../..</span>
+</code></pre></div></div>
+
+<p>Now that we’ve flagged <code class="highlighter-rouge">sudo: false</code> in our <code class="highlighter-rouge">.travis.yml</code> our Travis <em>wait time</em> for a build have significantly decreased. Some of our test builds take under 1:45 minutes!</p>
+
+<h2 id="moved-to-travis-cargo">Moved to <a href="https://github.com/huonw/travis-cargo"><code class="highlighter-rouge">travis-cargo</code></a></h2>
+
+<p>Huon created the fantastic <code class="highlighter-rouge">travis-cargo</code> crate and we recently moved over to it! This helped clean up the <code class="highlighter-rouge">.travis.yml</code> a bit and opened the door for us to utilize future improvements. This took our <code class="highlighter-rouge">.travis.yml</code> script section from this:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Generate Docs</span>
+<span class="na">after_success</span><span class="pi">:</span> <span class="pi">|</span>
+  <span class="no">[ $TRAVIS_BRANCH = master ] &amp;&amp;</span>
+  <span class="no">[ $TRAVIS_PULL_REQUEST = false ] &amp;&amp;</span>
+  <span class="no">cargo doc &amp;&amp;</span>
+  <span class="no">echo '&lt;meta http-equiv=refresh content=0;url=raft/index.html&gt;' &gt; target/doc/index.html &amp;&amp;</span>
+  <span class="no">sudo pip install ghp-import &amp;&amp;</span>
+  <span class="no">ghp-import -n target/doc &amp;&amp;</span>
+  <span class="no">git push -fq https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git gh-pages</span>
+</code></pre></div></div>
+
+<p>To this:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Load `travis-cargo`</span>
+<span class="na">before_script</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">pip install 'travis-cargo' --user</span>
+    <span class="pi">-</span> <span class="s">export PATH=$HOME/.local/bin:$PATH</span>
+
+<span class="na">script</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">travis-cargo build</span>
+    <span class="pi">-</span> <span class="s">travis-cargo test</span>
+    <span class="pi">-</span> <span class="s">travis-cargo bench</span>
+    <span class="pi">-</span> <span class="s">travis-cargo doc</span>
+
+<span class="c1"># Generate Docs and coverage</span>
+<span class="na">after_success</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">travis-cargo doc-upload</span>
+    <span class="pi">-</span> <span class="s">travis-cargo coveralls --no-sudo</span>
+</code></pre></div></div>
+
+<p>With <code class="highlighter-rouge">travis-cargo</code> our builds are more thorough, clear, and featured. It handles uploading our documentation, code coverage, benchmarking, and the whole kaboodle.</p>
+
+<h2 id="code-coverage">Code Coverage</h2>
+
+<p>You may have noticed the <code class="highlighter-rouge">travis-cargo coveralls --no-sudo</code> above and wondered what that was. <a href="http://coveralls.io/"><code class="highlighter-rouge">http://coveralls.io/</code></a> offers free code coverage analysis to open source projects. You can see what ours looks like <a href="https://coveralls.io/github/Hoverbear/raft">here</a>.</p>
+
+<p>We’re currently sitting at:</p>
+
+<p><a href="https://coveralls.io/github/Hoverbear/raft"><img src="https://img.shields.io/coveralls/Hoverbear/raft/master.svg" alt="Coverage Status" /></a></p>
+
+<p>Code coverage. Wow! That’s not bad! We hope to improve this as we go.</p>
+
+<h2 id="homu"><a href="http://homu.io/">@homu</a></h2>
+
+<p>We also adopted the friendly robot homu to be our repository gatekeeper. If you’ve been around Rust or Servo you probably know bors, homu is a rewrite of bors.</p>
+
+<p>homu acts sort of like a pre-commit hook, testing pull requests <em>just before</em> they’re merged. Much of the work to get <code class="highlighter-rouge">sudo</code>-less builds was in preparation for homu since we wanted it to be <em>fast!</em></p>
+
+<p>With homu guarding the <code class="highlighter-rouge">master</code> branch we can be sure that Raft will stay “green” on tests unless I manage to accidently push to master, or one of our dependencies breaks.</p>
+
+    </article>
+
+    <aside class="post-meta">
+  
+    Posted on
+    <time datetime="2015-07-23T00:00:00-07:00">23 Jul 2015</time>
+  
+
+  
+    
+      
+        , into
+        
+        <span><a href="/tags/#rust">Rust</a></span>
+      
+    
+      
+        ,
+        
+        <span><a href="/tags/#raft">Raft</a></span>
+      
+    
+      
+        
+            , and
+        
+        <span><a href="/tags/#tooling">Tooling</a></span>
+      
+    .
+  
+
+  
+</aside>
+
+</main>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>

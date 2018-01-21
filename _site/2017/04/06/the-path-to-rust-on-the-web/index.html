@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>The Path to Rust on the Web</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/2017/04/path.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="The Path to Rust on the Web">
+    
+    
+        <meta name="twitter:description" content="&lt;p&gt;Recently there has been quite a bit of talk about &lt;em&gt;WebAssembly&lt;/em&gt;, a new format for code for the web. It is a compile target for languages like C and Rust that enables us to write, and run, code from these languages in our browser.&lt;/p&gt;
+
+">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/2017/04/path.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">The Path to Rust on the Web</a></h1>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main>
+    <article>
+        <p>Recently there has been quite a bit of talk about <em>WebAssembly</em>, a new format for code for the web. It is a compile target for languages like C and Rust that enables us to write, and run, code from these languages in our browser.</p>
+
+<p>In the interest of learning more about this technology (and to avoid writing more Javascript) let’s explore together and get our hands dirty!</p>
+
+<blockquote>
+  <p><strong>Disclaimer:</strong> WebAssembly is stabilized, but most implementations are not. The information contained here may become out of date or be incorrect, despite working at the time of writing.</p>
+</blockquote>
+
+<p>Before we start please make sure you’re using the current (or developer) version of Firefox or Chrome. You can check out <code class="highlighter-rouge">about:config</code> or <code class="highlighter-rouge">chrome://flags/</code> and make sure <code class="highlighter-rouge">wasm</code> related things are enabled.</p>
+
+<h2 id="what-are-we-looking-at">What Are We Looking At?</h2>
+
+<p><a href="http://webassembly.org/"><em>WebAssembly</em></a> (or <em>wasm</em>) describes an <em>execution environment</em> which browsers can implement within their Javascript Virtual Machines. It’s a way to run code in place of, or alongside, Javascript.</p>
+
+<p>WebAssembly can be thought of as similar to <a href="http://asmjs.org/"><em>asm.js</em></a>. Indeed, we can use <a href="http://emscripten.org/"><em>Emscripten</em></a> compiler to target both.</p>
+
+<p>Most existing documentation discusses how to build C, C++, or Rust into wasm, but there is nothing excluding languages like <a href="http://ruby.dj/">Ruby</a> or Python from working as well.</p>
+
+<h2 id="installing-the-tools">Installing The Tools</h2>
+
+<p>We’ll need two things to get started with WebAssembly and Rust, assuming you already have a functional development environment otherwise (That is, you have <code class="highlighter-rouge">build-essential</code>, XCode, or the like installed.)</p>
+
+<p>First, Rust. You can review <a href="https://hoverbear.org/2017/03/03/setting-up-a-rust-devenv/#setting-up-rust-via-rustup">here</a> for a more long winded explanation of how to do this, or you can just run the following and accept the defaults:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl https://sh.rustup.rs <span class="nt">-sSf</span> | sh
+</code></pre></div></div>
+
+<p>Open a new terminal or run <code class="highlighter-rouge">source $HOME/.cargo/env</code>, then we’ll add the <code class="highlighter-rouge">wasm32-unknown-emscripten</code> compile target via <code class="highlighter-rouge">rustup</code> as well:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>rustup target add wasm32-unknown-emscripten
+</code></pre></div></div>
+
+<p>We can use this command to install other targets, found via <code class="highlighter-rouge">rustup target list</code>, as well.</p>
+
+<p>Next we need to set up Emscripten via <a href="http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html"><code class="highlighter-rouge">emsdk</code></a>. We’ll use the <em>incoming</em> version of Emscripten in order to get the best output. Note: This may take awhile (an hour!).</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl https://s3.amazonaws.com/mozilla-games/emscripten/releases/emsdk-portable.tar.gz | <span class="nb">tar</span> <span class="nt">-xv</span> <span class="nt">-C</span> ~/
+<span class="nb">cd</span> ~/emsdk-portable
+./emsdk update
+./emsdk install sdk-incoming-64bit
+./emsdk activate sdk-incoming-64bit
+</code></pre></div></div>
+
+<p>At this point Emscripten is installed. The last command will instruct us how to add the binaries to our path for permanent usage, or we can just <code class="highlighter-rouge">source ./emsdk_env.sh</code> for temporary fun.</p>
+
+<p>At this point <code class="highlighter-rouge">emcc -v</code> should report something similar to this:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>emcc <span class="nt">-v</span>
+INFO:root:<span class="o">(</span>Emscripten: Running sanity checks<span class="o">)</span>
+emcc <span class="o">(</span>Emscripten gcc/clang-like replacement + linker emulating GNU ld<span class="o">)</span> 1.37.9
+clang version 4.0.0 <span class="o">(</span>https://github.com/kripken/emscripten-fastcomp-clang/ d4b1e0785f1ee15ab78207de4380e82e3407c6ea<span class="o">)</span> <span class="o">(</span>https://github.com/kripken/emscripten-fastcomp/ 09aaa022c31e247bfb7b00882372733e6b27f007<span class="o">)</span> <span class="o">(</span>emscripten 1.37.9 : 1.37.9<span class="o">)</span>
+Target: x86_64-apple-darwin16.4.0
+Thread model: posix
+InstalledDir: /Users/hoverbear/emsdk-portable/clang/fastcomp/build_incoming_64/bin
+INFO:root:<span class="o">(</span>Emscripten: Running sanity checks<span class="o">)</span>
+</code></pre></div></div>
+
+<p>Now, let’s kick the tires a bit!</p>
+
+<h2 id="first-experiment-standalone-executable">First Experiment: Standalone Executable</h2>
+
+<p>In our first experiment we’ll compile some Rust code into wasm and have it run in the browser console. We’ll try a basic code sample to ensure things are working as we expect. We won’t try to do any crate importing, DOM manipulation, or network access yet, but that’s coming later!</p>
+
+<p>Let’s create our project, we’ll use this same project for our future experiments as well. We need to set this to nightly (at least at the time or writing) to have our demos work.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cargo init wasm-demo <span class="nt">--bin</span>
+rustup override <span class="nb">set </span>nightly
+</code></pre></div></div>
+
+<p>Then we’ll put our first code sample into <code class="highlighter-rouge">src/main.rs</code>:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="err">#</span><span class="p">[</span><span class="nf">derive</span><span class="p">(</span><span class="n">Debug</span><span class="p">)]</span>
+<span class="k">enum</span> <span class="n">Direction</span> <span class="p">{</span> <span class="n">North</span><span class="p">,</span> <span class="n">South</span><span class="p">,</span> <span class="n">East</span><span class="p">,</span> <span class="n">West</span> <span class="p">}</span>
+
+<span class="k">fn</span> <span class="nf">is_north</span><span class="p">(</span><span class="n">dir</span><span class="p">:</span> <span class="n">Direction</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">bool</span> <span class="p">{</span>
+    <span class="k">match</span> <span class="n">dir</span> <span class="p">{</span>
+        <span class="nn">Direction</span><span class="p">::</span><span class="n">North</span> <span class="k">=&gt;</span> <span class="k">true</span><span class="p">,</span>
+        <span class="n">_</span> <span class="k">=&gt;</span> <span class="k">false</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="n">points</span> <span class="o">=</span> <span class="nn">Direction</span><span class="p">::</span><span class="n">South</span><span class="p">;</span>
+    <span class="nd">println!</span><span class="p">(</span><span class="s">"{:?}"</span><span class="p">,</span> <span class="n">points</span><span class="p">);</span>
+    <span class="k">let</span> <span class="n">compass</span> <span class="o">=</span> <span class="nf">is_north</span><span class="p">(</span><span class="n">points</span><span class="p">);</span>
+    <span class="nd">println!</span><span class="p">(</span><span class="s">"{}"</span><span class="p">,</span> <span class="n">compass</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Running this normally yields what we would expect:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>cargo run
+   Compiling wasm-demo v0.1.0 <span class="o">(</span>file:///Users/hoverbear/git/rust/wasm-demo<span class="o">)</span>
+    Finished dev <span class="o">[</span>unoptimized + debuginfo] target<span class="o">(</span>s<span class="o">)</span> <span class="k">in </span>0.89 secs
+     Running <span class="sb">`</span>target/debug/wasm-demo<span class="sb">`</span>
+South
+<span class="nb">false</span>
+</code></pre></div></div>
+
+<p>Now, let’s get the same thing in our browser! We can build our executable for the wasm target by using the <code class="highlighter-rouge">--target</code> flag.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>cargo build <span class="nt">--target</span><span class="o">=</span>wasm32-unknown-emscripten <span class="nt">--release</span>
+<span class="nv">$ </span>tree target
+target
+└── wasm32-unknown-emscripten
+    └── release
+        ├── build
+        ├── deps
+        │   ├── wasm_demo-9c23ae9a241f12fa.asm.js
+        │   ├── wasm_demo-9c23ae9a241f12fa.js
+        │   └── wasm_demo-9c23ae9a241f12fa.wasm
+        ├── examples
+        ├── incremental
+        ├── native
+        ├── wasm-demo.d
+        └── wasm-demo.js
+</code></pre></div></div>
+
+<p><code class="highlighter-rouge">cargo</code> created several files in <code class="highlighter-rouge">target/wasm32-unknown-emscripten/release/deps/</code> for us. Of primary interest are the <code class="highlighter-rouge">.wasm</code> and <code class="highlighter-rouge">.js</code> files.</p>
+
+<p>Why do we get both a <code class="highlighter-rouge">wasm</code> and a <code class="highlighter-rouge">js</code>? Wasn’t the whole point of this to not use Javascript? Turns out we need some Javascript glue code to fetch, initialize, and configure it.</p>
+
+<p>At this point we can’t really <em>use</em> the created files, since we don’t have a webpage to import them into! Let’s work on that. We can create a <code class="highlighter-rouge">site/index.html</code> with the following content:</p>
+
+<div class="language-html highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;html&gt;</span>
+    <span class="nt">&lt;head&gt;</span>
+        <span class="nt">&lt;script&gt;</span>
+            <span class="c1">// This is read and used by `site.js`</span>
+            <span class="kd">var</span> <span class="nx">Module</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="na">wasmBinaryFile</span><span class="p">:</span> <span class="s2">"site.wasm"</span>
+            <span class="p">}</span>
+        <span class="nt">&lt;/script&gt;</span>
+        <span class="nt">&lt;script </span><span class="na">src=</span><span class="s">"site.js"</span><span class="nt">&gt;&lt;/script&gt;</span>
+    <span class="nt">&lt;/head&gt;</span>
+    <span class="nt">&lt;body&gt;&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</code></pre></div></div>
+
+<p>Next we need to set up some way to get the generated files from the <code class="highlighter-rouge">target/</code> folder into the <code class="highlighter-rouge">site/</code> folder. <code class="highlighter-rouge">make</code> is a good solution for this, so let’s make a <code class="highlighter-rouge">Makefile</code>. (Makefiles <strong>require</strong> tabs, not spaces!)</p>
+
+<div class="language-makefile highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">SHELL</span> <span class="o">:=</span> /bin/bash
+
+<span class="nl">all</span><span class="o">:</span>
+	cargo build <span class="nt">--target</span><span class="o">=</span>wasm32-unknown-emscripten <span class="nt">--release</span>
+	mkdir <span class="nt">-p</span> site
+	find target/wasm32-unknown-emscripten/release/deps <span class="nt">-type</span> f <span class="nt">-name</span> <span class="s2">"*.wasm"</span> | xargs <span class="nt">-I</span> <span class="o">{}</span> cp <span class="o">{}</span> site/site.wasm
+	find target/wasm32-unknown-emscripten/release/deps <span class="nt">-type</span> f <span class="o">!</span> <span class="nt">-name</span> <span class="s2">"*.asm.js"</span> <span class="nt">-name</span> <span class="s2">"*.js"</span> | xargs <span class="nt">-I</span> <span class="o">{}</span> cp <span class="o">{}</span> site/site.js
+</code></pre></div></div>
+
+<p>Finally, test it with <code class="highlighter-rouge">make</code>.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>tree site
+site
+├── index.html
+├── site.js
+└── site.wasm
+</code></pre></div></div>
+
+<p>Let’s test our generated code by running <code class="highlighter-rouge">python -m SimpleHTTPServer</code>, browsing to <a href="http://localhost:8000/site/"><code class="highlighter-rouge">http://localhost:8000/site/</code></a>, and opening the browser console.</p>
+
+<p>In the browser console you should see:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>trying binaryen method: native-wasm
+asynchronously preparing wasm
+binaryen method succeeded.
+The character encoding of the HTML document was not declared. The document will render with garbled text in some browser configurations if the document contains characters from outside the US-ASCII range. The character encoding of the page must be declared in the document or in the transfer protocol.
+South
+false
+</code></pre></div></div>
+
+<p>Excellent! It worked!</p>
+
+<h2 id="second-experiment-imports">Second Experiment: Imports</h2>
+
+<p>In our first example we just used a basic enum and some print statements, nothing too exciting. Let’s do something more exciting and work with iterators.</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">collections</span><span class="p">::</span><span class="n">HashMap</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">Direction</span><span class="p">::</span><span class="o">*</span><span class="p">;</span>
+
+<span class="nd">#[derive(Debug,</span> <span class="nd">PartialEq)]</span>
+<span class="k">enum</span> <span class="n">Direction</span> <span class="p">{</span> <span class="n">North</span><span class="p">,</span> <span class="n">South</span><span class="p">,</span> <span class="n">East</span><span class="p">,</span> <span class="n">West</span> <span class="p">}</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">users_facing</span> <span class="o">=</span> <span class="nn">HashMap</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span>
+    <span class="n">users_facing</span><span class="nf">.insert</span><span class="p">(</span><span class="s">"Alice"</span><span class="p">,</span> <span class="n">North</span><span class="p">);</span>
+    <span class="n">users_facing</span><span class="nf">.insert</span><span class="p">(</span><span class="s">"Bob"</span><span class="p">,</span> <span class="n">South</span><span class="p">);</span>
+    <span class="n">users_facing</span><span class="nf">.insert</span><span class="p">(</span><span class="s">"Carol"</span><span class="p">,</span> <span class="n">East</span><span class="p">);</span>
+
+    <span class="k">let</span> <span class="n">users_not_facing_north</span> <span class="o">=</span> <span class="n">users_facing</span><span class="nf">.iter</span><span class="p">()</span>
+        <span class="nf">.filter</span><span class="p">(|</span><span class="o">&amp;</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">d</span><span class="p">)|</span> <span class="o">*</span><span class="n">d</span> <span class="o">!=</span> <span class="n">North</span><span class="p">)</span>
+        <span class="py">.collect</span><span class="p">::</span><span class="o">&lt;</span><span class="n">HashMap</span><span class="o">&lt;</span><span class="n">_</span><span class="p">,</span><span class="n">_</span><span class="o">&gt;&gt;</span><span class="p">();</span>
+    <span class="nd">println!</span><span class="p">(</span><span class="s">"{:?}"</span><span class="p">,</span> <span class="n">users_not_facing_north</span><span class="p">);</span>
+<span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>Building this code again with <code class="highlighter-rouge">make</code> we can navigate to the page again in our browser. This should output:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="s">"Carol"</span><span class="p">:</span> <span class="n">East</span><span class="p">,</span> <span class="s">"Bob"</span><span class="p">:</span> <span class="n">South</span><span class="p">}</span>
+</code></pre></div></div>
+
+<p>Excellent! So importing things from <code class="highlighter-rouge">std</code> seems to work okay. How about other crates? Let’s try using <code class="highlighter-rouge">itertools</code>. Add the following to the <code class="highlighter-rouge">Cargo.toml</code>:</p>
+
+<div class="language-toml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nn">[dependencies]</span>
+<span class="py">itertools</span> <span class="p">=</span> <span class="s">"*"</span>
+</code></pre></div></div>
+
+<p>Then we can go and try to use it.</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">extern</span> <span class="n">crate</span> <span class="n">itertools</span><span class="p">;</span>
+
+<span class="k">use</span> <span class="nn">itertools</span><span class="p">::</span><span class="n">Itertools</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">Direction</span><span class="p">::</span><span class="o">*</span><span class="p">;</span>
+
+
+<span class="nd">#[derive(Debug,</span> <span class="nd">PartialEq,</span> <span class="nd">Eq,</span> <span class="nd">Hash)]</span>
+<span class="k">enum</span> <span class="n">Direction</span> <span class="p">{</span> <span class="n">North</span><span class="p">,</span> <span class="n">South</span><span class="p">,</span> <span class="n">East</span><span class="p">,</span> <span class="n">West</span> <span class="p">}</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="n">directions</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="n">North</span><span class="p">,</span> <span class="n">North</span><span class="p">,</span> <span class="n">South</span><span class="p">,</span> <span class="n">East</span><span class="p">,</span> <span class="n">West</span><span class="p">,</span> <span class="n">West</span><span class="p">];</span>
+
+    <span class="k">let</span> <span class="n">unique_directions</span> <span class="o">=</span> <span class="n">directions</span><span class="nf">.iter</span><span class="p">()</span>
+        <span class="nf">.unique</span><span class="p">()</span>
+        <span class="py">.collect</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;&gt;</span><span class="p">();</span>
+    <span class="nd">println!</span><span class="p">(</span><span class="s">"{:?}"</span><span class="p">,</span> <span class="n">unique_directions</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Building and visiting the page again we see the following output:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[North, South, East, West]
+</code></pre></div></div>
+
+<p>Okay that was simple! What about something a bit more complicated, like <code class="highlighter-rouge">serde</code>, which lets us serialize and deserialize various formats? This will be important for an application which needs to parse responses from APIs!</p>
+
+<p>Changing the <code class="highlighter-rouge">Cargo.toml</code> and the <code class="highlighter-rouge">main.rs</code>:</p>
+
+<div class="language-toml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nn">[dependencies]</span>
+<span class="py">serde_json</span> <span class="p">=</span> <span class="s">"*"</span>
+<span class="py">serde_derive</span> <span class="p">=</span> <span class="s">"*"</span>
+<span class="py">serde</span> <span class="p">=</span> <span class="s">"*"</span>
+</code></pre></div></div>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">extern</span> <span class="n">crate</span> <span class="n">serde_json</span><span class="p">;</span>
+<span class="nd">#[macro_use]</span> <span class="k">extern</span> <span class="n">crate</span> <span class="n">serde_derive</span><span class="p">;</span>
+
+<span class="nd">#[derive(Serialize,</span> <span class="nd">Deserialize,</span> <span class="nd">Debug)]</span>
+<span class="k">enum</span> <span class="n">Direction</span> <span class="p">{</span> <span class="n">North</span><span class="p">,</span> <span class="n">South</span><span class="p">,</span> <span class="n">East</span><span class="p">,</span> <span class="n">West</span> <span class="p">}</span>
+
+<span class="nd">#[derive(Serialize,</span> <span class="nd">Deserialize,</span> <span class="nd">Debug)]</span>
+<span class="k">struct</span> <span class="n">Example</span> <span class="p">{</span>
+    <span class="n">favorite_animal</span><span class="p">:</span> <span class="nb">String</span><span class="p">,</span>
+    <span class="n">favorite_direction</span><span class="p">:</span> <span class="n">Direction</span>
+<span class="p">}</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="n">data</span> <span class="o">=</span> <span class="n">r</span><span class="err">#</span><span class="s">" { "</span><span class="n">favorite_animal</span><span class="s">": "</span><span class="n">Bear</span><span class="s">", "</span><span class="n">favorite_direction</span><span class="s">": "</span><span class="n">North</span><span class="s">" } "</span><span class="err">#</span><span class="p">;</span>
+    <span class="k">let</span> <span class="n">parsed</span><span class="p">:</span> <span class="n">Example</span> <span class="o">=</span> <span class="nn">serde_json</span><span class="p">::</span><span class="nf">from_str</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="nf">.unwrap</span><span class="p">();</span>
+    <span class="nd">println!</span><span class="p">(</span><span class="s">"{:?}"</span><span class="p">,</span> <span class="n">parsed</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Building, and viewing it in the browser console yields:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Example</span> <span class="p">{</span> <span class="n">favorite_animal</span><span class="p">:</span> <span class="s">"Bear"</span><span class="p">,</span> <span class="n">favorite_direction</span><span class="p">:</span> <span class="n">North</span> <span class="p">}</span>
+</code></pre></div></div>
+
+<p>Awesome!</p>
+
+<h2 id="third-experiment-calling-from-javascript">Third Experiment: Calling From Javascript</h2>
+
+<p>It’s also possible to use generated wasm as a library and call the generated code from within Javascript. This has its own set of complications though.</p>
+
+<p>WebAssembly only supports a limited number of <a href="https://github.com/WebAssembly/design/blob/master/Semantics.md#types">value types</a>:</p>
+
+<ul>
+  <li><code class="highlighter-rouge">i32</code>: 32-bit integer</li>
+  <li><code class="highlighter-rouge">i64</code>: 64-bit integer</li>
+  <li><code class="highlighter-rouge">f32</code>: 32-bit floating point</li>
+  <li><code class="highlighter-rouge">f64</code>: 64-bit floating point</li>
+</ul>
+
+<p>Notice how this doesn’t include strings or other more satisfying types. That’s ok! We can still use a function called <code class="highlighter-rouge">Module.cwrap</code> to define the parameters and expected return values of the wasm exported functions.</p>
+
+<p>Writing this interaction code means that on the Rust side of things we have to treat it as though we’re interacting with C. This can make some things a bit complicated, on the bright side it means writing more FFI (foreign function interfaces) later will be much easier.</p>
+
+<p>So, let’s write a basic function which returns a String from Rust into Javascript.</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">os</span><span class="p">::</span><span class="nn">raw</span><span class="p">::</span><span class="nb">c_char</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">ffi</span><span class="p">::</span><span class="n">CString</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">collections</span><span class="p">::</span><span class="n">HashMap</span><span class="p">;</span>
+
+<span class="nd">#[no_mangle]</span>
+<span class="k">pub</span> <span class="k">fn</span> <span class="nf">get_data</span><span class="p">()</span> <span class="k">-&gt;</span> <span class="o">*</span><span class="k">mut</span> <span class="nb">c_char</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">data</span> <span class="o">=</span> <span class="nn">HashMap</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span>
+    <span class="n">data</span><span class="nf">.insert</span><span class="p">(</span><span class="s">"Alice"</span><span class="p">,</span> <span class="s">"send"</span><span class="p">);</span>
+    <span class="n">data</span><span class="nf">.insert</span><span class="p">(</span><span class="s">"Bob"</span><span class="p">,</span> <span class="s">"recieve"</span><span class="p">);</span>
+    <span class="n">data</span><span class="nf">.insert</span><span class="p">(</span><span class="s">"Carol"</span><span class="p">,</span> <span class="s">"intercept"</span><span class="p">);</span>
+    
+    <span class="k">let</span> <span class="n">descriptions</span> <span class="o">=</span> <span class="n">data</span><span class="nf">.iter</span><span class="p">()</span>
+        <span class="nf">.map</span><span class="p">(|(</span><span class="n">p</span><span class="p">,</span><span class="n">a</span><span class="p">)|</span> <span class="nd">format!</span><span class="p">(</span><span class="s">"{} likes to {} messages"</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="p">))</span>
+        <span class="py">.collect</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;&gt;</span><span class="p">();</span>
+
+    <span class="nn">CString</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="n">descriptions</span><span class="nf">.join</span><span class="p">(</span><span class="s">", "</span><span class="p">))</span>
+        <span class="nf">.unwrap</span><span class="p">()</span>
+        <span class="nf">.into_raw</span><span class="p">()</span>
+<span class="p">}</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c">// Deliberately blank.</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>First thing you might notice is that we have a <code class="highlighter-rouge">main()</code> function which is blank. This is on purpose, we’re going to define that in Javascript! We’ll edit the <code class="highlighter-rouge">index.html</code> to write a bit of new code for this purpose.</p>
+
+<div class="language-html highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;html&gt;</span>
+    <span class="nt">&lt;head&gt;</span>
+        <span class="nt">&lt;script&gt;</span>
+            <span class="c1">// This is read and used by `site.js`</span>
+            <span class="kd">var</span> <span class="nx">Module</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="na">wasmBinaryFile</span><span class="p">:</span> <span class="s2">"site.wasm"</span><span class="p">,</span>
+                <span class="na">onRuntimeInitialized</span><span class="p">:</span> <span class="nx">main</span><span class="p">,</span>
+            <span class="p">};</span>
+            <span class="kd">function</span> <span class="nx">main</span><span class="p">()</span> <span class="p">{</span>
+                <span class="kd">let</span> <span class="nx">get_data</span> <span class="o">=</span> <span class="nx">Module</span><span class="p">.</span><span class="nx">cwrap</span><span class="p">(</span><span class="s1">'get_data'</span><span class="p">,</span> <span class="s1">'string'</span><span class="p">,</span> <span class="p">[]);</span>
+                <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">get_data</span><span class="p">());</span>
+            <span class="p">}</span>
+        <span class="nt">&lt;/script&gt;</span>
+        <span class="nt">&lt;script </span><span class="na">src=</span><span class="s">"site.js"</span><span class="nt">&gt;&lt;/script&gt;</span>
+    <span class="nt">&lt;/head&gt;</span>
+    <span class="nt">&lt;body&gt;&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</code></pre></div></div>
+
+<p>The final argument of <code class="highlighter-rouge">cwrap</code> is an array of argument types, which we don’t use in this case.</p>
+
+<p>It’s also possible to call the function via <code class="highlighter-rouge">Module._get_data()</code> but you’ll notice that it returns a pointer to a memory location, not a string.</p>
+
+<h2 id="fourth-experiment-calling-javascript-from-rust">Fourth Experiment: Calling Javascript From Rust</h2>
+
+<p>There isn’t a tremendous amount of writing about this topic, the best resource I was able to find was in the <a href="https://kripken.github.io/emscripten-site/docs/porting/connecting_cpp_and_javascript/Interacting-with-code.html#implement-c-in-javascript">‘Interacting with code’</a> section of the Emscripten documentation.</p>
+
+<p>The basic concept is that when <code class="highlighter-rouge">emcc</code> goes and does its job it includes a <code class="highlighter-rouge">library.js</code> file which we can add functions to via the <code class="highlighter-rouge">--js-library</code> flag. These functions can return values, or do things like run <code class="highlighter-rouge">alert("Blah blah")</code>.</p>
+
+<p>In order to do this we need to create a <code class="highlighter-rouge">site/utilities.js</code> file containing the following:</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="s1">'use strict'</span><span class="p">;</span>
+
+<span class="kd">var</span> <span class="nx">library</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="na">get_data</span><span class="p">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">str</span> <span class="o">=</span> <span class="s2">"Hello from JS."</span><span class="p">;</span>
+    <span class="nx">alert</span><span class="p">(</span><span class="nx">str</span><span class="p">);</span>
+
+    <span class="c1">// Not needed for numerics.</span>
+    <span class="kd">var</span> <span class="nx">len</span> <span class="o">=</span> <span class="nx">lengthBytesUTF8</span><span class="p">(</span><span class="nx">str</span><span class="p">);</span>
+    <span class="kd">var</span> <span class="nx">buffer</span> <span class="o">=</span> <span class="nx">Module</span><span class="p">.</span><span class="nx">_malloc</span><span class="p">(</span><span class="nx">len</span><span class="p">);</span>
+    <span class="nx">Module</span><span class="p">.</span><span class="nx">stringToUTF8</span><span class="p">(</span><span class="nx">str</span><span class="p">,</span> <span class="nx">buffer</span><span class="p">,</span> <span class="nx">len</span><span class="p">);</span>
+
+    <span class="k">return</span> <span class="nx">buffer</span><span class="p">;</span>
+  <span class="p">},</span>
+<span class="p">};</span>
+
+<span class="nx">mergeInto</span><span class="p">(</span><span class="nx">LibraryManager</span><span class="p">.</span><span class="nx">library</span><span class="p">,</span> <span class="nx">library</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>Then the HTML:</p>
+
+<div class="language-html highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;html&gt;</span>
+    <span class="nt">&lt;head&gt;</span>
+        <span class="nt">&lt;script&gt;</span>
+            <span class="c1">// This is read and used by `site.js`</span>
+            <span class="kd">var</span> <span class="nx">Module</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="na">wasmBinaryFile</span><span class="p">:</span> <span class="s2">"site.wasm"</span><span class="p">,</span>
+            <span class="p">};</span>
+        <span class="nt">&lt;/script&gt;</span>
+        <span class="nt">&lt;script </span><span class="na">src=</span><span class="s">"site.js"</span><span class="nt">&gt;&lt;/script&gt;</span>
+    <span class="nt">&lt;/head&gt;</span>
+    <span class="nt">&lt;body&gt;&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</code></pre></div></div>
+
+<p>Lastly, the Rust code:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="err">#</span><span class="o">!</span><span class="p">[</span><span class="nf">feature</span><span class="p">(</span><span class="n">link_args</span><span class="p">)]</span>
+
+<span class="nd">#[cfg_attr(target_arch=</span><span class="s">"wasm32"</span><span class="nd">,</span> <span class="nd">link_args</span> <span class="nd">=</span> <span class="s">"</span><span class="err">\</span><span class="s">
+    --js-library site/utilities.js</span><span class="err">\</span><span class="s">
+"</span><span class="nd">)]</span>
+<span class="k">extern</span> <span class="p">{}</span>
+
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">os</span><span class="p">::</span><span class="nn">raw</span><span class="p">::</span><span class="nb">c_char</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">ffi</span><span class="p">::</span><span class="n">CStr</span><span class="p">;</span>
+
+<span class="k">extern</span> <span class="p">{</span>
+    <span class="k">fn</span> <span class="nf">get_data</span><span class="p">()</span> <span class="k">-&gt;</span> <span class="o">*</span><span class="k">mut</span> <span class="nb">c_char</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">fn</span> <span class="nf">get_data_safe</span><span class="p">()</span> <span class="k">-&gt;</span> <span class="nb">String</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="n">data</span> <span class="o">=</span> <span class="k">unsafe</span> <span class="p">{</span>
+        <span class="nn">CStr</span><span class="p">::</span><span class="nf">from_ptr</span><span class="p">(</span><span class="nf">get_data</span><span class="p">())</span>
+    <span class="p">};</span>
+    <span class="n">data</span><span class="nf">.to_string_lossy</span><span class="p">()</span>
+        <span class="nf">.into_owned</span><span class="p">()</span>
+<span class="p">}</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="n">data</span> <span class="o">=</span> <span class="nf">get_data_safe</span><span class="p">();</span>
+    <span class="nd">println!</span><span class="p">(</span><span class="s">"{:?}"</span><span class="p">,</span> <span class="n">data</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>If we build this and load the page we’ll get an alert, and see <code class="highlighter-rouge">"Hello from JS"</code> printed out on the console.</p>
+
+<p>The good thing is it works. The bad thing is that it is rather complex to do. Hopefully it will get better in the future.</p>
+
+<blockquote>
+  <p>I’m not entirely happy with this situation, if you have any ideas how we can do this better please let me know!</p>
+</blockquote>
+
+<h2 id="fifth-experiment-using-the-web-platform">Fifth Experiment: Using The Web Platform</h2>
+
+<p>As we’ve discovered by now, the barrier between our compiled code and Javascript is a bit annoying. It’d be quite handy if we could just write everything in Rust and avoid dealing with Javascript except where absolutely needed.</p>
+
+<p>Luckly for us, there is a crate called <a href="https://github.com/tcr/rust-webplatform/"><code class="highlighter-rouge">rust-webplatform</code></a> that was started. It allows for convienent DOM manipulation and provides some helpers for doing Javascript. It’s still a bit rough around the edges, but the foundations are there.</p>
+
+<p>To get started, let’s add <code class="highlighter-rouge">webplatform = "*"</code> to our dependencies. Then we can use some slightly modified sample code from the repo:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">extern</span> <span class="n">crate</span> <span class="n">webplatform</span><span class="p">;</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="n">document</span> <span class="o">=</span> <span class="nn">webplatform</span><span class="p">::</span><span class="nf">init</span><span class="p">();</span>
+    <span class="k">let</span> <span class="n">body</span> <span class="o">=</span> <span class="n">document</span><span class="nf">.element_query</span><span class="p">(</span><span class="s">"body"</span><span class="p">)</span>
+        <span class="nf">.unwrap</span><span class="p">();</span>
+    <span class="n">body</span><span class="nf">.html_append</span><span class="p">(</span><span class="s">"</span><span class="err">\</span><span class="s">
+        &lt;h1&gt;This header brought to you by Rust&lt;/h1&gt;</span><span class="err">\</span><span class="s">
+        &lt;button&gt;Click me!&lt;/button&gt;</span><span class="err">\</span><span class="s">
+    "</span><span class="p">);</span>
+    
+    <span class="k">let</span> <span class="n">button</span> <span class="o">=</span> <span class="n">document</span><span class="nf">.element_query</span><span class="p">(</span><span class="s">"button"</span><span class="p">)</span>
+        <span class="nf">.unwrap</span><span class="p">();</span>
+    <span class="n">button</span><span class="nf">.on</span><span class="p">(</span><span class="s">"mouseenter"</span><span class="p">,</span> <span class="k">move</span> <span class="p">|</span><span class="n">_</span><span class="p">|</span> <span class="p">{</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"Mouse entered!"</span><span class="p">);</span>
+        <span class="n">body</span><span class="nf">.html_append</span><span class="p">(</span><span class="s">"&lt;p&gt;Mouse entered!&lt;/p&gt;"</span><span class="p">);</span>
+    <span class="p">});</span>
+    <span class="n">button</span><span class="nf">.on</span><span class="p">(</span><span class="s">"click"</span><span class="p">,</span> <span class="p">|</span><span class="n">_</span><span class="p">|</span> <span class="p">{</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"Clicked!"</span><span class="p">);</span>
+        <span class="nn">webplatform</span><span class="p">::</span><span class="nf">alert</span><span class="p">(</span><span class="s">"Clicked!"</span><span class="p">);</span>
+    <span class="p">});</span>
+
+    <span class="nn">webplatform</span><span class="p">::</span><span class="nf">spin</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Building our project you should see:</p>
+
+<ul>
+  <li>DOM elements created when the wasm is loaded.</li>
+  <li>DOM elements being created when your mouse goes over the button.</li>
+  <li>An alert when you click on the button.</li>
+</ul>
+
+<p>Due to the youth of the library there isn’t much in the way of examples or documentation, so be prepared to fumble around in the dark. For example, I discovered the key to getting some events and <code class="highlighter-rouge">println!()</code> working was to use <code class="highlighter-rouge">webplatform::spin()</code>.</p>
+
+<blockquote>
+  <p>If you’re looking for something to contribute, this crate would likely be an excellent place to do so! There’s a bunch of work to be done and you could really make a difference for the blossoming Rust wasm community!</p>
+</blockquote>
+
+<h2 id="outlook">Outlook</h2>
+
+<p>The future of Rust on the web is quite bright! Much of the foundations already exist, as we’ve seen in this article, and the Rust community is actively interested in improving the experience. The Rust repository even has an <a href="https://github.com/rust-lang/rust/issues?utf8=%E2%9C%93&amp;q=label%3AA-wasm%20"><code class="highlighter-rouge">A-wasm</code></a> tag for issues!</p>
+
+<p>There are currently discussions about moving from <code class="highlighter-rouge">emcc</code> to the nascent LLVM wasm backend which you can track <a href="https://github.com/rust-lang/rust/issues/38804">here</a>. This may make significant parts of this article obselete, which is very exciting!</p>
+
+<p>The ecosystem around wasm in Rust is still young, and now is a great time to get involved and help shape the future!</p>
+
+<blockquote>
+  <p>Special thanks to <a href="https://fnordig.de/">Jan-Erik (Badboy)</a> for his workshop at Rust Belt Rust 2016, his hard work on this ecosystem, his advice while writing this post, for reviewing this before publishing, and most of all for being my valued friend. May we continue to hack in the same circles.</p>
+</blockquote>
+
+<blockquote>
+  <p>This post was supported by <a href="http://asquera.de/">Asquera</a> and is an extension of the wasm chapter in our <a href="https://github.com/skade/rust-three-days-course/">Three Days of Rust</a> course. If you’d like to hire us for training, consulting, or developing in Rust (or anything else) please get in touch with me at <a href="mailto:andrew.hobden@asquera.de">andrew.hobden@asquera.de</a>.</p>
+</blockquote>
+
+    </article>
+
+    <aside class="post-meta">
+  
+    Posted on
+    <time datetime="2017-04-06T00:00:00-07:00">06 Apr 2017</time>
+  
+
+  
+    
+      
+        , into
+        
+        <span><a href="/tags/#rust">Rust</a></span>
+      
+    
+      
+        
+             and
+        
+        <span><a href="/tags/#tutorials">Tutorials</a></span>
+      
+    .
+  
+
+  
+    <span class="image-credit">Image by: Mario Klassen</span>
+  
+</aside>
+
+</main>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>

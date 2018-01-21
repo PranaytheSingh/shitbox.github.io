@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>ShitBox</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/cover.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="http://0.0.0.0:4000">
+    
+    
+        <meta name="twitter:description" content="Exploring, fascinating and amusing">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/cover.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">ShitBox</a></h1>
+      <p class="description">Exploring, fascinating and amusing</p>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main id="index">
+    
+          <h2><a href="/2018/01/01/a-new-dawn/">A New Year Dawns</a></h2>
+          <section class="excerpt">
+              <p>First of all, happy new year! It’s been awhile since I wrote anything, and there are many things I’d love to write more about. Sadly, time is a limited resource and I’ve been managing to keep quite busy. For now, I’ll stick to an update about a wave of change in my life. Glowing memories Over the last year and a half I’ve had the absolutely wonderful pleasure of working with my dear friends at Asquera in beautiful Berlin. It has given me ample opportunity to learn, teach, and get experience with a wide range of topics. I will carry...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="01 January 2018">01 January 2018</time>
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2017/12/11/greasing-the-gears/">Greasing the Gears</a></h2>
+          <section class="excerpt">
+              <p>It’s been quite a journey so far, but there is still a long ways to go. We can’t stop. We must triage, repair, and replace while the motor is still running. We can’t do it alone, but together, with hard work, we might make it. During my education, one of the most surprisingly interesting courses I took was Software Evolution. I originally took it because I know the professor was great, but it turned out to be hugely inspirational and motivating in the last years. During that class we didn’t study how to write code, how to write better code,...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="11 December 2017">11 December 2017</time>
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2017/04/11/wrapping-apis-in-rust/">Wrapping APIs in Rust</a></h2>
+          <section class="excerpt">
+              <p>Modern applications often interface with external services through RESTful APIs. Examples of this include everything from telephony like Twilio to infrastructure like DigitalOcean. In most cases these services provide an HTTP REST API, though there are exceptions such as mailers which sometimes use SMTP. It’s rather common for these services to offer official wrappers for some popular programming languages, and often there are many unofficial wrappers of varying quality. Digital Ocean, for example, offers official Ruby and Go wrappers here. In languages without a wrapper, interacting with these services can involve some extra work. It can be the case that...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="11 April 2017">11 April 2017</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#rust">Rust</a></span>
+                
+              
+                
+                  
+                       and
+                  
+                  <span><a href="/tags/#tutorials">Tutorials</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2017/04/06/the-path-to-rust-on-the-web/">The Path to Rust on the Web</a></h2>
+          <section class="excerpt">
+              <p>Recently there has been quite a bit of talk about WebAssembly, a new format for code for the web. It is a compile target for languages like C and Rust that enables us to write, and run, code from these languages in our browser. In the interest of learning more about this technology (and to avoid writing more Javascript) let’s explore together and get our hands dirty! Disclaimer: WebAssembly is stabilized, but most implementations are not. The information contained here may become out of date or be incorrect, despite working at the time of writing. Before we start please make...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="06 April 2017">06 April 2017</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#rust">Rust</a></span>
+                
+              
+                
+                  
+                       and
+                  
+                  <span><a href="/tags/#tutorials">Tutorials</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2017/03/03/setting-up-a-rust-devenv/">Setting up a Rust Development Environment</a></h2>
+          <section class="excerpt">
+              <p>In this post we’ll be discussing one way to set up your machine for Rust development. There are different ways, particularly related to the text editor, so feel free to skip what is irrelevant to you. We’ll focus on: Setting up Rust via Rustup. Valuable tools like clippy and rustfmt. Configuring VS Code for Rust. Debugging with the command line and inside of VS Code. Using different compile targets. Everything we do should be functional on both Linux and MacOS, on Windows your mileage may vary. I, unfortunately, don’t have a Windows instance to test on. In order to finish...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="03 March 2017">03 March 2017</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#rust">Rust</a></span>
+                
+              
+                
+                  ,
+                  
+                  <span><a href="/tags/#tutorials">Tutorials</a></span>
+                
+              
+                
+                  
+                      , and
+                  
+                  <span><a href="/tags/#tooling">Tooling</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2017/03/01/the-future-with-futures/">The Future with Futures</a></h2>
+          <section class="excerpt">
+              <p>Recently there has been a lot of progress in the Rust language towards a robust asynchronous stack. In this article we’ll take a look at what these things are, take a tour of what’s available, play with some examples, and talk about how the pieces fit together. We’ll get started with the futures crate to start, move on to futures_cpupool, and then eventually to tokio. We will assume you have some knowledge of programming, and have at least thought about trying Rust before. What are Futures and Async? When writing code to do some action which may take some time,...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="01 March 2017">01 March 2017</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#rust">Rust</a></span>
+                
+              
+                
+                  
+                       and
+                  
+                  <span><a href="/tags/#tutorials">Tutorials</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2016/10/12/rust-state-machine-pattern/">Pretty State Machine Patterns in Rust</a></h2>
+          <section class="excerpt">
+              <p>Lately I’ve been thinking a lot about the patterns and structures which we program with. It’s really wonderful to start exploring a project and see familiar patterns and styles which you’ve already used before. It makes it easier to understand the project, and empowers you to start working on the project faster. Sometimes you’re working on a new project and realize that you need to do something in the same way as you did in another project. This thing might not be a functionality or a library, it might not be something which you can encode into some clever macro...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="12 October 2016">12 October 2016</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#rust">Rust</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2016/09/29/an-https-terminator-box/">An HTTPS Terminator Box</a></h2>
+          <section class="excerpt">
+              <p>Over the last couple days at asquera we’ve been on a retreat at the Landhaus Fredenwalde. It’s really beautiful out here and it’s given me a chance to work on a few small projects which I’ve been wanting to explore for awhile now. Anyways, yesterday I set up a system that uses Ansible, Let’s Encrypt, nginx, and DigitalOcean to terminate HTTP and proxy requests to arbitrary hosts. The intended use case for this is to have Github Pages sites able to be dropped onto a custom domain that is SSL enabled, but there are many other use cases which I...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="29 September 2016">29 September 2016</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#infrastructure">Infrastructure</a></span>
+                
+              
+                
+                  
+                       and
+                  
+                  <span><a href="/tags/#tooling">Tooling</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2016/07/13/winds-of-change/">Winds of Change</a></h2>
+          <section class="excerpt">
+              <p>Unlike most of this blog this post is not technical in the slightest, instead it’s a personal update. Though, I have been wanting to write this post for a long time now! Many things have happened in the last few months, and life is still swirling all around me. Many things seemed uncertain, other things still do. Irregardless, things are pretty darn cool. Anyways, here’s what’s happened lately. The First Degree I went Camosun College in late 2010, and transfered to the University of Victoria in 2012. As of June 2016, I’ve finished my program and recieved my degree! I’m...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="13 July 2016">13 July 2016</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#personal">Personal</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2016/04/22/The-Menagerie-of-Badssl/">The Menagerie of Badssl</a></h2>
+          <section class="excerpt">
+              <p>Late last year I was given an opporunity to participate in the Mozilla Winter of Security 2016! I’m happy to report it was, and still is, super cool. Plans diverted significantly at the very start of the project as it was discovered that the “menagerie” of certificates we wanted to build already existed. What joy! In order to avoid any “not-invented-here” syndrome problems we pivoted, like a failing startup, and I moved to become a contributor to BadSSL. One of my mentors, April King, happened to already be a contributor to BadSSL and helped me get acquainted with the repository...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="22 April 2016">22 April 2016</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#uvic">UVic</a></span>
+                
+              .
+          </div>
+        
+    
+</main>
+
+<hr>
+
+<nav id="pagination">
+    
+        <a href="/archive/2/">&larr; Older posts</a>
+    
+    <span class="page-number">Page 1 of 7</span>
+    
+      <a href="#">Newer posts &rarr;</a>
+    
+</nav>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>

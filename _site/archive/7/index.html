@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>ShitBox</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/cover.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="http://0.0.0.0:4000">
+    
+    
+        <meta name="twitter:description" content="Exploring, fascinating and amusing">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/cover.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">ShitBox</a></h1>
+      <p class="description">Exploring, fascinating and amusing</p>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main id="index">
+    
+          <h2><a href="/2014/08/12/option-monads-in-rust/">Option Monads in Rust</a></h2>
+          <section class="excerpt">
+              <p>One common monadic structure is the Option (or Maybe in Haskell and other languages) type. This can be seen as an encapsulation type. Consider a function which may fail to produce a meaningful value for certain inputs. For example, fn main () { // Parses a string into an integer. from_str::&lt;int&gt;("4"); // A valid input. from_str::&lt;int&gt;("Potato"); // Definitely invalid. } The from_str function cannot return a meaningful value for "Potato". Rust (and many other functional languages) does not have null, so what should we return? This is where an Option type becomes useful. In our example, instead of returning an...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="12 August 2014">12 August 2014</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#rust">Rust</a></span>
+                
+              
+                
+                  
+                       and
+                  
+                  <span><a href="/tags/#tutorials">Tutorials</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2014/08/04/back-channel-keycloak-requests/">Back Channel Keycloak Requests</a></h2>
+          <section class="excerpt">
+              <p>While using Keycloak you may need to make authenticated requests between various services. How can this be accomplished with Immutant? You may want to check this link to learn how to use Immutant with Keycloak. Concept In this deployment, there are three components to the deployment, a Consumer, a Provider, and Keycloak. The Consumer makes a request of the Provider using authentication through Keycloak. Workflow: User visits Consumer, gets redirected to Keycloak. User authenticates with Keycloak, gets redirected back to Consumer. Consumer uses the User’s “Bearer” token in a back channel request to the Provider. Provider verifies the User’s “Bearer”...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="04 August 2014">04 August 2014</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#uvic">UVic</a></span>
+                
+              
+                
+                  
+                       and
+                  
+                  <span><a href="/tags/#tutorials">Tutorials</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2014/07/25/integrating-immutant-and-keycloak/">Integrating Immutant and Keycloak</a></h2>
+          <section class="excerpt">
+              <p>In my past two posts, we took a surface level look at Immutant then took a look at deploying immutant applications to the Wildfly application server. This time, we’ll take a look at how to integrate Keycloak with an Immutant app, again using Docker heavily. If you haven’t read the previous few articles, it might be useful to give them a quick glance over. Keycloak Erecting Keycloak Keycloak is an integrated Single-Sign-On and Identity Management platform from the fine folks of JBoss. A Docker image of Keycloak is available here, just like Immutant, Wildfly, and a few others. To pull...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="25 July 2014">25 July 2014</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#uvic">UVic</a></span>
+                
+              
+                
+                  
+                       and
+                  
+                  <span><a href="/tags/#tutorials">Tutorials</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2014/07/22/deploying-immutant-to-wildfly/">Deploying Immutant to Wildfly</a></h2>
+          <section class="excerpt">
+              <p>Currently, the tutorial on deploying to Wildfly with Immutant 2 is not written. Furthermore,the JBoss documentation isn’t particularly tailored towards Clojure applications. So, let’s take a look at how to do this using the convenient dockerfiles provided by the JBoss project. We’ll use Docker to simplify deployment and setup of Wildfly, but instructions for a non-docker application should be similar. Create a basic Immutant application. Starting from a lein new app learning command, set up your project like so: project.clj: (defproject learning "0.1.0-SNAPSHOT" :description "FIXME: write description" :url "http://example.com/FIXME" :license {:name "MPL" :url "http://choosealicense.com/licenses/mpl-2.0/"} :dependencies [[org.clojure/clojure "1.6.0"] [org.immutant/immutant "2.x.incremental.186"] [compojure...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="22 July 2014">22 July 2014</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#uvic">UVic</a></span>
+                
+              
+                
+                  
+                       and
+                  
+                  <span><a href="/tags/#tutorials">Tutorials</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2014/07/14/starting-with-immutant/">Starting with Immutant</a></h2>
+          <section class="excerpt">
+              <p>Immutant is suite of Clojure libraries that is part of the JBossAS/Wildfly ecosystem. Great, fantastic! Clojure is a lisp that runs on the JVM, the CLR, and compiles to Javascript. Lets get started! Some links we’ll need: Immutant - The framework. Clojure - The language. Leiningen - The package manager. Getting Leiningen Assuming ~/bin/ is a folder in your $PATH DEST=~/bin/lein curl https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein &gt; $DEST chmod +x $DEST Getting Clojure You get Clojure (oddly) through lein. Just run it, and it’ll download everything it needs. lein That was easy! Setting up an Immutant Project This is a lightly expanded version...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="14 July 2014">14 July 2014</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#uvic">UVic</a></span>
+                
+              
+                
+                  
+                       and
+                  
+                  <span><a href="/tags/#tutorials">Tutorials</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2014/07/14/arch-docker-baseimage/">Arch Docker Baseimage</a></h2>
+          <section class="excerpt">
+              <p>Problem You need a base image of Arch Linux that you’re sure is a-okay. Compounding Factors Base images currently can’t be so-called ‘Trusted Builds’ built by the repository itself. You have no way of verifying the integrity of the images available. Arch is very much a moving target distribution. Any images you do pull are likely to be out of date. You don’t have an existing Arch Linux install, which the current scripts require. and don’t want to make one, or use someone else’s container or install to build your image, again, going back to trust. The Arch Netinstall ISO...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="14 July 2014">14 July 2014</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#containers">Containers</a></span>
+                
+              
+                
+                  ,
+                  
+                  <span><a href="/tags/#arch-linux">Arch Linux</a></span>
+                
+              
+                
+                  
+                      , and
+                  
+                  <span><a href="/tags/#tutorials">Tutorials</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2014/06/05/async-auto/">Async Auto</a></h2>
+          <section class="excerpt">
+              <p>I’ve been exploring the handy async over the last few days in the lab. One of my projects is a MongoDB API Adapter in Node.js and I was pleased by a novel way of handling control flow. async.auto() is a function offered by the libary which allows you to declare a set of tasks and their dependencies, then the library determines the best way to compose the initialization. Consider the following dependency graph: With async this could be modelled like so: (function init() { async.auto({ dbConn: dbConn, schemas: [ 'dbConn', schemas ], http: http, httpMiddleware: [ 'http', httpMiddleware ], routes:...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="05 June 2014">05 June 2014</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#javascript">Javascript</a></span>
+                
+              
+                
+                  
+                       and
+                  
+                  <span><a href="/tags/#tutorials">Tutorials</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2014/03/21/gathering-our-voices/">Gathering Our Voices 2014</a></h2>
+          <section class="excerpt">
+              <p>I played dual roles for Gathering Our Voices 2014. One role was with the B.C. Association of Aboriginal Friendship Centres, and the other was with Science Venture. The purpose of these conferences is to unite youth from throughout the country in learning, healing and sharing and to provide tangible experiences of tools, resources and knowledge that the youth can bring back to their communities. The conference had 1800 delegates and over 2000 participants. BCAAFC With the Association, I played both a technical and organizational role. I rewrote the website code from the ground up. It was redesigned to be much...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="21 March 2014">21 March 2014</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#events">Events</a></span>
+                
+              
+                
+                  
+                       and
+                  
+                  <span><a href="/tags/#bcaafc">BCAAFC</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2013/03/21/gathering-our-voices/">Gathering Our Voices 2013</a></h2>
+          <section class="excerpt">
+              <p>I helped plan and host the 11th Gathering Our Voices Aboriginal Youth Conference in Penticton, British Columbia. Much of my time was spent learning proper software design and refining the management and registration software I developed. This was my first ‘real’ software project. I developed Gathering Our Voice’s custom conference management software using Mongoose (A MongoDB ODM), MongoDB, Node.JS, Bootstrap, and Redis. The software was deployed to Heroku. The implementation language was CoffeeScript. The event attracted over 1700 participants, the largest ever at the time. Not only did I produce and provide support for the registration site, I also acted...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="21 March 2013">21 March 2013</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#events">Events</a></span>
+                
+              
+                
+                  
+                       and
+                  
+                  <span><a href="/tags/#bcaafc">BCAAFC</a></span>
+                
+              .
+          </div>
+        
+    
+</main>
+
+<hr>
+
+<nav id="pagination">
+    
+        <a href="#">&larr; Older posts</a>
+    
+    <span class="page-number">Page 7 of 7</span>
+    
+        
+            <a href="/archive/6/">Newer posts &rarr;</a>
+        
+    
+</nav>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>

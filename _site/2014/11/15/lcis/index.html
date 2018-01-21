@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>Longest Common Increasing Sequence</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/cover.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="Longest Common Increasing Sequence">
+    
+    
+        <meta name="twitter:description" content="&lt;p&gt;A really ‘cute’ problem popped up in our Data Structures &amp;amp; Algorithms homework and I wanted to write about it.&lt;/p&gt;
+
+">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+      <script type="text/javascript" async src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/cover.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">Longest Common Increasing Sequence</a></h1>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main>
+    <article>
+        <p>A really ‘cute’ problem popped up in our Data Structures &amp; Algorithms homework and I wanted to write about it.</p>
+
+<blockquote>
+  <p>If you’re in the class this will obviously ruin the fun, so read it later, after you’re done!</p>
+</blockquote>
+
+<p>The goal is to find the longest common increasing subsequence. Some notes:</p>
+
+<ul>
+  <li>A <strong>subsequence</strong> of <script type="math/tex">s</script> is a set <script type="math/tex">v</script> such that <script type="math/tex">v \subset s</script>, and the items in <script type="math/tex">v</script> appear in the same order as they appear in <script type="math/tex">s</script>.</li>
+  <li>An <strong>increasing subsequence</strong> of <script type="math/tex">s</script> is a subsequence <script type="math/tex">v</script> such that:</li>
+</ul>
+
+<script type="math/tex; mode=display">% <![CDATA[
+v_1 < v_2 < ... < v_n %]]></script>
+
+<p>The problem calls for some <script type="math/tex">s</script> and some \( t \), returning the longest subsequence common between the sets. It is described roughly in <a href="http://www.codechef.com/problems/C5/">this link</a> and a sample solution is described in a following <a href="http://blog.codechef.com/2009/05/19/211/">blog post</a>.</p>
+
+<p>Defining <script type="math/tex">LCIS(s_{1}...s_{n},t_{1}...t_{m},last)</script> recursively:</p>
+
+<ul>
+  <li>If <script type="math/tex">s_{n} = t_{m}</script> and <script type="math/tex">s_{n} > last</script>, then</li>
+</ul>
+
+<script type="math/tex; mode=display">LCIS = max(
+    LCIS(s_{1}...s_{n-1},t_{1}...t_{m-1},s_{n})+1,
+    LCIS(s_{1}...s_{n-1},t_{1}...t_{m},last),
+    LCIS(s_{1}...s_{n},t_{1}...t_{m-1},last)
+)</script>
+
+<ul>
+  <li>If \( s_{n}\neq t_{m} \), then</li>
+</ul>
+
+<script type="math/tex; mode=display">LCIS=max(
+    LCIS(s\_{1}...s\_{n-1},t\_{1}...t\_{m},last),
+    LCIS(s\_{1}...s\_{n},t\_{1}...t\_{m-1},last)
+)</script>
+
+<p>Which is fine and dandy, but it’s a super slow recurrence. Think about how many times <script type="math/tex">LCIS(s\_1...s\_2, t\_1...t\_2)</script> will be invoked.</p>
+
+<p>Instead, we’ll use <em>Dynamic Programming</em>, which is much less exciting then it sounds. (I don’t know about you, but I expect some serious magic, like lasers, from that kind of name.)</p>
+
+<p>The basic idea of dynamic programming is to define an <strong>optimal substructure</strong> and discover <strong>overlapping subproblems</strong>. Then, we compute the value of the overlapping subproblems in a <strong>bottom up fashion</strong>, usually via a table or a set of vectors.</p>
+
+<p>The recurrence we defined above is an <strong>optimal substructure</strong> since it will allow us to utilize overlapping calls. (Like <script type="math/tex">LCIS(s\_1...s\_2, t\_1...t\_2)</script>)</p>
+
+<p>Examining the problem closely, It’s possible to solve this problem using two arrays instead of a matrix. We’ll use <script type="math/tex">c</script> which stores the length of the LCIS ending at a given element <script type="math/tex">i</script> and <script type="math/tex">p</script> which stores the previous element of the LCIS (used for reconstruction).</p>
+
+<p>The Rust code below is well commented and includes a number of tests.</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">cmp</span><span class="p">::</span><span class="n">max</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">collections</span><span class="p">::</span><span class="n">RingBuf</span><span class="p">;</span>
+
+<span class="c">/// Longest Common Increasing Sequence</span>
+<span class="c">///</span>
+<span class="c">/// Accepts two `Vec&lt;int&gt;`s and returning a `Vec&lt;int&gt;` Which is the LCIS.</span>
+<span class="c">///</span>
+<span class="c">/// Note: There are multiple Longest Common Increasing Sequences in most inputs.</span>
+<span class="c">/// For example, `[5, 3, 6, 2, 7, 1, 8]` and `[1i, 2, 3, 4, 5, 6, 7, 8, 9]` have</span>
+<span class="c">/// multiple valid results: `[5i, 6, 7, 8]`, `[3i, 6, 7, 8]`, ...</span>
+<span class="c">///</span>
+<span class="k">pub</span> <span class="k">fn</span> <span class="nf">lcis</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">int</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">int</span><span class="o">&gt;</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">int</span><span class="o">&gt;</span> <span class="p">{</span>
+    <span class="c">// Convient access.</span>
+    <span class="k">let</span> <span class="n">size</span> <span class="o">=</span> <span class="nf">max</span><span class="p">(</span><span class="n">s</span><span class="nf">.len</span><span class="p">(),</span> <span class="n">t</span><span class="nf">.len</span><span class="p">());</span>
+    <span class="c">// We'll index into the largest for returning the path.</span>
+    <span class="k">let</span> <span class="p">(</span><span class="n">largest</span><span class="p">,</span> <span class="n">smallest</span><span class="p">)</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="n">s</span><span class="nf">.len</span><span class="p">()</span> <span class="o">==</span> <span class="n">size</span> <span class="p">{</span>
+            <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
+        <span class="p">}</span>
+    <span class="p">};</span>
+    <span class="c">// Length of the LCIS ending at `i`</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">c</span> <span class="o">=</span> <span class="nn">Vec</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">uint</span><span class="o">&gt;</span><span class="p">::</span><span class="nf">from_elem</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+    <span class="c">// Index of the previous element.</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">p</span> <span class="o">=</span> <span class="nn">Vec</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">int</span><span class="o">&gt;</span><span class="p">::</span><span class="nf">from_elem</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+
+    <span class="c">// Outer Loop</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="n">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">0u</span><span class="p">,</span> <span class="n">smallest</span><span class="nf">.len</span><span class="p">())</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="p">(</span><span class="k">mut</span> <span class="n">cur</span><span class="p">,</span> <span class="k">mut</span> <span class="n">last</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="err">-</span><span class="mi">1</span><span class="p">);</span>
+        <span class="c">// Inner Loop</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="n">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">0u</span><span class="p">,</span> <span class="n">largest</span><span class="nf">.len</span><span class="p">())</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="n">smallest</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">largest</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">&amp;&amp;</span> <span class="n">cur</span><span class="o">+</span><span class="mi">1</span> <span class="o">&gt;</span> <span class="n">c</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="p">{</span>
+                <span class="c">// This LCIS larger then our current.</span>
+                <span class="n">c</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">cur</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+                <span class="n">p</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">last</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="k">if</span> <span class="n">smallest</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">largest</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">&amp;&amp;</span> <span class="n">cur</span> <span class="o">&lt;</span> <span class="n">c</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="p">{</span>
+                <span class="n">cur</span> <span class="o">=</span> <span class="n">c</span><span class="p">[</span><span class="n">j</span><span class="p">];</span>
+                <span class="n">last</span> <span class="o">=</span> <span class="n">j</span> <span class="k">as</span> <span class="nb">int</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="c">// Find the length and end of the sequence.</span>
+    <span class="k">let</span> <span class="p">(</span><span class="k">mut</span> <span class="n">length</span><span class="p">,</span> <span class="k">mut</span> <span class="n">index</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0u</span><span class="p">,</span> <span class="mi">0u</span><span class="p">);</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="n">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">0u</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">length</span> <span class="p">{</span>
+            <span class="n">length</span> <span class="o">=</span> <span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="n">i</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="c">// Find the sequence.</span>
+    <span class="k">let</span> <span class="n">sequence</span> <span class="o">=</span> <span class="k">if</span> <span class="n">length</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="p">{</span>
+        <span class="c">// You can't push onto the front of a vector, this is easier.</span>
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">seq</span> <span class="o">=</span> <span class="nn">RingBuf</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">int</span><span class="o">&gt;</span><span class="p">::</span><span class="nf">with_capacity</span><span class="p">(</span><span class="n">size</span><span class="p">);</span>
+        <span class="c">// `-1` means we're at the start of the sequence.</span>
+        <span class="k">while</span> <span class="n">index</span> <span class="o">!=</span> <span class="err">-</span><span class="mi">1</span> <span class="p">{</span>
+            <span class="c">// Add to the sequence.</span>
+            <span class="n">seq</span><span class="nf">.push_front</span><span class="p">(</span><span class="n">largest</span><span class="p">[</span><span class="n">index</span><span class="p">]);</span>
+            <span class="c">// Set index to the previous.</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="k">as</span> <span class="nb">uint</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="c">// Send it back to a vector.</span>
+        <span class="c">// TODO: Make this better.</span>
+        <span class="n">seq</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.map</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">x</span><span class="p">|</span> <span class="n">x</span><span class="p">)</span><span class="nf">.collect</span><span class="p">()</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="c">// An empty set.</span>
+        <span class="nn">Vec</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">int</span><span class="o">&gt;</span><span class="p">::</span><span class="nf">new</span><span class="p">()</span>
+    <span class="p">};</span>
+    <span class="n">sequence</span>
+<span class="p">}</span>
+
+<span class="c">/// Single result LCIS Test Suite</span>
+<span class="c">///</span>
+<span class="c">/// These tests we know the (only) answer to, so we can test for the answer.</span>
+<span class="nd">#[test]</span>
+<span class="k">fn</span> <span class="nf">all</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="n">s</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">1</span><span class="n">i</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">];</span>
+    <span class="k">let</span> <span class="n">t</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">1</span><span class="n">i</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">];</span>
+    <span class="k">let</span> <span class="n">goal</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">1</span><span class="n">i</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">];</span>
+    <span class="k">let</span> <span class="n">result</span> <span class="o">=</span> <span class="nf">lcis</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">t</span><span class="p">);</span>
+    <span class="k">assert</span><span class="o">!</span><span class="p">(</span><span class="n">result</span> <span class="o">==</span> <span class="n">goal</span><span class="p">,</span> <span class="s">"Goal: {}, Result: {}"</span><span class="p">,</span> <span class="n">goal</span><span class="p">,</span> <span class="n">result</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="nd">#[test]</span>
+<span class="k">fn</span> <span class="nf">none</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="n">s</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">1</span><span class="n">i</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">];</span>
+    <span class="k">let</span> <span class="n">t</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">4</span><span class="n">i</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">];</span>
+    <span class="k">let</span> <span class="n">goal</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[];</span>
+    <span class="k">let</span> <span class="n">result</span> <span class="o">=</span> <span class="nf">lcis</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">t</span><span class="p">);</span>
+    <span class="k">assert</span><span class="o">!</span><span class="p">(</span><span class="n">result</span> <span class="o">==</span> <span class="n">goal</span><span class="p">,</span> <span class="s">"Goal: {}, Result: {}"</span><span class="p">,</span> <span class="n">goal</span><span class="p">,</span> <span class="n">result</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="nd">#[test]</span>
+<span class="k">fn</span> <span class="nf">continuous_start</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="n">s</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">1</span><span class="n">i</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">];</span>
+    <span class="k">let</span> <span class="n">t</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">1</span><span class="n">i</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">];</span>
+    <span class="k">let</span> <span class="n">goal</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">1</span><span class="n">i</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">];</span>
+    <span class="k">let</span> <span class="n">result</span> <span class="o">=</span> <span class="nf">lcis</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">t</span><span class="p">);</span>
+    <span class="k">assert</span><span class="o">!</span><span class="p">(</span><span class="n">result</span> <span class="o">==</span> <span class="n">goal</span><span class="p">,</span> <span class="s">"Goal: {}, Result: {}"</span><span class="p">,</span> <span class="n">goal</span><span class="p">,</span> <span class="n">result</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="nd">#[test]</span>
+<span class="k">fn</span> <span class="nf">reversed_sizes</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="n">s</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">1</span><span class="n">i</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">];</span>
+    <span class="k">let</span> <span class="n">t</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">1</span><span class="n">i</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">];</span>
+    <span class="k">let</span> <span class="n">goal</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">1</span><span class="n">i</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">];</span>
+    <span class="k">let</span> <span class="n">result</span> <span class="o">=</span> <span class="nf">lcis</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">t</span><span class="p">);</span>
+    <span class="k">assert</span><span class="o">!</span><span class="p">(</span><span class="n">result</span> <span class="o">==</span> <span class="n">goal</span><span class="p">,</span> <span class="s">"Goal: {}, Result: {}"</span><span class="p">,</span> <span class="n">goal</span><span class="p">,</span> <span class="n">result</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="nd">#[test]</span>
+<span class="k">fn</span> <span class="nf">continuous_end</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="n">s</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">1</span><span class="n">i</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">];</span>
+    <span class="k">let</span> <span class="n">t</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">4</span><span class="n">i</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">];</span>
+    <span class="k">let</span> <span class="n">goal</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">4</span><span class="n">i</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">];</span>
+    <span class="k">let</span> <span class="n">result</span> <span class="o">=</span> <span class="nf">lcis</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">t</span><span class="p">);</span>
+    <span class="k">assert</span><span class="o">!</span><span class="p">(</span><span class="n">result</span> <span class="o">==</span> <span class="n">goal</span><span class="p">,</span> <span class="s">"Goal: {}, Result: {}"</span><span class="p">,</span> <span class="n">goal</span><span class="p">,</span> <span class="n">result</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="nd">#[test]</span>
+<span class="k">fn</span> <span class="nf">bidirection</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="n">s</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">10</span><span class="n">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">5</span><span class="p">];</span>
+    <span class="k">let</span> <span class="n">t</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">1</span><span class="n">i</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">];</span> <span class="c">// Skip 5 so it's unique</span>
+    <span class="k">let</span> <span class="n">goal</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">1</span><span class="n">i</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">];</span>
+    <span class="k">let</span> <span class="n">result</span> <span class="o">=</span> <span class="nf">lcis</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">t</span><span class="p">);</span>
+    <span class="k">assert</span><span class="o">!</span><span class="p">(</span><span class="n">result</span> <span class="o">==</span> <span class="n">goal</span><span class="p">,</span> <span class="s">"Goal: {}, Result: {}"</span><span class="p">,</span> <span class="n">goal</span><span class="p">,</span> <span class="n">result</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="nd">#[test]</span>
+<span class="k">fn</span> <span class="nf">example</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c">// From http://blog.codechef.com/2009/05/19/211/</span>
+    <span class="k">let</span> <span class="n">s</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">4</span><span class="n">i</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">];</span>
+    <span class="k">let</span> <span class="n">t</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">1</span><span class="n">i</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">7</span><span class="p">];</span>
+    <span class="k">let</span> <span class="n">goal</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">3</span><span class="n">i</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">];</span>
+    <span class="k">let</span> <span class="n">result</span> <span class="o">=</span> <span class="nf">lcis</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">t</span><span class="p">);</span>
+    <span class="k">assert</span><span class="o">!</span><span class="p">(</span><span class="n">result</span><span class="nf">.len</span><span class="p">()</span> <span class="o">==</span> <span class="n">goal</span><span class="nf">.len</span><span class="p">(),</span> <span class="s">"Goal: {}, Result: {}"</span><span class="p">,</span> <span class="n">goal</span><span class="p">,</span> <span class="n">result</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c">/// Multiple Results Test Suite</span>
+<span class="c">///</span>
+<span class="c">/// These results we know only the length of, but we can test the validity the</span>
+<span class="c">/// sequence.</span>
+<span class="nd">#[cfg(test)]</span>
+<span class="k">fn</span> <span class="nf">validity_test</span><span class="p">(</span><span class="n">sequence</span><span class="p">:</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">int</span><span class="o">&gt;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="n">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">0u</span><span class="p">,</span> <span class="n">sequence</span><span class="nf">.len</span><span class="p">()</span> <span class="err">-</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">assert</span><span class="o">!</span><span class="p">(</span><span class="n">sequence</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">sequence</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span>
+            <span class="s">"Not a valid LCIS: {}"</span><span class="p">,</span> <span class="n">sequence</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="nd">#[test]</span>
+<span class="k">fn</span> <span class="nf">staggered</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="n">s</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">5</span><span class="n">i</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">8</span><span class="p">];</span>
+    <span class="k">let</span> <span class="n">t</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">1</span><span class="n">i</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">];</span>
+    <span class="k">let</span> <span class="n">goal</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="mi">5</span><span class="n">i</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">];</span>
+    <span class="k">let</span> <span class="n">result</span> <span class="o">=</span> <span class="nf">lcis</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">t</span><span class="p">);</span>
+    <span class="k">assert</span><span class="o">!</span><span class="p">(</span><span class="n">result</span><span class="nf">.len</span><span class="p">()</span> <span class="o">==</span> <span class="n">goal</span><span class="nf">.len</span><span class="p">(),</span>
+    	<span class="s">"Goal: {}, Result: {}"</span><span class="p">,</span> <span class="n">goal</span><span class="p">,</span> <span class="n">result</span><span class="p">);</span>
+    <span class="nf">validity_test</span><span class="p">(</span><span class="n">result</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+    </article>
+
+    <aside class="post-meta">
+  
+    Posted on
+    <time datetime="2014-11-15T00:00:00-08:00">15 Nov 2014</time>
+  
+
+  
+    
+      
+        , into
+        
+        <span><a href="/tags/#tutorials">Tutorials</a></span>
+      
+    
+      
+        ,
+        
+        <span><a href="/tags/#rust">Rust</a></span>
+      
+    
+      
+        
+            , and
+        
+        <span><a href="/tags/#uvic">UVic</a></span>
+      
+    .
+  
+
+  
+</aside>
+
+</main>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>

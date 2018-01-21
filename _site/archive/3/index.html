@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>ShitBox</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/cover.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="http://0.0.0.0:4000">
+    
+    
+        <meta name="twitter:description" content="Exploring, fascinating and amusing">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/cover.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">ShitBox</a></h1>
+      <p class="description">Exploring, fascinating and amusing</p>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main id="index">
+    
+          <h2><a href="/2015/08/11/blog-changeover/">Blog Changeover</a></h2>
+          <section class="excerpt">
+              <p>I’ve moved my feed over from Ghost to Jekyll! It took several hours spread across several days to transfer all of my posts out of Ghost since it’s (experimental) export functionality just dumps a bunch of junk into a JSON document. In this move most page links should still map to the same thing as before. This does not hold for images, diagrams, etc (but you should have hosted your own copy anyways). For now, tags don’t work, but I’m working on that. Jekyll doesn’t have that functionality built in and I don’t know Ruby well. I’m going to work...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="11 August 2015">11 August 2015</time>
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2015/08/04/mtrack/">Trackpad Drivers for Linux on a Mac</a></h2>
+          <section class="excerpt">
+              <p>If you’re like me and have Mac hardware but run Linux you might also run into the slight annoyance with the trackpad drivers X.org defaults to. If you haven’t explored, there is a fantastic replacement called mtrack that I’ve had great luck with. Here’s an example of my configuration in vim /etc/X11/xorg.conf.d/10-mtrack.conf Section "InputClass" MatchIsTouchpad "on" Identifier "Touchpads" Driver "mtrack" Option "Sensitivity" "0.5" Option "IgnorePalm" "on" Option "IgnoreThumb" "on" Option "FingerHigh" "15" Option "ClickFinger1" "3" Option "ClickFinger2" "2" Option "ClickFinger3" "0" Option "TapButton1" "1" Option "TapButton2" "3" Option "TapButton3" "2" Option "SwipeDistance" "1400" Option "Swipe4Distance" "1400" Option "SwipeLeftButton" "9" Option...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="04 August 2015">04 August 2015</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#arch-linux">Arch Linux</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2015/08/01/raft-examples/">Raft Progress & Examples!</a></h2>
+          <section class="excerpt">
+              <p>We’ve also got couple nice working examples! Yes, they’re ready to play with! Can’t wait, need code? Visit Raft and check out the examples/ directory! Progress Report The core Raft consensus algorithm now is quite functional! We’re still lacking log compaction (but have support for snapshotting already prepared) and have not implemented dynamic membership changes. These things are on our road map! We’ve been building more tests and examples recently, Dan landed this bundle which got us into a good state! Next I landed query and some example expansion which gave us some examples that work! Examples There are now...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="01 August 2015">01 August 2015</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#rust">Rust</a></span>
+                
+              
+                
+                  ,
+                  
+                  <span><a href="/tags/#raft">Raft</a></span>
+                
+              
+                
+                  
+                      , and
+                  
+                  <span><a href="/tags/#uvic">UVic</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2015/07/23/raft-tooling/">Raft: Tooling & Infra Update</a></h2>
+          <section class="excerpt">
+              <p>In preparation for the forthcoming 0.0.1 release of Raft we’ve taken several forward steps to improve our (already pretty darn cool!) tooling and infrastructure. If you attempt to set up any of these on your own and have issues let me know! I’d be more than happy to help. You can find our .travis.yml here. sudo-less Travis CI released their container infrastructure last year, and we finally started using it! We’d tried before however we struggled with packages, as Cap’n Proto has rather demanding dependencies for a C++11 compiler. In case anyone is looking, here is the secret sauce on...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="23 July 2015">23 July 2015</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#rust">Rust</a></span>
+                
+              
+                
+                  ,
+                  
+                  <span><a href="/tags/#raft">Raft</a></span>
+                
+              
+                
+                  
+                      , and
+                  
+                  <span><a href="/tags/#tooling">Tooling</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2015/07/16/raft-new-crates/">Raft: New Crates!</a></h2>
+          <section class="excerpt">
+              <p>We’ve been resoundingly busy with our Raft implementation after a brief period of calm in the early summer! I’ll be posting a few bits over the next weeks to help people both learn Rust, and learn about Raft! As a result of Raft development two new crates have been put together for general consumption! Both of these are macro-centric and lead mainly by James. A Useful Error Pattern Working with Raft we discovered a useful error pattern for making use of things like try!(). Let’s quickly recap on why error handling can be a pain sometimes. Let’s say you’re off...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="16 July 2015">16 July 2015</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#rust">Rust</a></span>
+                
+              
+                
+                  ,
+                  
+                  <span><a href="/tags/#raft">Raft</a></span>
+                
+              
+                
+                  
+                      , and
+                  
+                  <span><a href="/tags/#uvic">UVic</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2015/07/10/reading-rust-function-signatures/">Reading Rust Function Signatures</a></h2>
+          <section class="excerpt">
+              <p>In Rust, function signatures tell a story. Just from glancing at the signature of a function an experienced Rust user can tell much of the functions behaivor. In this article we’ll explore some signatures and talk about how to read them and extract information from them. While exploring, you can find many great function signature examples in the Rust API docs. You can play around on the Playpen. This article assumes some knowledge of Rust, glossing over a bit of the book should be quite sufficient if you are lacking that but have programmed before. If you’re used to programming...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="10 July 2015">10 July 2015</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#rust">Rust</a></span>
+                
+              
+                
+                  
+                       and
+                  
+                  <span><a href="/tags/#tutorials">Tutorials</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2015/07/08/a-useful-error-pattern/">Collecting Results from Collections</a></h2>
+          <section class="excerpt">
+              <p>I’ve been playing around with a new project that uses a lot of collections of results, for example Vec&lt;Result&lt;()&gt;&gt; and asked some folks on Rust if they new a good way of transforming this into a Result&lt;Vec&lt;()&gt;&gt;. Turns out, .collect() can do it for you! use std::io::{Error, ErrorKind}; fn main() { let results = vec![ Ok(0), Ok(1), Ok(2), Err(Error::new(ErrorKind::Other, "I'm an error!")), ]; let error = results.into_iter() .collect::&lt;Result&lt;Vec&lt;usize&gt;, Error&gt;&gt;(); println!("{:?}", error); let results = vec![ Ok(0), Ok(1), Ok(2), ]; let okay = results.into_iter() .collect::&lt;Result&lt;Vec&lt;usize&gt;, Error&gt;&gt;(); println!("{:?}", okay); } // Err(Error { repr: Custom(Custom // { kind: Other, error: StringError("I\'m an...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="08 July 2015">08 July 2015</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#rust">Rust</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2015/06/16/acm-papers-in-pandoc/">ACM papers in Pandoc</a></h2>
+          <section class="excerpt">
+              <p>Based partially off my earlier article I’ve set up a repository here that demonstrates how to use Travis CI to build yourself ACM styled PDFs (along with fairly decent looking HTML versions) out of a simple pandoc markdown document!
+
+Since it is a paper generator, you can see the generated HTML instructions how to use it here or the PDF here.
+
+Enjoy, please feel encouraged to send a pull request!
+</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="16 June 2015">16 June 2015</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#tooling">Tooling</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2015/06/11/quadcopters-motors/">Quadcopters: Motors</a></h2>
+          <section class="excerpt">
+              <p>We’ve already talked a bit about motors in our previous articles, in this article we’ll talk more about motors than the quadcopter as a whole. Motor Basics We found some great introductory videos which very throughly explain motors and give many great ideas, so instead of replicating their work we chose to share it instead. Build Your Own One of the best ways to learn about anything is hands on! Why not try to make a motor yourself, or with your cohort? The below video explains how you can build a simple motor out of some basic supplies. This project...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="11 June 2015">11 June 2015</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#quadcopters">Quadcopters</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2015/06/10/quadcopters-stabilization/">Quadcopters: Stabilization</a></h2>
+          <section class="excerpt">
+              <p>In our past articles we’ve explored some of the basics of the mechanics of Quadcopters. In this article we’ll be doing something a bit different and discussing the algorithms behind how the Quadcopter keeps itself stable. To do this we’ll actually be inspecting some of the official Bitcraze Firmware and it’s stabilizer.c implementation. It’s okay if you don’t know C or understand what’s going on in this file, that’s part of the purpose of this article! The Crazyflie uses a real time operating system called FreeRTOS which is a well regarded industry standard. Structure C code and Arduino code are...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="10 June 2015">10 June 2015</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#quadcopters">Quadcopters</a></span>
+                
+              .
+          </div>
+        
+    
+</main>
+
+<hr>
+
+<nav id="pagination">
+    
+        <a href="/archive/4/">&larr; Older posts</a>
+    
+    <span class="page-number">Page 3 of 7</span>
+    
+        
+            <a href="/archive/2/">Newer posts &rarr;</a>
+        
+    
+</nav>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>

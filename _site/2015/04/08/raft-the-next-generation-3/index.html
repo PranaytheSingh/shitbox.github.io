@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>Raft: Status Update</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/cover.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="Raft: Status Update">
+    
+    
+        <meta name="twitter:description" content="&lt;p&gt;In order to celebrate the new &lt;a href=&quot;http://blog.rust-lang.org/2015/04/03/Rust-1.0-beta.html&quot;&gt;beta&lt;/a&gt; release of Rust, and as part of reporting requirements for my class, I’m happy to write to you regarding &lt;a href=&quot;https://github.com/hoverbear/raft&quot;&gt;hoverbear/raft&lt;/a&gt;!&lt;/p&gt;
+
+">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/cover.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">Raft: Status Update</a></h1>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main>
+    <article>
+        <p>In order to celebrate the new <a href="http://blog.rust-lang.org/2015/04/03/Rust-1.0-beta.html">beta</a> release of Rust, and as part of reporting requirements for my class, I’m happy to write to you regarding <a href="https://github.com/hoverbear/raft">hoverbear/raft</a>!</p>
+
+<h1 id="a-recap">A Recap</h1>
+
+<p>In January, 2015, a undergraduate (me) at the University of Victoria set out on a quest to implement the <a href="http://raftconsensus.github.io/">Raft Consensus Algorithm</a> in Rust, an experimental language in shepherded by Mozilla Research.</p>
+
+<p>If you don’t know what Raft is, please take a look at <a href="http://thesecretlivesofdata.com/raft/">the secret lives of data</a>. If you don’t know what Rust is, please feel encouraged to follow along at <a href="http://doc.rust-lang.org/nightly/intro.html">the intro</a>.</p>
+
+<p>Back in february I had a <a href="http://hoverbear.org/2015/02/24/raft-update-3/">first prototype</a> working. It was a partial implementation and some subtle logic flaws have been found in the reworking of the code.</p>
+
+<blockquote>
+  <p>You can play with the very first prototype <a href="https://github.com/hoverbear/raft/tree/first-prototype">here</a> updated for a recent nightly.</p>
+</blockquote>
+
+<h1 id="where-were-heading">Where We’re Heading</h1>
+
+<p>With the help of <a href="https://github.com/danburkert/">Dan Burkert</a> several dramatic architecture changes have occured.</p>
+
+<p>Summarily, the second prototype builds from the first in the following ways:</p>
+
+<ul>
+  <li>The <a href="https://github.com/carllerche/mio">mio</a> <strong>Asynchronous Event Loop</strong> backs the library, providing
+it with event driven sockets and timers. This removes the <code class="highlighter-rouge">loop {}</code> and
+reduces demands on the system by using things like <code class="highlighter-rouge">epoll</code>.</li>
+  <li><strong>Communication is over TCP</strong>, as opposed to UDP in the first prototype. It
+was determined that the additional costs of TCP were worth its benefits
+provided connections to other nodes could be maintained for multiple
+communications. This improves reliability of communication, ease of
+understanding, and opens the door for encrypted communication at a later date.</li>
+  <li>For more efficient communication, <strong>Cap’n Proto is used</strong> to facilitate
+communication between nodes. This dramatically reduces the amount of data
+which needs to be sent compared to the first prototype, which uses JSON.</li>
+  <li>The <strong>Replicated Log is abstracted from the library</strong> allowing the client to
+provide their own backing storage for the log in the fashion of their choosing.</li>
+  <li>A <strong><code class="highlighter-rouge">Raft</code> type is now provided to the consuming application</strong> which
+dramatically simplifies client communication with the cluster. As a result of
+this, all client requests require a network trip, but in the vast majority of
+cases, this was required regardless, since all client requests must go to the
+leader.</li>
+  <li>The <strong>State Machine abstraction has been improved</strong> in order to facilitate
+more useful consumption of the library. The first prototype’s interface was
+determined to be insufficient to provide things like <em>Log Compaction</em>, an
+optional feature of Raft, in the future.</li>
+</ul>
+
+<p>This changes <em>are still not done</em>, as they have required a considerable amount of work, both on our code and on upstream libraries.</p>
+
+<p>As a result of this project, several pull requests to upstream projects have
+been created and merged.</p>
+
+<p>Merged pull requests by Dan Burkert:</p>
+
+<ul>
+  <li><a href="https://github.com/dwrensha/capnproto-rust/pull/30">impl <code class="highlighter-rouge">::std::error::Error</code> for <code class="highlighter-rouge">capnp::Error</code></a></li>
+  <li><a href="https://github.com/rust-lang/rust/pull/23125">Implement <code class="highlighter-rouge">std::error::Error</code> for <code class="highlighter-rouge">std::sync::mpsc</code> error types</a></li>
+</ul>
+
+<p>Merged pull requests by Andrew Hobden:</p>
+
+<ul>
+  <li><a href="https://github.com/dwrensha/capnproto-rust/pull/35">Move to <code class="highlighter-rouge">&amp;mut s[..]</code> syntax</a></li>
+  <li><a href="https://github.com/rust-lang/rust/pull/23836">Update <code class="highlighter-rouge">std::error</code> example</a></li>
+  <li><a href="https://github.com/carllerche/bytes/pull/12">Add <code class="highlighter-rouge">Read</code> and <code class="highlighter-rouge">Write</code> to <code class="highlighter-rouge">RingBuf</code></a></li>
+  <li><a href="https://github.com/carllerche/mio/pull/144">Add docs for <code class="highlighter-rouge">NonBlock&lt;TcpListener&gt;::accept()</code></a></li>
+  <li><a href="https://github.com/carllerche/syncbox/pull/13">Implement <code class="highlighter-rouge">collect()</code></a></li>
+  <li><a href="https://github.com/rust-lang/rustc-serialize/pull/30">Derive not Deriving</a></li>
+</ul>
+
+<h1 id="thanks">Thanks</h1>
+
+<p>At this time I’d like to personally extend thanks to the following people:</p>
+
+<ul>
+  <li>David Renshaw (<a href="https://github.com/dwrensha/">@dwrensha</a>)</li>
+  <li>Carl Lerche (<a href="https://github.com/carllerche/">@carllerche</a>)</li>
+  <li>Dan Burkert (<a href="https://github.com/danburkert/">@danburkert</a>)</li>
+</ul>
+
+<p>For their professionalism, mentorship, and community involvement. One of my favorite things about the Rust community is just how great it is. Stop by on <a href="https://client01.chat.mibbit.com/?server=irc.mozilla.org&amp;channel=%23rust">IRC</a> sometime!</p>
+
+<p>I’m having a tremendous amount of fun on this project and I’m learning so much. I can’t wait to wrap up my semester to get back to work on Raft!</p>
+
+<blockquote>
+  <p>You can get involved with Raft <a href="http://github.com/hoverbear/raft">here</a>. Or join the Reddit discussion here.</p>
+</blockquote>
+
+    </article>
+
+    <aside class="post-meta">
+  
+    Posted on
+    <time datetime="2015-04-08T00:00:00-07:00">08 Apr 2015</time>
+  
+
+  
+    
+      
+        , into
+        
+        <span><a href="/tags/#raft">Raft</a></span>
+      
+    
+      
+        
+             and
+        
+        <span><a href="/tags/#rust">Rust</a></span>
+      
+    .
+  
+
+  
+</aside>
+
+</main>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>

@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>OpenWRT in Virtualbox</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/cover.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="OpenWRT in Virtualbox">
+    
+    
+        <meta name="twitter:description" content="&lt;p&gt;For my CSC 467 project I’m studying the configuration and performance of various QoS parameters in OpenWRT.&lt;/p&gt;
+
+">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/cover.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">OpenWRT in Virtualbox</a></h1>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main>
+    <article>
+        <p>For my CSC 467 project I’m studying the configuration and performance of various QoS parameters in OpenWRT.</p>
+
+<p>The plan is to set up an OpenWRT router in <a href="https://www.virtualbox.org/">VirtualBox</a> and orcestrate some <a href="http://vagrantup.com/">Vagrant</a> boxes to create a VM network.</p>
+
+<h2 id="configuration">Configuration</h2>
+
+<p>Lets configure some environment variables we’ll use throughout, once you close your shell these will disappear, so you might need to reinitialize them later.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>NAME="openwrt"
+URL="https://downloads.openwrt.org/barrier_breaker/14.07/x86/generic/openwrt-x86-generic-combined-ext4.img.gz"
+VDI="./openwrt.14.07.vdi"
+VMNAME="openwrt"
+SIZE='512000000'
+</code></pre></div></div>
+
+<h2 id="getting-a-vdi">Getting a VDI</h2>
+
+<p>Pull the image, unzip it, and make a VDI out of it for VirtualBox.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl $URL \
+| gunzip \
+| VBoxManage convertfromraw --format VDI stdin $VDI $SIZE
+</code></pre></div></div>
+
+<h2 id="setup-the-vm">Setup the VM</h2>
+
+<p>Configure a VM with some modest settings for the router. We can add adapters and other storage devices later. This is a 3 port router.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>VBoxManage createvm --name $VMNAME --register &amp;&amp; \
+VBoxManage modifyvm $VMNAME \
+    --description "A VM to build an OpenWRT Vagrant box." \
+    --ostype "Linux26" \
+    --memory "512" \
+    --cpus "1" \
+    --nic1 "intnet" \
+    --intnet1 "port1" \
+    --nic2 "intnet" \
+    --intnet2 "port2" \
+    --nic3 "intnet" \
+    --intnet3 "port3" \
+    --nic4 "nat" \
+    --natpf4 "ssh,tcp,,2222,,22" \
+    --natpf4 "luci,tcp,,8080,,80" \
+    --uart1 "0x3F8" "4" \
+    --uartmode1 "disconnected" &amp;&amp; \
+VBoxManage storagectl $VMNAME \
+    --name "SATA Controller" \
+    --add "sata" \
+    --portcount "4" \
+    --hostiocache "on" \
+    --bootable "on" &amp;&amp; \
+VBoxManage storageattach $VMNAME \
+    --storagectl "SATA Controller" \
+    --port "1" \
+    --type "hdd" \
+    --nonrotational "on" \
+    --medium $VDI
+</code></pre></div></div>
+
+<p>That’s it! Now to fire up the VM:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>VBoxManage startvm openwrt --type "gui"
+</code></pre></div></div>
+
+<p>Next, it’s time to settle in and get comfortable. The boot output will not show you command prompt until you manually focus the window and tap return, then you should see a prompt.</p>
+
+<p><img src="/assets/images/2014/11/openwrt.png" alt="The VM screen" /></p>
+
+<h2 id="wan">WAN</h2>
+
+<p>You’ll notice from a quick <code class="highlighter-rouge">ping hoverbear.org</code> that you don’t have a network connection working, even though we set up a NAT connection.</p>
+
+<p>In the OpenWRT VM, add the following to <code class="highlighter-rouge">/etc/config/network</code>:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>config interface 'wan'
+    option ifname   'eth3'
+    option proto    'dhcp'
+</code></pre></div></div>
+
+<p>Then restart the networking service:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/etc/init.d/network restart
+</code></pre></div></div>
+
+<p>Now you should be able to <code class="highlighter-rouge">ping hoverbear.org</code></p>
+
+<h2 id="pulling-repos">Pulling Repos</h2>
+
+<p>Before doing much more, you may wish to fetch the repository listing:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>opkg update
+</code></pre></div></div>
+
+<h2 id="password">Password</h2>
+<p>You may want to set up a password on the account, or put set up an SSH key for login. You may also want to use a non-root user.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>passwd
+</code></pre></div></div>
+
+<h2 id="ssh">SSH</h2>
+
+<p>OpenWRT uses Dropbear as an SSH server. <em>(In my totally unbiased opinion, that is an awesome name)</em></p>
+
+<p>Lets set it up so we don’t have to keep working in the VirtualBox GUI. Having a native terminal is much more comfortable.</p>
+
+<p>By default, Dropbear is <strong>already</strong> installed, but if you don’t have it for some reason, you can install it with:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  opkg install dropbear
+</code></pre></div></div>
+
+<p>Then check <code class="highlighter-rouge">/etc/config/dropbear</code>. By default, PasswordAuth and RootPasswordAuth are both on and it runs on port 22. For our Virtual Machine testing purposes, this is fine, it will be port-forwarded on port 2222 of our host machine. On a system facing the world (I.E. not behind a NAT and router etc) this would be considered very, very bad practice.</p>
+
+<p>According to <a href="http://wiki.openwrt.org/doc/uci/dropbear">the Dropbear WRT documentation</a>, it is already enabled. If you change the configuration make sure to restart it.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/etc/init.d/dropbear restart
+</code></pre></div></div>
+
+<p>However if you attempt to <code class="highlighter-rouge">ssh root@localhost -p 2222</code> you’ll see a something along the lines of <code class="highlighter-rouge">ssh_exchange_identification: read: Connection reset by peer</code>. That’s because the firewall is blocking it.</p>
+
+<p>Now in <code class="highlighter-rouge">/etc/config/firewall</code> we can add a rule to fix this:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code># ... Other Rules ...
+
+# Allow SSH on wan
+config rule
+        option src              wan
+        option proto            tcp
+        option dest_port        22
+        option target           ACCEPT
+</code></pre></div></div>
+
+<p>Then restart the firewall:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/etc/init.d/firewall restart
+</code></pre></div></div>
+
+<p>Now you should be able to run <code class="highlighter-rouge">ssh root@localhost -2222</code> on the host machine and connect.</p>
+
+<h2 id="going-headless">Going Headless</h2>
+
+<p>Make sure you’ve set up SSH (and logged in!) first before trying this.</p>
+
+<p>You can stop the VM and start it again in a headless form.</p>
+
+<p>Stop the VM:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>VBoxManage controlvm $VMNAME poweroff
+</code></pre></div></div>
+
+<p>Start it headless:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>VBoxManage startvm $VMNAME --type headless
+</code></pre></div></div>
+
+<h2 id="guest-additions">Guest Additions</h2>
+
+<p>Unfortunately it seems OpenWRT does not provide simple workflow for VirtualBox Guest Additions. Please let me know if you find a way of getting this working.</p>
+
+<h2 id="lan">LAN</h2>
+
+<p>To set up the other adapters, remove the <code class="highlighter-rouge">lan</code> section from the <code class="highlighter-rouge">/etc/config/network</code> file and replace it with:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>config interface 'lan1'
+    option ifname 'eth0'
+    option proto 'static'
+    option ipaddr '192.168.1.1'
+    option netmask '255.255.255.0'
+    option ip6assign '60'
+
+config interface 'lan2'
+    option ifname 'eth1'
+    option proto 'static'
+    option ipaddr '192.168.2.1'
+    option netmask '255.255.255.0'
+    option ip6assign '60'
+
+config interface 'lan3'
+    option ifname 'eth2'
+    option proto 'static'
+    option ipaddr '192.168.3.1'
+    option netmask '255.255.255.0'
+    option ip6assign '60'
+</code></pre></div></div>
+
+<p>Then restart the network:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/etc/init.d/network reload
+</code></pre></div></div>
+
+<h2 id="dhcp">DHCP</h2>
+
+<p>Since we removed the <code class="highlighter-rouge">lan</code> interface above, you’ll need to reconfigure the DHCP daemon. Remove the <code class="highlighter-rouge">lan</code> block from <code class="highlighter-rouge">/etc/config/dhcp</code> and replace it with this:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>config dhcp 'lan1'
+    option interface 'lan1'
+    option start '100'
+    option limit '150'
+    option leasetime '12h'
+    option dhcpv6 'server'
+    option ra 'server'
+    list 'dhcp_option' '3,192.168.1.1'
+
+config dhcp 'lan2'
+    option interface 'lan2'
+    option start '100'
+    option limit '150'
+    option leasetime '12h'
+    option dhcpv6 'server'
+    option ra 'server'
+    list 'dhcp_option' '3,192.168.2.1'
+
+config dhcp 'lan3'
+    option interface 'lan3'
+    option start '100'
+    option limit '150'
+    option leasetime '12h'
+    option dhcpv6 'server'
+    option ra 'server'
+    list 'dhcp_option' '3,192.168.3.1'
+</code></pre></div></div>
+
+<p>Then restart the <code class="highlighter-rouge">dhcp</code> and <code class="highlighter-rouge">dnsmasq</code> services.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/etc/init.d/odhcpd reload
+/etc/init.d/dnsmasq reload
+</code></pre></div></div>
+
+<h2 id="firewall">Firewall</h2>
+
+<p>This new configuration won’t work without modifying the firewall, too. Change the <code class="highlighter-rouge">lan</code> zone in <code class="highlighter-rouge">/etc/config/firewall</code> to:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>config zone
+    option name             lan
+    list   network          'lan1'
+    list   network          'lan2'
+    list   network          'lan3'
+    option input            ACCEPT
+    option output           ACCEPT
+    option forward          ACCEPT
+</code></pre></div></div>
+
+<p>Then restart the firewall.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>	/etc/init.d/firewall reload
+</code></pre></div></div>
+
+<h2 id="making-clients">Making Clients</h2>
+
+<p>We can create other VMs which attach to our new router.</p>
+
+<p>I’ll be writing later about how to get these subordinates, (ahem, <em>network clients</em>) working together with the router.</p>
+
+<p><a href="http://www.hoverbear.org/2014/12/04/vagrant-clients-for-openwrt-vms/">See next post.</a></p>
+
+    </article>
+
+    <aside class="post-meta">
+  
+    Posted on
+    <time datetime="2014-11-23T00:00:00-08:00">23 Nov 2014</time>
+  
+
+  
+    
+      
+        , into
+        
+        <span><a href="/tags/#tutorials">Tutorials</a></span>
+      
+    
+      
+        
+             and
+        
+        <span><a href="/tags/#openwrt">OpenWRT</a></span>
+      
+    .
+  
+
+  
+</aside>
+
+</main>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>

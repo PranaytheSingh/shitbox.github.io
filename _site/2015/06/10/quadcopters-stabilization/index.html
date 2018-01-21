@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>Quadcopters: Stabilization</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/cover.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="Quadcopters: Stabilization">
+    
+    
+        <meta name="twitter:description" content="&lt;p&gt;In our &lt;a href=&quot;/tag/quadcopters/&quot;&gt;past articles&lt;/a&gt; we’ve explored some of the basics of the mechanics of Quadcopters. In this article we’ll be doing something a bit different and discussing the algorithms behind how the Quadcopter keeps itself stable.&lt;/p&gt;
+
+">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/cover.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">Quadcopters: Stabilization</a></h1>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main>
+    <article>
+        <p>In our <a href="/tag/quadcopters/">past articles</a> we’ve explored some of the basics of the mechanics of Quadcopters. In this article we’ll be doing something a bit different and discussing the algorithms behind how the Quadcopter keeps itself stable.</p>
+
+<p>To do this we’ll actually be inspecting some of the official <a href="https://github.com/bitcraze/crazyflie-firmware">Bitcraze Firmware</a> and it’s <a href="https://github.com/bitcraze/crazyflie-firmware/blob/crazyflie2/modules/src/stabilizer.c"><code class="highlighter-rouge">stabilizer.c</code></a> implementation.</p>
+
+<blockquote>
+  <p>It’s okay if you don’t know C or understand what’s going on in this file, that’s part of the purpose of this article!</p>
+</blockquote>
+
+<p>The Crazyflie uses a <em>real time</em> operating system called <a href="http://www.freertos.org/index.html">FreeRTOS</a> which is a well regarded industry standard.</p>
+
+<h1 id="structure">Structure</h1>
+
+<p><strong>C code and Arduino code are fairly similar</strong>, and the best practice is to lay out your code roughly as follows:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Includes
+// Definitions
+// Variables
+// Functions
+</code></pre></div></div>
+
+<p>So what are all these? Let’s break them down.</p>
+
+<h2 id="includes">Includes</h2>
+
+<p>In order to use code from other files it’s necessary to bring them “in scope”. Includes come in two forms:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#include &lt;math.h&gt;     // Use a system provided library.
+#include "FreeRTOS.h" // Use from the project library.
+</code></pre></div></div>
+
+<p>Notice how we include <code class="highlighter-rouge">.h</code> files instead of <code class="highlighter-rouge">.c</code> files? These are called <em>header files</em> and contain functions, variables, and definitions. In most cases, each <code class="highlighter-rouge">.h</code> file has a respective <code class="highlighter-rouge">.c</code> file.</p>
+
+<blockquote>
+  <p>The distinction between <code class="highlighter-rouge">.c</code> and <code class="highlighter-rouge">.h</code> files is largely a historical one. Some modern languages have combined the two.</p>
+</blockquote>
+
+<h2 id="definitions">Definitions</h2>
+
+<p>Definitions are a way to assign certain values to specific names. <code class="highlighter-rouge">#define</code>s can be values or expressions.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#define example 1
+#define max(a,b) ((a) &gt; (b) ? (a) : (b))
+#define min(a,b) ((a) &lt; (b) ? (a) : (b))
+</code></pre></div></div>
+
+<p><em>Note:</em> Definitions cannot change while the program is running, this is not a place for variables.</p>
+
+<p>Consider them like “macros”, if we enter <code class="highlighter-rouge">max(1,2)</code> then our compiler will replace it with <code class="highlighter-rouge">((1) &gt; (2) ? (1) : (2))</code>.</p>
+
+<h2 id="variables">Variables</h2>
+
+<p>We’ve used variables in our Arduino experiments already. Variables are the main workhorse of <em>data storage</em>.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>int foo;
+static int bar = 2;
+const int baz = 3;
+foo = 1;
+</code></pre></div></div>
+
+<p>Variables follow the format <code class="highlighter-rouge">type name = value</code>. You can also do just <code class="highlighter-rouge">type name</code> and <code class="highlighter-rouge">name</code> will be <code class="highlighter-rouge">null</code> (nothing) until it is set.</p>
+
+<p>Sometimes you’ll also see things like <code class="highlighter-rouge">static</code> and <code class="highlighter-rouge">const</code> in front. <code class="highlighter-rouge">static</code> variables exist over the lifetime of the program and are unique inside that given code file, they are not accessible outside of it. <code class="highlighter-rouge">const</code> variables cannot change their value after declared.</p>
+
+<p>Not all variables will be simple values, for example, below we declare three <code class="highlighter-rouge">Axis3f</code>. When designing programs it’s quite easy to create your own types to store whatever you might need.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>static Axis3f gyro; // Gyro axis data in deg/s
+static Axis3f acc;  // Accelerometer axis data in mG
+static Axis3f mag;  // Magnetometer axis data in testla
+</code></pre></div></div>
+
+<p>You’ll see <code class="highlighter-rouge">float</code> occur commonly in the stabilization code, this is a decimal value like <code class="highlighter-rouge">0.00001</code>.</p>
+
+<h2 id="functions">Functions</h2>
+
+<p>Functions are step-by-step procedures which (generally) have an input and an output. The simplest function is this:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>void foo() {}
+</code></pre></div></div>
+
+<p>This is a function with no input or output! <code class="highlighter-rouge">void</code> is the <em>return type</em>, <code class="highlighter-rouge">void</code> in most cases means nothing is returned. A function which takes a pair of integers and returns their sum looks like this:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>int sum(int a, int b) {
+	return a+b;
+}
+</code></pre></div></div>
+
+<p>Functions can be invoked by calling them like so:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>int should_be_three = sum(1, 2);
+</code></pre></div></div>
+
+<h1 id="understanding-the-code">Understanding the Code</h1>
+
+<p>The stabilization code is broken up into a few sections. We’ll take the code directly from the project and go over it slowly. If anything doesn’t make sense please <a href="mailto:andrew+quads@hoverbear.org">email me</a> and I’ll make it more clear!</p>
+
+<h2 id="initialization">Initialization</h2>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>void stabilizerInit(void)
+{
+  if(isInit)
+    return;
+
+  motorsInit();
+  imu6Init();
+  sensfusion6Init();
+  controllerInit();
+
+  rollRateDesired = 0;
+  pitchRateDesired = 0;
+  yawRateDesired = 0;
+
+  xTaskCreate(stabilizerTask, (const signed char * const)STABILIZER_TASK_NAME,
+              STABILIZER_TASK_STACKSIZE, NULL, STABILIZER_TASK_PRI, NULL);
+
+  isInit = true;
+}
+</code></pre></div></div>
+
+<p>The <code class="highlighter-rouge">stabilizerInit()</code> function is what starts up the stabilization routines. You can see in the first line that if it is already been initialized the function simply returns early, doing nothing. (Note how <code class="highlighter-rouge">isInit</code> is set at the end of a normal call)</p>
+
+<p>The code then initializes it’s dependencies (which also exit early if already initialized!) After, it sets the desired orientation values to zero.</p>
+
+<p>Finally, the function calls <code class="highlighter-rouge">xTaskCreate</code> which spawns a <em>task</em> which can run concurrently alongside other tasks. This particular task runs the <code class="highlighter-rouge">stabilizerTask()</code> function.</p>
+
+<blockquote>
+  <p>In general, you can consider the entire quadcopter somewhat like your computer. It runs multiple tasks all the time. On your computer, this is things like your web browser and music player. On the quadcopter it’s things like the stabilizer and radio.</p>
+</blockquote>
+
+<h2 id="the-task">The Task</h2>
+
+<p>Okay, so what does this task look like then? Let’s take a look! This function is longer, so I’ll be breaking it up.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>static void stabilizerTask(void* param)
+{
+  uint32_t attitudeCounter = 0;
+  uint32_t altHoldCounter = 0;
+  uint32_t lastWakeTime;
+
+  vTaskSetApplicationTaskTag(0, (void*)TASK_STABILIZER_ID_NBR);
+
+  //Wait for the system to be fully started to start stabilization loop
+  systemWaitStart();
+
+  lastWakeTime = xTaskGetTickCount();
+
+  while(1)
+  {
+    vTaskDelayUntil(&amp;lastWakeTime, F2T(IMU_UPDATE_FREQ)); // 500Hz
+</code></pre></div></div>
+
+<p>In the first few lines the function allocates some space for some 32-bit unsigned integers, these <em>only represent absolute numbers</em>. You can see that <code class="highlighter-rouge">lastWakeTime</code> is set later in the code. There are a few functions whose purpose is not immediately clear, let’s go over them.</p>
+
+<ul>
+  <li><a href="http://www.freertos.org/vTaskSetApplicationTag.html"><code class="highlighter-rouge">vTaskSetApplicationTaskTag()</code></a> - Sets the ‘tag’ of the tag for debugging purposes. We need not concern ourselves with this.</li>
+  <li><a href="http://www.freertos.org/a00021.html#xTaskGetTickCount"><code class="highlighter-rouge">xTaskGetTickCount()</code></a> - This returns the number of ticks since the task was started (we saw this above).</li>
+  <li><a href="http://www.freertos.org/vtaskdelayuntil.html"><code class="highlighter-rouge">vTaskDelayUntil()</code></a> - This call asks the FreeRTOS to delay any execution of the task until the appropriate time, then start it again.</li>
+</ul>
+
+<p>You’ll notice as well that there is the start of a <code class="highlighter-rouge">while(1)</code> loop, which is an <em>infinite loop</em>, and will keep going until it is manually exited. Let’s move forward.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Magnetometer not yet used more then for logging.
+imu9Read(&amp;gyro, &amp;acc, &amp;mag);
+
+if (imu6IsCalibrated())
+{
+  commanderGetRPY(&amp;eulerRollDesired, &amp;eulerPitchDesired, &amp;eulerYawDesired);
+  commanderGetRPYType(&amp;rollType, &amp;pitchType, &amp;yawType);
+
+  // 250HZ
+  if (++attitudeCounter &gt;= ATTITUDE_UPDATE_RATE_DIVIDER)
+  {
+    sensfusion6UpdateQ(gyro.x, gyro.y, gyro.z, acc.x, acc.y, acc.z, FUSION_UPDATE_DT);
+    sensfusion6GetEulerRPY(&amp;eulerRollActual, &amp;eulerPitchActual, &amp;eulerYawActual);
+
+    accWZ = sensfusion6GetAccZWithoutGravity(acc.x, acc.y, acc.z);
+    accMAG = (acc.x*acc.x) + (acc.y*acc.y) + (acc.z*acc.z);
+    // Estimate speed from acc (drifts)
+    vSpeed += deadband(accWZ, vAccDeadband) * FUSION_UPDATE_DT;
+
+    controllerCorrectAttitudePID(eulerRollActual, eulerPitchActual, eulerYawActual,
+                                 eulerRollDesired, eulerPitchDesired, -eulerYawDesired,
+                                 &amp;rollRateDesired, &amp;pitchRateDesired, &amp;yawRateDesired);
+    attitudeCounter = 0;
+  }
+</code></pre></div></div>
+
+<p>At the top of this chunk you’ll see <code class="highlighter-rouge">imu9Read(&amp;gyro, &amp;acc, &amp;mag);</code> which, if you’ve never used pointers, may seem odd. Essentially what we’re doing is calling the <code class="highlighter-rouge">imu9Read</code> function and passing it the three <em>pointers</em> to the location of our variables. The function can then <em>dereference</em> these pointers and write into them. This is a common practice when you want to modify a complex value in a function without needing to copy the entire thing.</p>
+
+<p>The <code class="highlighter-rouge">commanderGetRPY()</code> and <code class="highlighter-rouge">commanderGetRPYType()</code> fetch the desired inputs from the user, like an increase in pitch or roll.</p>
+
+<p>After, if a counter is high enough (the <code class="highlighter-rouge">++</code> increments it) we do an ‘attitude’ update. This is not to be confused with altitude. The term attitude is something that seems to be internal to the Crazyflie, and appears to just be their term for a need for adjustment.</p>
+
+<p>The <code class="highlighter-rouge">sensfusion6UpdateQ()</code> and <code class="highlighter-rouge">sensfusion6GetEulerRPY()</code> functions pull the current quadcopter orientation from the sensors onboard. You may note that this only updates the Gyro and Accelerometer, that’s because the Crazyflie does not use the Magnometer in this code yet.</p>
+
+<p><code class="highlighter-rouge">AccWZ</code> is used along with the deadband (a way to reduce the amount of data collected and save battery life) to estimate the vertical speed of the device. It appears that <code class="highlighter-rouge">AccMAG</code> is unused.</p>
+
+<p>Then <code class="highlighter-rouge">controllerCorrectAttitudePID()</code> is called. This takes the desired values and through a round-about method works with <a href="https://github.com/bitcraze/crazyflie-firmware/blob/a3ecf78d2e0e70e45c8a77f4d3d068b875ab8bf4/modules/interface/pid.h#L65-L81"><code class="highlighter-rouge">PidObject</code></a>s to update the pointers we pass in (The <code class="highlighter-rouge">&amp;</code> values). <code class="highlighter-rouge">PidObject</code>s are used to model mathematics that drive the quadcopter.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  // 100HZ
+  if (imuHasBarometer() &amp;&amp; (++altHoldCounter &gt;= ALTHOLD_UPDATE_RATE_DIVIDER))
+  {
+    stabilizerAltHoldUpdate();
+    altHoldCounter = 0;
+  }
+
+  if (rollType == RATE)
+  {
+    rollRateDesired = eulerRollDesired;
+  }
+  if (pitchType == RATE)
+  {
+    pitchRateDesired = eulerPitchDesired;
+  }
+  if (yawType == RATE)
+  {
+    yawRateDesired = -eulerYawDesired;
+  }
+</code></pre></div></div>
+
+<p>Next, if necessary, an altitude hold update is performed. Afterwards the three axes of movement are updated to their desired values.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  // TODO: Investigate possibility to subtract gyro drift.
+  controllerCorrectRatePID(gyro.x, -gyro.y, gyro.z,
+                           rollRateDesired, pitchRateDesired, yawRateDesired);
+
+  controllerGetActuatorOutput(&amp;actuatorRoll, &amp;actuatorPitch, &amp;actuatorYaw);
+
+  if (!altHold || !imuHasBarometer())
+  {
+    // Use thrust from controller if not in altitude hold mode
+    commanderGetThrust(&amp;actuatorThrust);
+  }
+  else
+  {
+    // Added so thrust can be set to 0 while in altitude hold mode after disconnect
+    commanderWatchdog();
+  }
+</code></pre></div></div>
+
+<p>Here the task updates the desired rate, and updates its picture of how fast the quadcopter is actuating with its motors. Then it is updating the thrust based on input from the user or the altitude hold control.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      if (actuatorThrust &gt; 0)
+      {
+#if defined(TUNE_ROLL)
+        distributePower(actuatorThrust, actuatorRoll, 0, 0);
+#elif defined(TUNE_PITCH)
+        distributePower(actuatorThrust, 0, actuatorPitch, 0);
+#elif defined(TUNE_YAW)
+        distributePower(actuatorThrust, 0, 0, -actuatorYaw);
+#else
+        distributePower(actuatorThrust, actuatorRoll, actuatorPitch, -actuatorYaw);
+#endif
+      }
+      else
+      {
+        distributePower(0, 0, 0, 0);
+        controllerResetAllPID();
+      }
+    }
+  }
+</code></pre></div></div>
+
+<p>Finally, the task distributes power to the actuators. The <code class="highlighter-rouge">#if defined(TUNE_ROLL)</code> lines are compile time options meant for debugging, normally the <code class="highlighter-rouge">#else</code> case is used.</p>
+
+<h1 id="what-does-it-all-mean">What does it all mean?</h1>
+
+<p>In order to stabilize itself a quadcopter must <em>rapidly, constantly</em> sample its sensors, controller, and actuators in order to get the best picture of two very important things:</p>
+
+<ul>
+  <li>What it is doing at that moment.</li>
+  <li>What it should be doing at that moment.</li>
+</ul>
+
+<p>In order to determine these values it uses mathematical models to get an idea of it’s orientation and status. If you read our article on sensors you may recall how we transformed our accelerometer data into velocity data, this is the same idea. Then, the quadcopter attempts to find a <em>happy, stable</em> place that satisfies these requirements.</p>
+
+    </article>
+
+    <aside class="post-meta">
+  
+    Posted on
+    <time datetime="2015-06-10T00:00:00-07:00">10 Jun 2015</time>
+  
+
+  
+    
+      
+        , into
+        
+        <span><a href="/tags/#quadcopters">Quadcopters</a></span>
+      
+    .
+  
+
+  
+</aside>
+
+</main>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>

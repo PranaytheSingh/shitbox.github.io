@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>ShitBox</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/cover.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="http://0.0.0.0:4000">
+    
+    
+        <meta name="twitter:description" content="Exploring, fascinating and amusing">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/cover.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">ShitBox</a></h1>
+      <p class="description">Exploring, fascinating and amusing</p>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main id="index">
+    
+          <h2><a href="/2014/12/06/openwrt-qos/">OpenWRT QoS</a></h2>
+          <section class="excerpt">
+              <p>Using the setup from my last two posts, let’s play with some QoS parameters and observe the results. The documentation for OpenWRT’s QoS is rather lacking, please feel encouraged to improve it as you go! Prerequisites Documented here, the qos-scripts package offers a simple configuration that integrates well with the rest of OpenWRT’s UCI (Unified Configuration Interface). On the router: opkg install qos-scripts As an added side benefit, qos-scripts will pull in several dependencies that can be used to further tune our QoS. Overview You can look into /etc/config/qos to see the default configuration. You’ll see several config block types....</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="06 December 2014">06 December 2014</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#tutorials">Tutorials</a></span>
+                
+              
+                
+                  
+                       and
+                  
+                  <span><a href="/tags/#openwrt">OpenWRT</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2014/12/03/vagrant-clients-for-openwrt-vms/">Vagrant Clients for OpenWRT VMs</a></h2>
+          <section class="excerpt">
+              <p>In my last post, we explored how to set up a OpenWRT VM in VirtualBox. Let’s give it some clients! Since the router is using a intnets we need to configure some machines to use that as their primary way to connect to the internet. Since Vagrant has support for multi-machine configurations and gives us minimal builds of machines, we’ll use this for our clients. The Plan Here is (roughly) the goal. The pair of VMs test1 and test2 will access test3 (and the internet) through the OpenWRT router we created. Later, we’ll build in QoS and talk about the...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="03 December 2014">03 December 2014</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#tutorials">Tutorials</a></span>
+                
+              
+                
+                  
+                       and
+                  
+                  <span><a href="/tags/#openwrt">OpenWRT</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2014/11/23/openwrt-in-virtualbox/">OpenWRT in Virtualbox</a></h2>
+          <section class="excerpt">
+              <p>For my CSC 467 project I’m studying the configuration and performance of various QoS parameters in OpenWRT. The plan is to set up an OpenWRT router in VirtualBox and orcestrate some Vagrant boxes to create a VM network. Configuration Lets configure some environment variables we’ll use throughout, once you close your shell these will disappear, so you might need to reinitialize them later. NAME="openwrt" URL="https://downloads.openwrt.org/barrier_breaker/14.07/x86/generic/openwrt-x86-generic-combined-ext4.img.gz" VDI="./openwrt.14.07.vdi" VMNAME="openwrt" SIZE='512000000' Getting a VDI Pull the image, unzip it, and make a VDI out of it for VirtualBox. curl $URL \ | gunzip \ | VBoxManage convertfromraw --format VDI stdin $VDI $SIZE Setup...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="23 November 2014">23 November 2014</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#tutorials">Tutorials</a></span>
+                
+              
+                
+                  
+                       and
+                  
+                  <span><a href="/tags/#openwrt">OpenWRT</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2014/11/17/first-look-at-dacs/">A First Look at DACS</a></h2>
+          <section class="excerpt">
+              <p>At Simbioses Lab, we’ve been recently looking at the federated authentication DACS as well as Keycloak. I’ve previously written about Keycloak, so let’s take a look at DACS. Feature Keycloak DACS Author Red Hat Distributed Systems Software License ASL v2 Sleepycat Implementation Language Java C/C++ Authentication True True Authorization True True Access Control Type Role-based Role-based, Context Based Supported Languages Java, Clojure (More planned) Virtually Any (C/C++ API, Apache CGI, Java, Command Line), REST Single Sign-On Yes Yes Supported Authentication Types Password, TOTP, LDAP Unix, Password, NTLM, X.509. LDAP, CAS, TOTP Multi-Factor Authentication True True Federation False True OAuth Consumer/Client...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="17 November 2014">17 November 2014</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#uvic">UVic</a></span>
+                
+              
+                
+                  
+                       and
+                  
+                  <span><a href="/tags/#tutorials">Tutorials</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2014/11/15/lcis/">Longest Common Increasing Sequence</a></h2>
+          <section class="excerpt">
+              <p>A really ‘cute’ problem popped up in our Data Structures &amp; Algorithms homework and I wanted to write about it. If you’re in the class this will obviously ruin the fun, so read it later, after you’re done! The goal is to find the longest common increasing subsequence. Some notes: A subsequence of is a set such that , and the items in appear in the same order as they appear in . An increasing subsequence of is a subsequence such that: The problem calls for some and some \( t \), returning the longest subsequence common between the sets....</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="15 November 2014">15 November 2014</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#tutorials">Tutorials</a></span>
+                
+              
+                
+                  ,
+                  
+                  <span><a href="/tags/#rust">Rust</a></span>
+                
+              
+                
+                  
+                      , and
+                  
+                  <span><a href="/tags/#uvic">UVic</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2014/11/15/command-line-args-in-rust/">Parsing Arguments in Rust</a></h2>
+          <section class="excerpt">
+              <p>I was reading about the Docopt project the other day and really liked the standardized approach to --help prompts and argument parsing that it offers. Luckly, there is a Rust Package to play with! cargo new --bin foo cd foo Add docopt to your Cargo.toml # ... [dependencies.docopt_macros] git = "git://github.com/docopt/docopt.rs" Now in foo/src/main.rs: extern crate serialize; extern crate docopt; use docopt::Docopt; // Define a USAGE string. static USAGE: &amp;'static str = " Usage: foo [options] &lt;target&gt; &lt;task&gt; foo (--help | --version) Task: start Starts the task. stop Stops the task. restart Restarts the task. Options: -h, --help Show this...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="15 November 2014">15 November 2014</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#rust">Rust</a></span>
+                
+              
+                
+                  
+                       and
+                  
+                  <span><a href="/tags/#tutorials">Tutorials</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2014/11/14/init-configuration/">Init - Configuration</a></h2>
+          <section class="excerpt">
+              <p>An initialization system’s main interface with the user is through it’s configuration scripts and service files. Let’s take a look at what this looks like for systemd and OpenRC. With systemd, daemon configuration is handled by .toml configuration files. With OpenRC, this task is performed by shell scripts. Daemons and services systemd stores service files in /etc/systemd/system/ (user-provided) or /usr/lib/systemd/system/ (package-provided). .service files are used to declare configuration. OpenRC stores scripts in /etc/init.d/, the scripts are typically standalone, configuration does not require multiple separate files. Here is the contents of /etc/systemd/system/sshd.service on a Fedora 20 system: [Unit] Description=OpenSSH server daemon...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="14 November 2014">14 November 2014</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#tutorials">Tutorials</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2014/11/02/a-ghost-openrc-script/">A Ghost OpenRC Script</a></h2>
+          <section class="excerpt">
+              <p>Whipped up an OpenRC script for Ghost. Feel free to use it for yourself. Things to be aware of: The script was designed for Funtoo. The script expects Ghost to be in $GHOST_ROOT. The script runs Ghost as $GHOST_USER:$GHOST_GROUP. The script exports the $NODE_ENV to production. #!/sbin/runscript # PATH should only include /usr/* if it runs after the mountnfs.sh script PATH=/sbin:/usr/sbin:/bin:/usr/bin DESC="Ghost" NAME=ghost GHOST_ROOT=/var/ghost GHOST_GROUP=ghost GHOST_USER=ghost DAEMON=/usr/bin/node DAEMON_ARGS="$GHOST_ROOT/index.js" PIDFILE=/var/run/$NAME.pid SCRIPTNAME=/etc/init.d/$NAME export NODE_ENV=production source /lib64/rc/sh/functions.sh depend() { use logger dns need net } start() { ebegin "Starting ${DESC}" start-stop-daemon --start --quiet \ --user $GHOST_USER:$GHOST_GROUP \ --chdir $GHOST_ROOT --background \ --make-pidfile --pidfile...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="02 November 2014">02 November 2014</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#tutorials">Tutorials</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2014/09/29/init-runlevels-and-targets/">Init - Runlevels and Targets</a></h2>
+          <section class="excerpt">
+              <p>In this post, we’ll look at how runlevels work in two major init systems, systemd and OpenRC. If you’re interested in trying out systemd, I’d suggest using an Arch Linux Live ISO. For those interested in trying OpenRC, check out Funtoo. Both of these will work great in your favorite virtualization solution. OpenRC OpenRC uses runlevels in very much the same way as sysvinit (or BSD init). At any given time the system is in one of the defined runlevels, there are three internal runlevels and four user defined runlevels. Internal Runlevels: sysinit: Initialize the system. shutdown: Power off the...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="29 September 2014">29 September 2014</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#tutorials">Tutorials</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2014/09/07/command-execution-in-rust/">Command Execution in Rust</a></h2>
+          <section class="excerpt">
+              <p>One of my projects over the upcoming semester is to explore the Linux boot process and the job of the init (initialization) system. The init system is considered PID 1 and is responsible for a significant portion of userspace functionality. Common init systems on Linux are OpenRC and systemd. One of the key parts of an init system is to spawn new processes, like in command shell. Executing child processes may be useful to any number of programs, but common applications include: Shells Init systems Launchers Interfacing with command line applications Using libc If you are familiar with C/C++, or...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="07 September 2014">07 September 2014</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#rust">Rust</a></span>
+                
+              
+                
+                  ,
+                  
+                  <span><a href="/tags/#tutorials">Tutorials</a></span>
+                
+              
+                
+                  
+                      , and
+                  
+                  <span><a href="/tags/#uvic">UVic</a></span>
+                
+              .
+          </div>
+        
+    
+</main>
+
+<hr>
+
+<nav id="pagination">
+    
+        <a href="/archive/7/">&larr; Older posts</a>
+    
+    <span class="page-number">Page 6 of 7</span>
+    
+        
+            <a href="/archive/5/">Newer posts &rarr;</a>
+        
+    
+</nav>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>

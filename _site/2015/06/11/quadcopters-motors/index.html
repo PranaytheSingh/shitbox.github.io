@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>Quadcopters: Motors</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/cover.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="Quadcopters: Motors">
+    
+    
+        <meta name="twitter:description" content="&lt;p&gt;We’ve already talked a bit about motors in our &lt;a href=&quot;http://hoverbear.org/tag/quadcopters/&quot;&gt;previous articles&lt;/a&gt;, in this article we’ll talk more about &lt;strong&gt;motors&lt;/strong&gt; than the quadcopter as a whole.&lt;/p&gt;
+
+">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+      <script type="text/javascript" async src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/cover.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">Quadcopters: Motors</a></h1>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main>
+    <article>
+        <p>We’ve already talked a bit about motors in our <a href="http://hoverbear.org/tag/quadcopters/">previous articles</a>, in this article we’ll talk more about <strong>motors</strong> than the quadcopter as a whole.</p>
+
+<h1 id="motor-basics">Motor Basics</h1>
+
+<p>We found some great introductory videos which very throughly explain motors and give many great ideas, so instead of replicating their work we chose to share it instead.</p>
+
+<h2 id="build-your-own">Build Your Own</h2>
+
+<p>One of the best ways to learn about anything is hands on! Why not try to make a motor yourself, or with your cohort?</p>
+
+<p>The below video explains how you can build a simple motor out of some basic supplies. This project is more suitable for younger or less technically inclined humans. Note that the motors used in a Quadcopter are <em>slightly</em> more sophisticated.</p>
+
+<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/ziWUmIUcR2k?rel=0" frameborder="0" allowfullscreen=""></iframe>
+
+<h2 id="tinker-or-make-a-demo">Tinker or Make a Demo</h2>
+
+<p>The below video has a fantastic, in-depth explaination of how motors work and includes a number of setups which can help you understand the mechanics and motion of a motor.</p>
+
+<p>If you have any old drills or other motored devices hanging around (or found at the thrift store) you can transform it into a number of great demos.</p>
+
+<blockquote>
+  <p>Getting your hands on something is unquestionably the best way to learn, having demos and experiments is a fantastic way to enhance your lessons or self-study.</p>
+</blockquote>
+
+<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/-qS85aIvleQ?rel=0" frameborder="0" allowfullscreen=""></iframe>
+
+<h1 id="measuring-the-motor">Measuring the Motor</h1>
+
+<p>In order to get some firm measurements about the motor, we built an apparatus to hold it and attached wires to it.</p>
+
+<p>Since we didn’t want to damage the motor we were careful and used very small wire looped into the connector. Then we used tape to keep the copper wires seperate. The wires touching would cause a short circuit and be very bad (resulting in smoke and an angry motor.)</p>
+
+<p><img src="/assets/images/2015/05/taping.jpg" alt="Taping" /></p>
+
+<p>After that was complete we used an adjustable soldering stand to hold the motor up in the path of a photogate sensor. The idea was to use the propellor to break the photogate’s beam and use the number of breaks to determine the rotations per minute (RPM) of the propellor at various speeds.</p>
+
+<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/OgLc68JZ2xY?rel=0" frameborder="0" allowfullscreen=""></iframe>
+
+<p>With the motor held safely, the photogate in place, and the power supply wired in to provide power to the motor, we attached our photogate to a measurement device to start our experiment.</p>
+
+<p><strong>Failure.</strong> It turns out that the software was unable to effectively measure the propellor at higher speeds. The quadcopters motors are rated up to 14,000 RPM and it’s understandable that standard equiptment might struggle with this.</p>
+
+<p>This threw us for a bit of a loop but we figured out a better, simpler method. We decided to utilize a strobe light to “stop” the motor.</p>
+
+<blockquote>
+  <p>How can a strobe light be used to measure RPM?</p>
+</blockquote>
+
+<p>First the strobe light pulses its light at a constant, uniform rate, and the motor is turning at a (mostly) constant, uniform rate. Because of this, if the strobe light pulses at some amount of <em>pulses per minute</em> (<script type="math/tex">PPM</script>) which is equal to the motors <em>rotations per minute</em> (<script type="math/tex">RPM</script>) then each pulse of light will shine on approximately the same image of the motor. This image is what we see observing it.</p>
+
+<script type="math/tex; mode=display">PPM = RPM</script>
+
+<p>You can see how it looks in this below video, apologies for the video quality <strong>and loud sound</strong>, strobes are noisy and cameras don’t image the way our eyes do.</p>
+
+<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/_8-kZzx6Kw4?rel=0" frameborder="0" allowfullscreen=""></iframe>
+
+<p>This is a very fun and curious experiment to try on your own or with your cohort however strobe lights can be hard to source.</p>
+
+<h1 id="measurements">Measurements</h1>
+
+<p>Using a pair of multimeters and an adjustable power supply we could take measurements of the motor at various power settings.</p>
+
+<p><img src="/assets/images/2015/06/motor_measuring.jpg" alt="Measuring Setup" /></p>
+
+<p>First, let’s take a look at the relationship between voltage and the rotations per minute (RPM) of the propeller. Voltage is the <strong>difference in potential</strong> between the hot and ground wires.</p>
+
+<blockquote>
+  <p>If you picture yourself as an electron walking along a road (the wire), you can picture voltage as how steep the hill is.</p>
+</blockquote>
+
+<p><img src="/assets/images/2015/06/volt-v-rpm.jpg" alt="Voltage vs. RPM" /></p>
+
+<p>The relationship that current and the rotations per minute have is also very much a straight line.</p>
+
+<blockquote>
+  <p>If you picture yourself as an electron current is how hard you’re pushing against something.</p>
+</blockquote>
+
+<p><img src="/assets/images/2015/06/cur-v-rpm.jpg" alt="Current vs. RPM" /></p>
+
+<p>The power of the motor is equals to the voltage times the current. You can see that this relationship is a nice, smooth curve. It’s interesting to note that there are diminishing returns the more power you put in.</p>
+
+<script type="math/tex; mode=display">voltage * current = power</script>
+
+<p><img src="/assets/images/2015/06/pow-v-rpm-2.jpg" alt="Power vs. RPM" /></p>
+
+<p>The angular velocity is the speed at which the blade of the propeller is rotating around the motor’s axis. This relationship is straight, just like the voltage vs RPM graph.</p>
+
+<script type="math/tex; mode=display">velocity_{angular} = RPM * \frac{2\pi}{60 seconds}</script>
+
+<p><img src="/assets/images/2015/06/volt-v-angu-2.jpg" alt="Voltage vs. Angular Velocity" /></p>
+
+<h1 id="motors-in-action">Motors in Action</h1>
+
+<p>In the following graphs we captured data from the quadcopter using the Crazyflie client’s logging functionalities. A motor value of 0 indicates that no power was sent to the motor, while a higher number means more power was sent. (We asked the Bitcraze folks what these values represented <a href="https://github.com/bitcraze/crazyflie-firmware/issues/50">here</a>.)</p>
+
+<p>In order to capture this data we held the quadcopter (mostly) in place and fully triggered given inputs. The wobble you see in the motor plots is due to variances in the outputs of the stablization algorithms as they react on sensor input.</p>
+
+<h2 id="pitch">Pitch</h2>
+
+<p><img src="/assets/images/2015/06/pitch-increase.jpg" alt="Pitch Increase" /></p>
+
+<p>In these you can see the very clear demonstration of the front motor and rear motors raising or lowering depending on the input.</p>
+
+<p><img src="/assets/images/2015/06/pitch-decrease.jpg" alt="Pitch Decrease" /></p>
+
+<h2 id="roll">Roll</h2>
+
+<p><img src="/assets/images/2015/06/roll-increase.jpg" alt="Roll Increase" /></p>
+
+<p>In these you can observe the left and right motors changing accordingly.</p>
+
+<p><img src="/assets/images/2015/06/roll-decrease.jpg" alt="Roll Decrease" /></p>
+
+<h2 id="yaw">Yaw</h2>
+
+<p><img src="/assets/images/2015/06/yaw-increase.jpg" alt="Yaw Increase" /></p>
+
+<p>Finally, in these you can see the diagonal motors changing as we’ve previously discussed.</p>
+
+<p><img src="/assets/images/2015/06/yaw-decrease.jpg" alt="Yaw Decrease" /></p>
+
+    </article>
+
+    <aside class="post-meta">
+  
+    Posted on
+    <time datetime="2015-06-11T00:00:00-07:00">11 Jun 2015</time>
+  
+
+  
+    
+      
+        , into
+        
+        <span><a href="/tags/#quadcopters">Quadcopters</a></span>
+      
+    .
+  
+
+  
+</aside>
+
+</main>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>

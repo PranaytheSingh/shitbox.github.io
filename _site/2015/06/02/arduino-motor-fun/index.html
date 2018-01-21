@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>Arduino: Motor Fun!</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/cover.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="Arduino: Motor Fun!">
+    
+    
+        <meta name="twitter:description" content="&lt;p&gt;Lately we’ve been playing with Quadcopters a lot, one of the key components of any copter is it’s motors! I’ll be writing about motors next, but before that I wanted to share some small, short Arduino ‘labs’ that you can do either on your own or with your cohort!&lt;/p&gt;
+
+">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/cover.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">Arduino: Motor Fun!</a></h1>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main>
+    <article>
+        <p>Lately we’ve been playing with Quadcopters a lot, one of the key components of any copter is it’s motors! I’ll be writing about motors next, but before that I wanted to share some small, short Arduino ‘labs’ that you can do either on your own or with your cohort!</p>
+
+<p>All of these ‘labs’ are as inexpensive as we could manage in terms of parts, with the exception of the Arduino.</p>
+
+<blockquote>
+  <p>You’re welcome to print, distribute, and modify all of these to meet your needs. You can <a href="mailto:andrew+blog@hoverbear.org">email me</a> if you’d like the source files. We use <a href="http://www.fritzing.org/">Fritzing</a> for breadboard layouts.</p>
+</blockquote>
+
+<h1 id="on-and-off">On and Off</h1>
+
+<p>First, let’s start with a basic on/off motor. This gives us the chance to understand two particularly important concepts.</p>
+
+<p><strong>Using a transistor as a trigger</strong> allows us to safely control larger amounts of voltage with an Arduino pin. If we tried to just use a plain Arduino pin to power the motor we’d risk blowing out the pin as the motor tried to draw many more milliamps than the Arduino can supply through a digital pin.</p>
+
+<p><strong>Using a Diode to handle backcurrent</strong> helps prevent any damage that may come from the attached motor is <em>suddenly</em> stopped. This is a neat characteristic in and of itself!</p>
+
+<p><strong>You should see</strong> the motor turn on, spin for a pair of seconds, than turn off for two seconds. It will then repeat.</p>
+
+<h3 id="parts-list">Parts List</h3>
+
+<ul>
+  <li>1x Arduino</li>
+  <li>1x DC Motor (smaller is better)</li>
+  <li>1x Diode</li>
+  <li>1x Resistor (We used 5.6k ohm)</li>
+  <li>1x NPN transistor</li>
+  <li>Wires</li>
+</ul>
+
+<h3 id="breadboard">Breadboard</h3>
+
+<p><img src="/assets/images/2015/06/plain.png" alt="Plain" /></p>
+
+<h3 id="code">Code</h3>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>const int motor = 3;
+
+void setup() {
+  pinMode(motor, OUTPUT);
+}
+
+void loop() {
+  // Motor on.
+  digitalWrite(motor, HIGH);
+
+  delay(2000);
+
+  // Motor off.
+  digitalWrite(motor, LOW);
+
+  delay(2000);
+}
+</code></pre></div></div>
+
+<h1 id="pulse-width-modulation">Pulse Width Modulation</h1>
+
+<p>If you haven’t used Pulse Width Modulation before, it’s a way to use certain digital pins on the Arduino to mimic the behaivor of an analog pin, sorta. Essentially PWM makes the pin <strong>pulse</strong> at specific <strong>widths</strong> to <strong>modulate</strong> the signal. This can be used to provide varying amounts of power to something like a motor.</p>
+
+<p><strong>You should see</strong> the motor slowly speed up and then back down again.</p>
+
+<h3 id="supplies--breadboard">Supplies &amp; Breadboard</h3>
+
+<p>Same as above.</p>
+
+<h3 id="code-1">Code</h3>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>const int motor = 3;
+int speed = 0;
+int amount = 5;
+
+void setup() {
+  pinMode(motor, OUTPUT);
+}
+
+void loop() {
+  // Use PWM
+  analogWrite(motor, speed);
+
+  // Amount will either be + or -
+  speed = speed + amount;
+
+  if (speed == 0 || speed == 255) {
+    // At a boundary, swap +/- on amount
+    amount = -amount;
+  }
+
+  delay(30);
+}
+</code></pre></div></div>
+
+<h1 id="reacting-to-input">Reacting to Input</h1>
+
+<p>The last few experiments we just used code to change the speed of the motor, however this isn’t quite what a quadcopter does. <strong>A quadcopter has to take input from sensors and alter the amount of power to the motors accordingly.</strong></p>
+
+<p><strong>You should see</strong> the motor’s speed change as you turn the potentiometer.</p>
+
+<h2 id="parts-list-1">Parts List</h2>
+
+<p>Same as above, but add:</p>
+
+<ul>
+  <li>1x Potentiometer (Or any sensor which offers variable resistance)</li>
+</ul>
+
+<h2 id="breadboard-1">Breadboard</h2>
+
+<p><img src="/assets/images/2015/06/turnpot.png" alt="Turnpot" /></p>
+
+<h2 id="code-2">Code</h2>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>const int motor = 3;
+const int turnpot = A0;
+
+void setup() {
+  pinMode(motor, OUTPUT);
+  pinMode(turnpot, INPUT);
+}
+
+void loop() {
+  int value = analogRead(turnpot);
+  analogWrite(motor, value);
+  delay(30);
+}
+</code></pre></div></div>
+
+<p>I hope you had some fun exploring these basic motor circuits with your Arduino! If you have any other sensor wirings or circuits you’d like to share please just email me and I’ll put them here too!</p>
+
+    </article>
+
+    <aside class="post-meta">
+  
+    Posted on
+    <time datetime="2015-06-02T00:00:00-07:00">02 Jun 2015</time>
+  
+
+  
+    
+      
+        , into
+        
+        <span><a href="/tags/#quadcopters">Quadcopters</a></span>
+      
+    .
+  
+
+  
+</aside>
+
+</main>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>

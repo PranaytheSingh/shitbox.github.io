@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>ShitBox</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/cover.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="http://0.0.0.0:4000">
+    
+    
+        <meta name="twitter:description" content="Exploring, fascinating and amusing">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/cover.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">ShitBox</a></h1>
+      <p class="description">Exploring, fascinating and amusing</p>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main id="index">
+    
+          <h2><a href="/2016/04/06/Site-Redesign/">Site Redesign</a></h2>
+          <section class="excerpt">
+              <p>I’ve begun redesigning my website with my own theme! With school finishing and new employment looming I decided to take the time to make my site truly my own.
+
+As a result I’ve rewritten all of the Jekyll liquid templates and styles myself and have been having a lot of fun learning how to use things like display: flexbox. I’m sure there will be bugs and people will have suggestions on how to improve things, please feel welcome to email me if you do.
+</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="06 April 2016">06 April 2016</time>
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2016/03/25/gathering-our-voices/">Gathering Our Voices 2016</a></h2>
+          <section class="excerpt">
+              <p>This year helped again with Gathering Our Voices. I worked in the same capacity as previous years and had a similarly great time.
+
+Rather than talking at length about events I’d rather share pictures. All of these photos were taken by my friend Geoff Howe. All images are wholly owned by the BCAAFC and you may not reproduce or use them in anything without their permission.
+
+Day 1
+
+
+
+
+
+
+
+
+
+
+
+
+
+Day 2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Day 3
+
+
+
+
+
+
+
+
+
+Day 4
+
+
+
+
+
+
+</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="25 March 2016">25 March 2016</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#bcaafc">BCAAFC</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2016/01/13/docker-archlinux/">Arch Linux on Docker Revisited</a></h2>
+          <section class="excerpt">
+              <p>Back in 2014 when I was learning about Docker I got around to making a base image for Arch Linux. It was a really fun exploration and I got to know a lot more about how Docker worked from it. I’d highly suggest trying to make your own sometime! Docker has matured a lot since, and I’ve enjoyed following it. I took some time this last week to revisit my Arch Linux image and ensure it’s still functional. I wasn’t surprised when the scripts continued to work just fine, even after two years. With nothing broken, I knew I only...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="13 January 2016">13 January 2016</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#containers">Containers</a></span>
+                
+              
+                
+                  
+                       and
+                  
+                  <span><a href="/tags/#arch-linux">Arch Linux</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2016/01/04/Heroku-Rust-Buildpack/">A Rust Heroku Buildpack</a></h2>
+          <section class="excerpt">
+              <p>I’m happy to introduce the first stable version of my Rust Heroku Buildpack! Just looking to get your hands dirty? Look here. The project was a really interesting learning experience about how Heroku does things, on bash scripting, and about multirust, which I’d not used before but now am quite a fan of! (I previously just rustup‘d the newest nightly every few days.) Features Cached multirust, Rust toolchain. Caching of previous build artifacts to (potentially dramatically) speed up similar builds. Configurable version selection inside of the Cargo.toml. It’s unit tested using Heroku’s official testrunner every commit (using homu) and includes...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="04 January 2016">04 January 2016</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#rust">Rust</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2015/12/30/The-Way-Forward/">The Way Forward</a></h2>
+          <section class="excerpt">
+              <p>In April, I will be graduating from University. It’s pretty darn exciting! Once that’s happened I’ll officially have a Computer Science Degree with a Networking option, meaning I focused primarily on networking for my upper year studies. I’ll be completing my degree with (approximately) a 7.75 (out of 9.00) GPA and I’m pretty proud of that! I’ve been placing a lot of thought into what comes next for me, and the only solid decision I’ve come to is that it’s dependent on external factors. The problem with trying to build a plan is that many of the factors I have...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="30 December 2015">30 December 2015</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#personal">Personal</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2015/10/28/Lets-Encrypt/">It's a Let's Encrypt Beta!</a></h2>
+          <section class="excerpt">
+              <p>I was privileged to recieve one of the early Let’s Encrypt beta certificates for https://hoverbear.org. I had an easy and fun time setting it up this evening on my Funtoo Container and wanted to quickly jot down how to! Get ‘er Done I first needed some prerequisites (I already had nginx installed): sudo emerge -vqa augeas python-augeas dialog Then, following the instructions provided: git clone https://github.com/letsencrypt/letsencrypt cd letsencrypt ./letsencrypt-auto --agree-dev-preview --server \ https://acme-v01.api.letsencrypt.org/directory auth From here you’ll be brought to something that looks like a make menuconfig when building your own kernel… But a lot easier. From here you have...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="28 October 2015">28 October 2015</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#tooling">Tooling</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2015/09/12/understand-over-guesswork/">Understanding Over Guesswork</a></h2>
+          <section class="excerpt">
+              <p>Evolving How We Learn Systems with Lessons from Programming in the Large Some bugs are just that—a one off. A wayward moth that just happens to be innocently fluttering through the wrong relay at the wrong time. But some kinds of bugs aren’t like that. Instead, they have risen to superstar status, plaguing veterans and newcomers alike. But what if these aren’t bugs at all? What if they are actual deficiencies in safety and robustness offered by the C programming language as a consequence of the degree to which guesswork is introduced. Here we explore a more explicit approach to...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="12 September 2015">12 September 2015</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#rust">Rust</a></span>
+                
+              
+                
+                  
+                       and
+                  
+                  <span><a href="/tags/#uvic">UVic</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2015/08/31/SF-trip-recap/">Photos: San Fransisco Trip</a></h2>
+          <section class="excerpt">
+              <p>A selection of images from my trip that I thought I’d share with the world.
+
+
+  If you want to use one of these for anything at all, just fire me an email and ask!
+
+
+Day 1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Day 2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Day 3
+
+
+
+
+
+
+</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="31 August 2015">31 August 2015</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#rust">Rust</a></span>
+                
+              
+                
+                  ,
+                  
+                  <span><a href="/tags/#raft">Raft</a></span>
+                
+              
+                
+                  
+                      , and
+                  
+                  <span><a href="/tags/#events">Events</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2015/08/27/meetup/">The Raft-rs Rust Meetup</a></h2>
+          <section class="excerpt">
+              <p>
+
+Wow. Was that ever fun! I hope that those that came had an equally enjoyable time and everyone got something useful out of it! I sure did!
+
+Slides
+
+
+  Yvonne Coady
+  Diego Ongaro &amp; Visualization
+  Andrew Hobden
+  Dan Burkert
+  Alex Newman
+
+</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="27 August 2015">27 August 2015</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#rust">Rust</a></span>
+                
+              
+                
+                  ,
+                  
+                  <span><a href="/tags/#raft">Raft</a></span>
+                
+              
+                
+                  ,
+                  
+                  <span><a href="/tags/#events">Events</a></span>
+                
+              
+                
+                  
+                      , and
+                  
+                  <span><a href="/tags/#uvic">UVic</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2015/08/23/exciting-times/">Exciting Times</a></h2>
+          <section class="excerpt">
+              <p>The next few weeks are full of excitement and busy-ness! First up is the Meetup in San Fran (See our planning). I can’t wait! It will be so fun to meet many people I’ve already met in IRC and through the community! If you’d like to do something, or show me around the city, let me know! I’ve never been to the USA before, let alone San Fransisco. After that I’m moving into a new place! A friend and I landed a great location for the next year and we’re looking forward to the changes ahead. Once I’m settled in...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="23 August 2015">23 August 2015</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#rust">Rust</a></span>
+                
+              
+                
+                  
+                       and
+                  
+                  <span><a href="/tags/#raft">Raft</a></span>
+                
+              .
+          </div>
+        
+    
+</main>
+
+<hr>
+
+<nav id="pagination">
+    
+        <a href="/archive/3/">&larr; Older posts</a>
+    
+    <span class="page-number">Page 2 of 7</span>
+    
+        
+            <a href="/">Newer posts &rarr;</a>
+        
+    
+</nav>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>

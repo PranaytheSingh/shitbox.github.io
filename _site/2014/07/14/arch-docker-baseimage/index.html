@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>Arch Docker Baseimage</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/cover.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="Arch Docker Baseimage">
+    
+    
+        <meta name="twitter:description" content="&lt;h2 id=&quot;problem&quot;&gt;Problem&lt;/h2&gt;
+
+">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/cover.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">Arch Docker Baseimage</a></h1>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main>
+    <article>
+        <h2 id="problem">Problem</h2>
+
+<p>You need a base image of Arch Linux that you’re sure is a-okay.</p>
+
+<h3 id="compounding-factors">Compounding Factors</h3>
+
+<ul>
+  <li>Base images currently can’t be so-called ‘Trusted Builds’ built by the repository itself. You have <em>no way</em> of verifying the integrity of the images available.</li>
+  <li>Arch is very much a moving target distribution. Any images you do pull are likely to be out of date.</li>
+  <li>You don’t have an existing Arch Linux install, which the <a href="https://github.com/dotcloud/docker/blob/master/contrib/mkimage-arch.sh">current scripts</a> require. and don’t want to make one, or use someone else’s container or install to build your image, again, going back to trust.</li>
+  <li>The Arch Netinstall ISO doesn’t have enough disposable storage to run the <a href="https://github.com/dotcloud/docker/blob/master/contrib/mkimage-arch.sh">current scripts</a>.</li>
+</ul>
+
+<h2 id="solution">Solution</h2>
+
+<h3 id="dependencies">Dependencies</h3>
+<p>You’ll need:</p>
+
+<ul>
+  <li><code class="highlighter-rouge">gpg</code></li>
+  <li><code class="highlighter-rouge">curl</code></li>
+  <li><code class="highlighter-rouge">docker</code></li>
+</ul>
+
+<h3 id="get-an-arch-chroot">Get an Arch Chroot</h3>
+<p>On any 64-bit Linux 2.6.23 or later you can create your base image via a chroot.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Make some space</span>
+mkdir archbuild
+<span class="nb">cd </span>archbuild
+<span class="c"># Get the Image</span>
+<span class="nv">VERSION</span><span class="o">=</span><span class="k">$(</span>curl https://mirrors.kernel.org/archlinux/iso/latest/ | <span class="nb">grep</span> <span class="nt">-Poh</span> <span class="s1">'(?&lt;=archlinux-bootstrap-)\d*\.\d*\.\d*(?=\-x86_64)'</span> | head <span class="nt">-n</span> 1<span class="k">)</span>
+curl https://mirrors.kernel.org/archlinux/iso/latest/archlinux-bootstrap-<span class="nv">$VERSION</span><span class="nt">-x86_64</span>.tar.gz <span class="o">&gt;</span> archlinux-bootstrap-<span class="nv">$VERSION</span><span class="nt">-x86_64</span>.tar.gz
+curl https://mirrors.kernel.org/archlinux/iso/latest/archlinux-bootstrap-<span class="nv">$VERSION</span><span class="nt">-x86_64</span>.tar.gz.sig <span class="o">&gt;</span> archlinux-bootstrap-<span class="nv">$VERSION</span><span class="nt">-x86_64</span>.tar.gz.sig
+<span class="c"># Pull Pierre Schmitz PGP Key.</span>
+<span class="c"># http://pgp.mit.edu:11371/pks/lookup?op=vindex&amp;fingerprint=on&amp;exact=on&amp;search=0x4AA4767BBC9C4B1D18AE28B77F2D434B9741E8AC</span>
+gpg <span class="nt">--keyserver</span> pgp.mit.edu <span class="nt">--recv-keys</span> 9741E8AC
+<span class="c"># Verify its integrity.</span>
+gpg <span class="nt">--verify</span> archlinux-bootstrap-<span class="nv">$VERSION</span><span class="nt">-x86_64</span>.tar.gz.sig
+</code></pre></div></div>
+<p>Check the output, make sure the signature is good. You’ll likely see a trust warning, that’s fine, you didn’t mark the key trusted.</p>
+
+<h3 id="getting-in">Getting In</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Extract</span>
+<span class="nb">tar </span>xvf archlinux-bootstrap-<span class="nv">$VERSION</span><span class="nt">-x86_64</span>.tar.gz
+<span class="c"># Hop in</span>
+<span class="nb">sudo</span> ./root.x86_64/bin/arch-chroot root.x86_64
+</code></pre></div></div>
+<p>You should notice you shell looks like <code class="highlighter-rouge">sh-4.3#</code>. Furthermore, <code class="highlighter-rouge">pacman</code> should be available.</p>
+
+<h3 id="setup">Setup</h3>
+<p><strong>In the chroot</strong>:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Setup a mirror.</span>
+<span class="nb">echo</span> <span class="s1">'Server = https://mirrors.kernel.org/archlinux/\$repo/os/\$arch'</span> <span class="o">&gt;</span> /etc/pacman.d/mirrorlist
+<span class="c"># Setup Keys</span>
+pacman-key <span class="nt">--init</span>
+pacman-key <span class="nt">--populate</span> archlinux
+<span class="c"># Base without the following packages, to save space.</span>
+<span class="c"># linux jfsutils lvm2 cryptsetup groff man-db man-pages mdadm pciutils pcmciautils reiserfsprogs s-nail xfsprogs vi</span>
+pacman <span class="nt">-Syu</span> <span class="nt">--noconfirm</span> bash bzip2 coreutils device-mapper dhcpcd gcc-libs gettext glibc <span class="nb">grep </span>gzip inetutils iproute2 iputils less libutil-linux licenses logrotate psmisc sed shadow sysfsutils systemd-sysvcompat <span class="nb">tar </span>texinfo usbutils util-linux which
+<span class="c"># Pacman doesn't let us force ignore files, so clean up.</span>
+pacman <span class="nt">-Sc</span> <span class="nt">--noconfirm</span>
+<span class="c"># Install stuff</span>
+<span class="nb">echo</span> <span class="s2">"en_US.UTF-8 UTF-8"</span> <span class="o">&gt;</span> /etc/locale.gen
+locale-gen
+<span class="nb">exit</span>
+</code></pre></div></div>
+<p><strong>Outside of the chroot</strong> (You may need to be root):</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># udev doesnt work in containers, rebuild /dev</span>
+<span class="c"># Taken from https://raw.githubusercontent.com/dotcloud/docker/master/contrib/mkimage-arch.sh</span>
+<span class="nv">DEV</span><span class="o">=</span>root.x86_64/dev
+rm <span class="nt">-rf</span> <span class="nv">$DEV</span>
+mkdir <span class="nt">-p</span> <span class="nv">$DEV</span>
+mknod <span class="nt">-m</span> 666 <span class="nv">$DEV</span>/null c 1 3
+mknod <span class="nt">-m</span> 666 <span class="nv">$DEV</span>/zero c 1 5
+mknod <span class="nt">-m</span> 666 <span class="nv">$DEV</span>/random c 1 8
+mknod <span class="nt">-m</span> 666 <span class="nv">$DEV</span>/urandom c 1 9
+mkdir <span class="nt">-m</span> 755 <span class="nv">$DEV</span>/pts
+mkdir <span class="nt">-m</span> 1777 <span class="nv">$DEV</span>/shm
+mknod <span class="nt">-m</span> 666 <span class="nv">$DEV</span>/tty c 5 0
+mknod <span class="nt">-m</span> 600 <span class="nv">$DEV</span>/console c 5 1
+mknod <span class="nt">-m</span> 666 <span class="nv">$DEV</span>/tty0 c 4 0
+mknod <span class="nt">-m</span> 666 <span class="nv">$DEV</span>/full c 1 7
+mknod <span class="nt">-m</span> 600 <span class="nv">$DEV</span>/initctl p
+mknod <span class="nt">-m</span> 666 <span class="nv">$DEV</span>/ptmx c 5 2
+ln <span class="nt">-sf</span> /proc/self/fd <span class="nv">$DEV</span>/fd
+</code></pre></div></div>
+
+<h3 id="import-the-image">Import the Image</h3>
+<p><strong>Outside of the chroot</strong> (You may need to be root):</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">USER</span><span class="o">=</span><span class="s1">'hoverbear'</span>
+<span class="nb">tar</span> <span class="nt">--numeric-owner</span> <span class="nt">-C</span> root.x86_64 <span class="nt">-c</span> <span class="nb">.</span>  | docker import - <span class="nv">$USER</span>/archlinux
+</code></pre></div></div>
+
+<h3 id="test-it">Test It</h3>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker run <span class="nt">--rm</span><span class="o">=</span><span class="nb">true</span> <span class="nt">-t</span> <span class="nt">-i</span> <span class="nv">$USER</span>/archlinux /bin/bash
+</code></pre></div></div>
+<p>Give it a try!</p>
+
+<h2 id="a-full-start-to-end-script">A full, start to end script</h2>
+<p>You can grab a fully automated script <a href="https://github.com/Hoverbear/docker-archlinux">here</a>.</p>
+
+    </article>
+
+    <aside class="post-meta">
+  
+    Posted on
+    <time datetime="2014-07-14T00:00:00-07:00">14 Jul 2014</time>
+  
+
+  
+    
+      
+        , into
+        
+        <span><a href="/tags/#containers">Containers</a></span>
+      
+    
+      
+        ,
+        
+        <span><a href="/tags/#arch-linux">Arch Linux</a></span>
+      
+    
+      
+        
+            , and
+        
+        <span><a href="/tags/#tutorials">Tutorials</a></span>
+      
+    .
+  
+
+  
+</aside>
+
+</main>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>It's a Let's Encrypt Beta!</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/2015/10/lock.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="It&#39;s a Let&#39;s Encrypt Beta!">
+    
+    
+        <meta name="twitter:description" content="&lt;p&gt;I was privileged to recieve one of the early &lt;a href=&quot;https://letsencrypt.org/&quot;&gt;Let’s Encrypt&lt;/a&gt; beta certificates for &lt;a href=&quot;https://hoverbear.org/&quot;&gt;https://hoverbear.org&lt;/a&gt;. I had an easy and fun time setting it up this evening on my &lt;a href=&quot;http://www.funtoo.org/Funtoo_Hosting&quot;&gt;Funtoo Container&lt;/a&gt; and wanted to quickly jot down how to!&lt;/p&gt;
+
+">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/2015/10/lock.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">It's a Let's Encrypt Beta!</a></h1>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main>
+    <article>
+        <p>I was privileged to recieve one of the early <a href="https://letsencrypt.org/">Let’s Encrypt</a> beta certificates for <a href="https://hoverbear.org/">https://hoverbear.org</a>. I had an easy and fun time setting it up this evening on my <a href="http://www.funtoo.org/Funtoo_Hosting">Funtoo Container</a> and wanted to quickly jot down how to!</p>
+
+<h2 id="get-er-done">Get ‘er Done</h2>
+
+<p>I first needed some prerequisites (I already had <code class="highlighter-rouge">nginx</code> installed):</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">sudo </span>emerge <span class="nt">-vqa</span> augeas python-augeas dialog
+</code></pre></div></div>
+
+<p>Then, following the instructions provided:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/letsencrypt/letsencrypt
+<span class="nb">cd </span>letsencrypt
+./letsencrypt-auto <span class="nt">--agree-dev-preview</span> <span class="nt">--server</span> <span class="se">\</span>
+  https://acme-v01.api.letsencrypt.org/directory auth
+</code></pre></div></div>
+
+<p>From here you’ll be brought to something that looks like a <code class="highlighter-rouge">make menuconfig</code> when building your own kernel… But a lot easier. From here you have two options, “Manual” and “Standalone”.</p>
+
+<p><strong>Manual</strong> asks you for your domain then tasks you with the job of hosting a file under something like <code class="highlighter-rouge">$YOUR_DOMAIN/.well_known/acme-challenge/$KEY</code>.</p>
+
+<p><strong>Standalone</strong> will make an effort to automatically verify your domain for you by hosting it’s own web server. (<em>You’ll need to stop your existing <code class="highlighter-rouge">nginx</code> server if you have one.</em>)</p>
+
+<h2 id="gotchas">Gotchas</h2>
+
+<p>Let’s Encrypt only issues certificates that are good for 90 days, so you need to regularly renew! There is a <a href="https://wiki.mozilla.org/Security/Automation/Winter_Of_Security_2015#Certificate_Automation_tooling_for_Let.27s_Encrypt">MWoS’2015 Project</a> to make this renewal automated.</p>
+
+    </article>
+
+    <aside class="post-meta">
+  
+    Posted on
+    <time datetime="2015-10-28T00:00:00-07:00">28 Oct 2015</time>
+  
+
+  
+    
+      
+        , into
+        
+        <span><a href="/tags/#tooling">Tooling</a></span>
+      
+    .
+  
+
+  
+</aside>
+
+</main>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>

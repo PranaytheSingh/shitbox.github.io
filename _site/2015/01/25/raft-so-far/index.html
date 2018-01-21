@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>Raft So Far</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/cover.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="Raft So Far">
+    
+    
+        <meta name="twitter:description" content="&lt;p&gt;I’ve been working quite a bit on my Raft implementation over the last few days and I must say it’s been quite a pleasure to work in Rust, which recently released it’s 1.0.0-alpha.&lt;/p&gt;
+
+">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/cover.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">Raft So Far</a></h1>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main>
+    <article>
+        <p>I’ve been working quite a bit on my Raft implementation over the last few days and I must say it’s been quite a pleasure to work in Rust, which recently released it’s 1.0.0-alpha.</p>
+
+<p>It takes the work out of needing to serialize and deserialize data, it enforces data safety, and it’s type checking is incredible. I’m very quickly able to make a change, build it, fix the errors the compiler catches for me, and build again, then test. So far the only times my tests have failed after a successful build was when I was accidently disgarding one of my channels.</p>
+
+<h2 id="client-interface">Client Interface</h2>
+
+<p>Currently, the design of my implementation is meant to be as simple as I can possibly make it. Once a <code class="highlighter-rouge">RaftNode</code> is created (<code class="highlighter-rouge">RaftNode::new()</code>) and spun up (<code class="highlighter-rouge">node.spinup()</code>) the client program will recieve a channel which to communicate on with the node.</p>
+
+<p>I wanted to remove the complexity of having to make network requests outside of the Node. If you’re participating in a Raft cluster you don’t want to have to think about it, you just want to read logs and append logs. Raft’s goal is to implement a replicated log, or state machine.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>fn spinup(self) -&gt; (Sender&lt;ClientRequest&lt;T&gt;&gt;,
+					Receiver&lt;ClientResponse&lt;T&gt;&gt;)
+enum ClientRequest&lt;T&gt; {
+    IndexRange {
+        start_index: u64,
+        end_index: u64,
+    },
+    AppendEntries {
+        prev_log_index: u64,
+        prev_log_term: T,
+        entries: Vec&lt;T&gt;,
+    },
+}
+
+enum ClientResponse&lt;T&gt; {
+    Accepted {
+        entries: Vec&lt;T&gt;,
+        last_index: u64,
+    },
+    Rejected {
+        reason: String,
+    },
+}
+</code></pre></div></div>
+
+<p>Right now most of the data types I’m using are compound data enums, allowing for strongly typed, encapsulated data that is easy to work with via <code class="highlighter-rouge">match</code> statements.</p>
+
+<p>I am not sure if this is the <em>right</em> way to go about things, and I think that there can be some improvement, but this method of requests across a channel are, as far as I can tell, the idomatic way to communicate with a thread in Rust.</p>
+
+<p>One cool thing about this approach is the log entries themselves can be basically anything the programmer desires as long as it can be serialized and deserialized. I’m mostly using <code class="highlighter-rouge">String</code>s for testing.</p>
+
+<h2 id="remote-procedure-calls">Remote Procedure Calls</h2>
+
+<p>Inside of the <code class="highlighter-rouge">RaftNode</code>’s thread it binds on a UDP socket and listens for <code class="highlighter-rouge">RemoteProcedureCall</code> data. These requests are encoded and decoded through the <code class="highlighter-rouge">rustc-serialize</code> crato, but in the future <code class="highlighter-rouge">serde</code> will probably replace it.</p>
+
+<p>A <code class="highlighter-rouge">RemoteProcedureCall</code> looks almost identical to those dictated in the Raft paper:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#[derive(RustcEncodable, RustcDecodable, Debug, Clone)]
+pub enum RemoteProcedureCall&lt;T&gt; {
+    AppendEntries {
+        term: u64,
+        leader_id: u64,
+        prev_log_index: u64,
+        prev_log_term: T,
+        entries: Vec&lt;T&gt;,
+        leader_commit: u64,
+    },
+    RequestVote {
+        term: u64,
+        candidate_id: u64,
+        last_log_index: u64,
+        last_log_term: u64,
+    },
+}
+
+#[derive(RustcEncodable, RustcDecodable, Debug, Copy)]
+pub enum RemoteProcedureResponse {
+    VoteAccepted { term: u64 },
+    VoteRejected { term: u64, current_leader: u64 },
+    EntriesAccepted { term: u64 },
+    EntriesRejected { term: u64 },
+}
+</code></pre></div></div>
+
+<p>I’m not sure if the way I’m approaching the <code class="highlighter-rouge">RemoteProcedureResponse</code> is necessarily the right way to go about things. I think it might be better to model it after <code class="highlighter-rouge">ClientResponse</code>.</p>
+
+<h2 id="progress">Progress</h2>
+
+<p>Most of the work done so far is on scaffolding, and determining interfaces. I have two nodes running locally successfully passing <code class="highlighter-rouge">ClientRequest</code>s into one node, them communicating with a <code class="highlighter-rouge">RemoteProcedureCall</code> and a <code class="highlighter-rouge">ClientResponse</code> being emitted at the other node.</p>
+
+<p>I’ve been spending a lot of time documenting my thoughts and ideas in the code as I write it, <code class="highlighter-rouge">// TODO:</code> is sprinkled throughout.</p>
+
+<h2 id="repository">Repository</h2>
+
+<p>Currently the state of the code is such that I don’t feel right releasing it to the public, once I have some bearance of functionality in the crate I’ll be releasing it under the MIT license.</p>
+
+<p>If you’re interested in helping out with this implementation please let me know. I’d be happy to include you in the private Github repository. I am currently working on it as part of a course project, but can accept contributions so long as I maintain a log of my work.</p>
+
+<p><strong>Discussion of this post was on <a href="https://www.reddit.com/r/rust/comments/2tncd1/raft_so_far_first_steps_into_implementation_in/">Reddit</a>.</strong></p>
+
+    </article>
+
+    <aside class="post-meta">
+  
+    Posted on
+    <time datetime="2015-01-25T00:00:00-08:00">25 Jan 2015</time>
+  
+
+  
+    
+      
+        , into
+        
+        <span><a href="/tags/#raft">Raft</a></span>
+      
+    
+      
+        
+             and
+        
+        <span><a href="/tags/#rust">Rust</a></span>
+      
+    .
+  
+
+  
+</aside>
+
+</main>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>

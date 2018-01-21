@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>OpenWRT QoS</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/cover.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="OpenWRT QoS">
+    
+    
+        <meta name="twitter:description" content="&lt;p&gt;Using the setup from my &lt;a href=&quot;/2014/11/23/openwrt-in-virtualbox/&quot;&gt;last&lt;/a&gt; &lt;a href=&quot;/2014/12/03/vagrant-clients-for-openwrt-vms/&quot;&gt;two&lt;/a&gt; posts, let’s play with some QoS parameters and observe the results.&lt;/p&gt;
+
+">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/cover.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">OpenWRT QoS</a></h1>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main>
+    <article>
+        <p>Using the setup from my <a href="/2014/11/23/openwrt-in-virtualbox/">last</a> <a href="/2014/12/03/vagrant-clients-for-openwrt-vms/">two</a> posts, let’s play with some QoS parameters and observe the results.</p>
+
+<blockquote>
+  <p>The <a href="http://wiki.openwrt.org/doc/uci/qos">documentation</a> for OpenWRT’s QoS is rather lacking, please feel encouraged to improve it as you go!</p>
+</blockquote>
+
+<h2 id="prerequisites">Prerequisites</h2>
+
+<p>Documented <a href="http://wiki.openwrt.org/doc/uci/qos">here</a>, the <code class="highlighter-rouge">qos-scripts</code> package offers a simple configuration that integrates well with the rest of OpenWRT’s UCI (Unified Configuration Interface).</p>
+
+<p>On the router:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>opkg install qos-scripts
+</code></pre></div></div>
+
+<p>As an added side benefit, <code class="highlighter-rouge">qos-scripts</code> will pull in several dependencies that can be used to further tune our QoS.</p>
+
+<h2 id="overview">Overview</h2>
+
+<p>You can look into <code class="highlighter-rouge">/etc/config/qos</code> to see the default configuration.</p>
+
+<p>You’ll see several <code class="highlighter-rouge">config</code> block types. Let’s take a look at samples.</p>
+
+<h3 id="interfaces">Interfaces</h3>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>config interface wan
+    option classgroup  "Default"
+    option enabled      0
+    option upload       128
+    option download     1024
+</code></pre></div></div>
+
+<p>This is an <strong>interface</strong> definition for <code class="highlighter-rouge">wan</code>. <code class="highlighter-rouge">wan</code> is defined in <code class="highlighter-rouge">/etc/config/network</code>.</p>
+
+<ul>
+  <li><code class="highlighter-rouge">option classgroup "Default"</code> defines that we’ll use the classes defined in the <code class="highlighter-rouge">config classgroup "Default"</code> block also in the configuration file.</li>
+  <li><code class="highlighter-rouge">option enabled 0</code> defines that QoS is currently <strong>not</strong> enabled for the <code class="highlighter-rouge">wan</code> interface. Meaning this configuration currently doesn’t do anything. If it’s value was <code class="highlighter-rouge">1</code> it would be enabled.</li>
+  <li><code class="highlighter-rouge">option upload 128</code> defines that this interface should only be able to upload at a rate of <code class="highlighter-rouge">128</code> kilobits/second. (Only for TCP)</li>
+  <li><code class="highlighter-rouge">option download 1024</code> defines that this interface should only be able to download at a rate of <code class="highlighter-rouge">1024</code> kilobits/second.</li>
+</ul>
+
+<h3 id="rules">Rules</h3>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>config classify
+    option target       "Priority"
+    option ports        "22,53"
+    option comment      "ssh, dns"
+config classify
+    option target       "Normal"
+    option proto        "tcp"
+    option ports        "20,21,25,80,110,443,993,995"
+    option comment      "ftp, smtp, http(s), imap"
+config reclassify
+    option target       "Priority"
+    option proto        "icmp"
+config default
+    option target       "Bulk"
+    option portrange    "1024-65535"
+</code></pre></div></div>
+
+<p><code class="highlighter-rouge">classify</code> blocks are an <em>initial, connection-tracked classification</em>. They are only run on connections which have not been assigned a traffic class already.</p>
+
+<p><code class="highlighter-rouge">reclassify</code> blocks can <em>override</em> the class on a <em>per packet</em> basis without altering the connection’s classification.</p>
+
+<p><code class="highlighter-rouge">default</code> blocks are fallbacks for everything that has not been marked by a <code class="highlighter-rouge">classify</code> or <code class="highlighter-rouge">reclassify</code>.</p>
+
+<ul>
+  <li><code class="highlighter-rouge">option target "Priority"</code> means that any connections or packets under this block are placed in the specified class (in the interface’s <code class="highlighter-rouge">classgroup</code>).</li>
+  <li><code class="highlighter-rouge">option ports "22,53"</code> means that this classifier will only work for connections on port 22 and 53.</li>
+  <li><code class="highlighter-rouge">option comment "ssh,dns"</code> is a comment about the purpose of the classifier.</li>
+  <li><code class="highlighter-rouge">option proto "tcp"</code> defines the protocol (<code class="highlighter-rouge">tcp</code>, <code class="highlighter-rouge">udp</code>, <code class="highlighter-rouge">icmp</code>, etc) that this classifier matches.</li>
+  <li><code class="highlighter-rouge">option pktsize "-500"</code> allows us to define a packetsize to match.</li>
+</ul>
+
+<p>If you’re wondering, the <code class="highlighter-rouge">-</code> in <code class="highlighter-rouge">-500</code> operates <em>I think</em>, on the definition of the corresponding <code class="highlighter-rouge">class</code>.</p>
+
+<h2 id="classgroups">Classgroups</h2>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>config classgroup "Default"
+	option classes      "Priority Express Normal Bulk"
+    option default      "Normal"
+</code></pre></div></div>
+
+<p><code class="highlighter-rouge">classgroup</code> blocks are used to define different class groupings. This is only really useful if you wish to have multiple interfaces with different class considerations, for example, you might want <code class="highlighter-rouge">eth1</code> to have an <code class="highlighter-rouge">ultrapriority</code> class or something.</p>
+
+<h3 id="classes">Classes</h3>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>config class "Priority"
+    option packetsize  400
+    option avgrate     10
+    option priority    20
+config class "Express"
+    option packetsize  1000
+    option avgrate     50
+    option priority    10
+config class "Normal"
+    option packetsize  1500
+    option packetdelay 100
+    option avgrate     10
+    option priority    5
+config class "Bulk"
+    option avgrate     1
+    option packetdelay 200
+</code></pre></div></div>
+
+<p><code class="highlighter-rouge">class</code> blocks are used to define packet classes. Each class is placed inside of a seperate <a href="https://en.wikipedia.org/wiki/Leaky_bucket">bucket</a>.</p>
+
+<ul>
+  <li><code class="highlighter-rouge">option packetsize 400</code> defines the size of packets within the bucket.</li>
+  <li><code class="highlighter-rouge">option maxsize 1000</code> defines the maximum size of the bucket. <em>(Probably, this isn’t specified.)</em></li>
+  <li><code class="highlighter-rouge">option packetdelay 100</code> defines the delay of the packet, in ms.</li>
+  <li><code class="highlighter-rouge">option avgrate 50</code> defines <em>some undocumented</em> parameter in %.</li>
+  <li><code class="highlighter-rouge">option priority 20</code> is a percentile value specifying the bucket’s priority.</li>
+</ul>
+
+<h1 id="initial-configuration">Initial Configuration</h1>
+
+<p>As a reminder, here is the configuration of our setup.</p>
+
+<p><img src="/assets/images/2014/12/diagram.jpg" alt="Our setup." /></p>
+
+<p>First, we need to pull in <code class="highlighter-rouge">xt_connmark</code>, which is a depedency for some features of <code class="highlighter-rouge">qos-scripts</code>:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>modprobe xt_connmark
+</code></pre></div></div>
+
+<p>Then, in <code class="highlighter-rouge">/etc/config/qos</code> replace the <code class="highlighter-rouge">wan</code> interface with our various defined interfaces with some modest and determinable differences to test that it works.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code># INTERFACES:
+# Fast client.
+config interface lan1
+        option classgroup  "Default"
+        option enabled      1
+        option upload       256
+        option download     2048
+# Slow client. (1/2 speed)
+config interface lan2
+        option classgroup  "Default"
+        option enabled      1
+        option upload       128
+        option download     1024
+# The Host. (Big pipes)
+config interface lan3
+        option classgroup  "Default"
+        option enabled      1
+        option upload       4096
+        option download     4096
+</code></pre></div></div>
+
+<p>To enable QoS and start it:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/etc/init.d/qos enable
+/etc/init.d/qos start
+</code></pre></div></div>
+
+<p>Later, to restart it:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/etc/init.d/qos restart
+</code></pre></div></div>
+
+<h4 id="aside-an-resolved-issue">Aside: An Resolved Issue</h4>
+
+<blockquote>
+  <p>When I attempted to use the <code class="highlighter-rouge">pktsize</code> option in a classifier I recieved yet unresolved errors.</p>
+</blockquote>
+
+<p>The error was:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>iptables: No chain/target/match by that name.
+</code></pre></div></div>
+
+<p>Inspecting the generated config:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/usr/lib/qos/generate.sh all
+</code></pre></div></div>
+
+<p>See the script executed along with output (for diagnosing errors):</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/usr/lib/qos/generate.sh all | sh -x
+</code></pre></div></div>
+
+<p>Resulted in:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code># ...
++ iptables -t mangle -A qos_Default -m mark --mark 0/0xf0 -p udp -m length --length 500 -j MARK --set-mark 34/0xff
+iptables: No chain/target/match by that name.
+# ...
+</code></pre></div></div>
+
+<p>I was only able to resolve this by removing the use of <code class="highlighter-rouge">pktsize</code> in classifiers then restarting the service.</p>
+
+<h2 id="testing-it">Testing It</h2>
+
+<p>Open up a terminal to use <code class="highlighter-rouge">vagrant ssh test1</code> and <code class="highlighter-rouge">test2</code> then, run the following command at approximately the same time (remember to sub in <code class="highlighter-rouge">$TEST3IP</code>):</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>wget $TEST3IP/video.mp4
+</code></pre></div></div>
+
+<p>You should see something like the following:</p>
+
+<p><img src="/assets/images/2014/12/in-action-1.png" alt="In action." /></p>
+
+<p>Feel free to cancel them at any time. We only care about the rate right now.</p>
+
+<p>As you can see, <code class="highlighter-rouge">test1</code> recieved approximately twice the bandwidth of <code class="highlighter-rouge">test2</code>. Perfect, that’s exactly what we wanted.</p>
+
+<blockquote>
+  <p>Things will not always be exact as there are protocol overheads and other factors in our simulation.</p>
+</blockquote>
+
+<p>Before going on to more complicated experiments you may want to ensure that the rates are more fair.</p>
+
+<h1 id="experimentation">Experimentation</h1>
+
+<p>With our QoS system in place, what kind of experiments can we do to the network?</p>
+
+<h2 id="favoring-ports">Favoring Ports</h2>
+
+<p>Looking over the default configuration you can see the following config block:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>config classify
+    option target       "Priority"
+    option ports        "22,53"
+    option comment      "ssh, dns"
+</code></pre></div></div>
+
+<p>Which match to the following class:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>config class "Priority"
+    option packetsize  400
+    option avgrate     10
+    option priority    20
+</code></pre></div></div>
+
+<p>This suggests that all traffic over port 22 (The standard <code class="highlighter-rouge">ssh</code> default) will prioritized as it has the highest priority in the default configuration.</p>
+
+<p>But what if you don’t use port 22 for <code class="highlighter-rouge">ssh</code>? Then this is a silly rule.  You can easily just remap the ports option to <code class="highlighter-rouge">"2222,53"</code> or something else.</p>
+
+<h2 id="limiting-a-class-rate">Limiting a Class Rate</h2>
+
+<p>Say we’d like to gaurentee that one class of packets can only take up so much of the total limit of the connection.</p>
+
+<p>First, lets get our <code class="highlighter-rouge">test3</code> VM serving off multiple ports so we can classify them differently.</p>
+
+<p>In <code class="highlighter-rouge">/etc/nginx/nginx.conf</code> modify your listen block:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    server {
+      listen       80 default_server;
+      listen       8080; # Add this.
+      server_name  localhost;
+      root /vagrant;
+      # ...
+</code></pre></div></div>
+
+<p>Then run <code class="highlighter-rouge">sudo systemctl restart nginx</code>.</p>
+
+<p>Back on the router, edit <code class="highlighter-rouge">/etc/config/qos</code> to add two new blocks, a <code class="highlighter-rouge">classify</code> block and a <code class="highlighter-rouge">class</code> block. Also make sure that your <code class="highlighter-rouge">lan1</code> and <code class="highlighter-rouge">lan2</code> interfaces have the same upload and download so we can use them to test.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>config classify
+	option target  "httpdev"
+    option ports   "8080"
+    option comment "httpdev"
+config class "httpdev"
+	option packetsize  1500
+    option packetdelay 100
+    option limitrate   10
+    option priority    5
+</code></pre></div></div>
+
+<p>Then in the <code class="highlighter-rouge">classroup "Default"</code> add <code class="highlighter-rouge">httpdev</code> to the classes.</p>
+
+<p>Finally, restart the QoS:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/etc/init.d/qos reload
+</code></pre></div></div>
+
+<p>Then get <code class="highlighter-rouge">test1</code> to download from port 80, and <code class="highlighter-rouge">test2</code> to download from port 8080.</p>
+
+<p><img src="/assets/images/2014/12/httpdev.png" alt="httpdev" /></p>
+
+<p>Attempting to download on port 8080 only resulted in recieving 10% of the available bandwidth, where on port 80 it was able to use the entire link.</p>
+
+<h2 id="priorities">Priorities</h2>
+
+<p>Instead of placing a hard limit on the rate a class can achieve, let’s instead change the priority it recieves.</p>
+
+<p>On the router, edit <code class="highlighter-rouge">/etc/config/qos</code>, change the <code class="highlighter-rouge">Normal</code> class to have a <code class="highlighter-rouge">50</code> priority, while leaving <code class="highlighter-rouge">httpdev</code> on <code class="highlighter-rouge">5</code>.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>config class "Normal"
+    option packetsize  1500
+    option packetdelay 100
+    option avgrate     10
+    option priority    50
+</code></pre></div></div>
+
+<p>Then issue <code class="highlighter-rouge">/etc/init.d/qos reload</code>. To test this, <strong>on one of the <code class="highlighter-rouge">test1</code> or <code class="highlighter-rouge">test2</code></strong> open two connections and attempt to download from both ports.</p>
+
+<p><img src="/assets/images/2014/12/priorities.png" alt="Priorities." /></p>
+
+<p>Here I ran two tests, one with downloads on different ports, one with them on the same. Notice how the <code class="highlighter-rouge">8080</code> download is much slower while there is a download on port <code class="highlighter-rouge">80</code> happening, but while both at on port <code class="highlighter-rouge">80</code> they’re nearly the same <em>(except that I couldn’t stop both at the same time so the second one I stopped was reading higher then before, they were both in the teens).</em></p>
+
+<p>A lone download on port <code class="highlighter-rouge">8080</code> (and thus of the <code class="highlighter-rouge">httpdev</code> class) would still be fast if there is no other traffic in the <code class="highlighter-rouge">normal</code> class, though.</p>
+
+<h1 id="further-configuration">Further Configuration</h1>
+
+<p>While <code class="highlighter-rouge">qos-scripts</code> provides many simplier facilities for configuring Quality-of-Service in OpenWRT, it is certainly not the be all, end all.</p>
+
+<p>You can also take a much more low-level and fine grained control of how things behave using standard Linux tools. After all, everything in <code class="highlighter-rouge">qos-scripts</code> is built off <code class="highlighter-rouge">iptables</code>, <code class="highlighter-rouge">tc</code>, and other standard tools.</p>
+
+<p>Here are some links to explore further:</p>
+
+<ul>
+  <li><a href="http://wiki.openwrt.org/doc/howto/packet.scheduler/packet.scheduler">Network Traffic Control</a> - Configuring your kernel scheduler.</li>
+  <li><a href="http://wiki.openwrt.org/doc/howto/netfilter">Netfilter</a> - Configuring <code class="highlighter-rouge">iptables</code> and other things.</li>
+  <li><a href="http://wiki.openwrt.org/doc/howto/bwmon">Bandwidth Monitoring</a> - Keeping tabs on things.</li>
+</ul>
+
+<p><em>A special thanks to the Bergens Banen train for our test material. The cover image of this article is from the video.</em></p>
+
+    </article>
+
+    <aside class="post-meta">
+  
+    Posted on
+    <time datetime="2014-12-06T00:00:00-08:00">06 Dec 2014</time>
+  
+
+  
+    
+      
+        , into
+        
+        <span><a href="/tags/#tutorials">Tutorials</a></span>
+      
+    
+      
+        
+             and
+        
+        <span><a href="/tags/#openwrt">OpenWRT</a></span>
+      
+    .
+  
+
+  
+</aside>
+
+</main>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>

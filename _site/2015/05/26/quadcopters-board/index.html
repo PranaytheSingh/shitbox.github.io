@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>Quadcopters: The Board</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/cover.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="Quadcopters: The Board">
+    
+    
+        <meta name="twitter:description" content="&lt;p&gt;This post is less about the mechanics of the quadcopter and more to satisfy those curious about what exactly is on the board.&lt;/p&gt;
+
+">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/cover.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">Quadcopters: The Board</a></h1>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main>
+    <article>
+        <p>This post is less about the mechanics of the quadcopter and more to satisfy those curious about what exactly is on the board.</p>
+
+<p>Here are links to the schematics and component placements:</p>
+
+<ul>
+  <li><a href="https://wiki.bitcraze.io/_media/projects:crazyflie2:hardware:crazyflie_2.0_rev.c_component_placement_top.pdf">Component Placement - Top</a></li>
+  <li><a href="https://wiki.bitcraze.io/_media/projects:crazyflie2:hardware:crazyflie_2.0_rev.c_component_placement_bottom.pdf">Component Placement - bottom</a></li>
+  <li><a href="https://wiki.bitcraze.io/_media/projects:crazyflie2:hardware:crazyflie_2.0_rev.c_schematics.pdf">Schematics</a></li>
+</ul>
+
+<p>On the pictures below we’ll use the <strong>schematic symbols</strong> as they are shortest.</p>
+
+<h1 id="top-side">Top Side</h1>
+
+<p><img src="/assets/images/2015/05/image4144.jpg" alt="Labelled Top" /></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>On-Board</th>
+      <th>Schematic</th>
+      <th>Part</th>
+      <th>Purpose</th>
+    </tr>
+  </thead>
+  <tbody>
+	<tr>
+      <td>MP92 X752D1</td>
+      <td>U9</td>
+      <td>MPU-9250</td>
+      <td>3 Axis Accelerometer, Gyroscope, &amp; Magnometer</td>
+    </tr>
+  	<tr>
+   	  <td>A7RRYG</td>
+      <td>U3</td>
+      <td>NCP702SN30</td>
+      <td>Voltage Regulator &amp; Power Supply</td>
+    </tr>
+  	<tr>
+      <td>CDU TI08W</td>
+      <td>U4</td>
+      <td>BQ24075</td>
+      <td>Battery Charger</td>
+    </tr>
+    <tr>
+      <td>NS1822 QFAAG3 1440BE</td>
+      <td>U6</td>
+      <td>NRF51822</td>
+      <td>System-on-a-Chip (Transceiver/Bluetooth)</td>
+    </tr>
+    <tr>
+    	<td>6360 T 4Y03</td>
+        <td>X3</td>
+        <td>N/A</td>
+        <td>16Mhz Quartz Crystal</td>
+    </tr>
+    <tr>
+      <td>RF AXIS X2401C UB1248</td>
+      <td>U8</td>
+      <td>RFX2401C</td>
+      <td>2.4Ghz Zigbee Transceiver</td>
+    &lt;/td&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+# Bottom Side #
+
+![Labelled Bottom](/assets/images/2015/05/labelled_bottom.png)
+
+<table>
+  <thead>
+    <tr>
+      <th>On-Board</th>
+      <th>Schematic</th>
+      <th>Part</th>
+      <th>Purpose</th>
+    </tr>
+  </thead>
+  <tbody>
+	<tr>
+      <td>STM32F405</td>
+      <td>U2</td>
+      <td>STM32F405RG</td>
+      <td>System-on-a-Chip</td>
+    </tr>
+	<tr>
+      <td>N/A</td>
+      <td>U1</td>
+      <td>24AA64FT-E/OT</td>
+      <td>64K EEPROM</td>
+    </tr>
+    <tr>
+      <td>N/A</td>
+      <td>U10</td>
+      <td>LPS25H</td>
+      <td>Pressure Sensor</td>
+    </tr>
+    <tr>
+      <td>LRAG</td>
+      <td>U5</td>
+      <td>LP2985</td>
+      <td>Regulator</td>
+    </tr>
+  </tbody>
+</table>
+</tr></tbody></table>
+
+    </article>
+
+    <aside class="post-meta">
+  
+    Posted on
+    <time datetime="2015-05-26T00:00:00-07:00">26 May 2015</time>
+  
+
+  
+    
+      
+        , into
+        
+        <span><a href="/tags/#quadcopters">Quadcopters</a></span>
+      
+    .
+  
+
+  
+</aside>
+
+</main>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>

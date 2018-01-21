@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>A Ghost OpenRC Script</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/cover.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="A Ghost OpenRC Script">
+    
+    
+        <meta name="twitter:description" content="&lt;p&gt;Whipped up an OpenRC script for &lt;a href=&quot;https://ghost.org/&quot;&gt;Ghost&lt;/a&gt;. Feel free to use it for yourself.&lt;/p&gt;
+
+">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/cover.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">A Ghost OpenRC Script</a></h1>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main>
+    <article>
+        <p>Whipped up an OpenRC script for <a href="https://ghost.org/">Ghost</a>. Feel free to use it for yourself.</p>
+
+<p>Things to be aware of:</p>
+
+<ul>
+  <li>The script was designed for <a href="http://www.funtoo.org/Welcome">Funtoo</a>.</li>
+  <li>The script expects Ghost to be in <code class="highlighter-rouge">$GHOST_ROOT</code>.</li>
+  <li>The script runs Ghost as <code class="highlighter-rouge">$GHOST_USER:$GHOST_GROUP</code>.</li>
+  <li>The script exports the <code class="highlighter-rouge">$NODE_ENV</code> to <code class="highlighter-rouge">production</code>.</li>
+</ul>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">#!/sbin/runscript</span>
+
+<span class="c"># PATH should only include /usr/* if it runs after the mountnfs.sh script</span>
+<span class="nv">PATH</span><span class="o">=</span>/sbin:/usr/sbin:/bin:/usr/bin
+<span class="nv">DESC</span><span class="o">=</span><span class="s2">"Ghost"</span>
+<span class="nv">NAME</span><span class="o">=</span>ghost
+<span class="nv">GHOST_ROOT</span><span class="o">=</span>/var/ghost
+<span class="nv">GHOST_GROUP</span><span class="o">=</span>ghost
+<span class="nv">GHOST_USER</span><span class="o">=</span>ghost
+<span class="nv">DAEMON</span><span class="o">=</span>/usr/bin/node
+<span class="nv">DAEMON_ARGS</span><span class="o">=</span><span class="s2">"</span><span class="nv">$GHOST_ROOT</span><span class="s2">/index.js"</span>
+<span class="nv">PIDFILE</span><span class="o">=</span>/var/run/<span class="nv">$NAME</span>.pid
+<span class="nv">SCRIPTNAME</span><span class="o">=</span>/etc/init.d/<span class="nv">$NAME</span>
+<span class="nb">export </span><span class="nv">NODE_ENV</span><span class="o">=</span>production
+<span class="nb">source</span> /lib64/rc/sh/functions.sh
+
+depend<span class="o">()</span> <span class="o">{</span>
+  use logger dns
+  need net
+<span class="o">}</span>
+
+start<span class="o">()</span> <span class="o">{</span>
+  ebegin <span class="s2">"Starting </span><span class="k">${</span><span class="nv">DESC</span><span class="k">}</span><span class="s2">"</span>
+  start-stop-daemon <span class="nt">--start</span> <span class="nt">--quiet</span>   <span class="se">\</span>
+    <span class="nt">--user</span> <span class="nv">$GHOST_USER</span>:<span class="nv">$GHOST_GROUP</span>   <span class="se">\</span>
+    <span class="nt">--chdir</span> <span class="nv">$GHOST_ROOT</span> <span class="nt">--background</span>  <span class="se">\</span>
+    <span class="nt">--make-pidfile</span> <span class="nt">--pidfile</span> <span class="nv">$PIDFILE</span> <span class="se">\</span>
+    <span class="nt">--exec</span> <span class="nv">$DAEMON</span> <span class="nt">--</span> <span class="nv">$DAEMON_ARGS</span>
+  eend <span class="nv">$?</span>
+<span class="o">}</span>
+
+stop<span class="o">()</span> <span class="o">{</span>
+  ebegin <span class="s2">"Stopping </span><span class="k">${</span><span class="nv">DESC</span><span class="k">}</span><span class="s2">"</span>
+  start-stop-daemon <span class="nt">--stop</span> <span class="nt">--quiet</span>     <span class="se">\</span>
+  	<span class="nt">--retry</span><span class="o">=</span>TERM/30/KILL/5 <span class="nt">--pidfile</span> <span class="se">\</span>
+    <span class="nv">$PIDFILE</span> <span class="nt">--exec</span> <span class="nv">$DAEMON</span>
+  eend <span class="nv">$?</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+    </article>
+
+    <aside class="post-meta">
+  
+    Posted on
+    <time datetime="2014-11-02T00:00:00-07:00">02 Nov 2014</time>
+  
+
+  
+    
+      
+        , into
+        
+        <span><a href="/tags/#tutorials">Tutorials</a></span>
+      
+    .
+  
+
+  
+</aside>
+
+</main>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>

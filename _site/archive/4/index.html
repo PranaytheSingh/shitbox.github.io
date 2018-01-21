@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>ShitBox</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/cover.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="http://0.0.0.0:4000">
+    
+    
+        <meta name="twitter:description" content="Exploring, fascinating and amusing">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/cover.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">ShitBox</a></h1>
+      <p class="description">Exploring, fascinating and amusing</p>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main id="index">
+    
+          <h2><a href="/2015/06/04/quadcopters-sensors/">Quadcopters: Sensors</a></h2>
+          <section class="excerpt">
+              <p>Most intelligent devices existing in the physical world, a quadcopter included, take input from sensors and act on them in some way, possibly producing an output. Some sensors are digital, like a button or switch, and can be read via a digitalRead() on an Arduino, returning either HIGH or LOW. Other sensors are analog and can return anything in the range of 0-1023. These are things like potentiometers, force sensors, light sensors, and temperature sensors. Finally, some sensors use Inter-integrated Circuit (I2C) or Serial Peripheral Interface (SPI) to interface. Typically these are found on more complicated chips like gyroscopes and...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="04 June 2015">04 June 2015</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#quadcopters">Quadcopters</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2015/06/02/arduino-motor-fun/">Arduino: Motor Fun!</a></h2>
+          <section class="excerpt">
+              <p>Lately we’ve been playing with Quadcopters a lot, one of the key components of any copter is it’s motors! I’ll be writing about motors next, but before that I wanted to share some small, short Arduino ‘labs’ that you can do either on your own or with your cohort! All of these ‘labs’ are as inexpensive as we could manage in terms of parts, with the exception of the Arduino. You’re welcome to print, distribute, and modify all of these to meet your needs. You can email me if you’d like the source files. We use Fritzing for breadboard layouts....</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="02 June 2015">02 June 2015</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#quadcopters">Quadcopters</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2015/05/27/quadcopters-yaw/">Quadcopters: Yaw</a></h2>
+          <section class="excerpt">
+              <p>So, in our earlier article we talked about Yaw a little but, but we didn’t get into details. First, let’s take a look at what yaw looks like under simple circumstances, then we’ll explain the motion. Notice how two propellers come to a stop when yawing? Understanding Torque Let’s first talk about Center of Gravity, have you ever tried to balance an object on the tip of your finger? That’s a center of gravity! Fun Fact: Your center of gravity is your belly button! The quads is, predictably, near its center. Torque () is a twisting force, you use it...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="27 May 2015">27 May 2015</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#quadcopters">Quadcopters</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2015/05/26/quadcopters-board/">Quadcopters: The Board</a></h2>
+          <section class="excerpt">
+              <p>This post is less about the mechanics of the quadcopter and more to satisfy those curious about what exactly is on the board. Here are links to the schematics and component placements: Component Placement - Top Component Placement - bottom Schematics On the pictures below we’ll use the schematic symbols as they are shortest. Top Side On-Board Schematic Part Purpose MP92 X752D1 U9 MPU-9250 3 Axis Accelerometer, Gyroscope, &amp; Magnometer A7RRYG U3 NCP702SN30 Voltage Regulator &amp; Power Supply CDU TI08W U4 BQ24075 Battery Charger NS1822 QFAAG3 1440BE U6 NRF51822 System-on-a-Chip (Transceiver/Bluetooth) 6360 T 4Y03 X3 N/A 16Mhz Quartz Crystal RF...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="26 May 2015">26 May 2015</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#quadcopters">Quadcopters</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2015/05/19/quadcopters-orientation/">Quadcopters: Orientation</a></h2>
+          <section class="excerpt">
+              <p>Spinnning tens of thousands times a second, four rotors cut through the air with their propellors. Their motion lifts them in unison, for they are connected together. In the center of the apparatus sits a bank of sensors, processors, and a radio acting in concert to control the great flow of air passing over it. Some ways away, perhaps near, perhaps far, its pilot watches over it. Whether by program or controller, they hold the fate of the airborne being in their hands. Quadcopters are fascinating marriages of physics, electronics, aviation, and computer science that have only become popular in...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="19 May 2015">19 May 2015</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#quadcopters">Quadcopters</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2015/05/02/a-journey-into-iterators/">A Journey into Iterators</a></h2>
+          <section class="excerpt">
+              <p>One of my favorite features of Rust is iterators. They are a fast, safe, ‘lazy’ way of working with data structures, streams, and other more creative applications. You can play along on http://play.rust-lang.org/ and by browsing here. This article is not a subtitute for the documentation or experience. Our First Iterator Having everything twice as much is great, right? Let’s take a set of values and double it! fn main() { // First, we get a set of values. let input = [1, 2, 3]; // Create an iterator over them. let iterator = input.iter(); // Specify things to do...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="02 May 2015">02 May 2015</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#rust">Rust</a></span>
+                
+              
+                
+                  
+                       and
+                  
+                  <span><a href="/tags/#tutorials">Tutorials</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2015/04/23/reflections-on-a-quarter-century/">Reflections on a Quarter Century</a></h2>
+          <section class="excerpt">
+              <p>Twenty five years is a fairly long time, it turns out. Stepping over the boundary for another year of life brings tends to bring about it a whirl of emotions, at least temporarily. Simultaneously the past, present, and future being about a poignant picture. I find myself deeply in such a situation, and I have been for a couple months now. I’ve taken time to reflect on what has happened, what is happening, and what is to come. A few things seemed worth sharing. They may not be relevant to your situation, be the best advice, or make sense to...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="23 April 2015">23 April 2015</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#personal">Personal</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2015/04/10/photoghaphy-last-decade/">Photography from Last Decade</a></h2>
+          <section class="excerpt">
+              <p>I did a fair amount of photography and digital imaging in high school. Please, enjoy.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="10 April 2015">10 April 2015</time>
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2015/04/08/raft-the-next-generation-3/">Raft: Status Update</a></h2>
+          <section class="excerpt">
+              <p>In order to celebrate the new beta release of Rust, and as part of reporting requirements for my class, I’m happy to write to you regarding hoverbear/raft! A Recap In January, 2015, a undergraduate (me) at the University of Victoria set out on a quest to implement the Raft Consensus Algorithm in Rust, an experimental language in shepherded by Mozilla Research. If you don’t know what Raft is, please take a look at the secret lives of data. If you don’t know what Rust is, please feel encouraged to follow along at the intro. Back in february I had a...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="08 April 2015">08 April 2015</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#raft">Raft</a></span>
+                
+              
+                
+                  
+                       and
+                  
+                  <span><a href="/tags/#rust">Rust</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2015/03/14/gathering-our-voices-2015/">Gathering Our Voices 2015</a></h2>
+          <section class="excerpt">
+              <p>Over the past two years I helped the BC Association of Aboriginal Friendship Centres host Gathering Our Voices, the largest annual Youth Conference in BC. This year, I helped out again! I also teamed up with Science Venture again to host 4 workshops! Saturday: Travel Unlike the last two years, we flew, and much of our supplies were shipped up weeks beforehand. Our flight went smoothly despite some high winds while headed towards Prince George. Here’s my favorite photo from the flight: Sunday: Preparation We worked with some of our awesome volunteers to put together some things that will be...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="14 March 2015">14 March 2015</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#bcaafc">BCAAFC</a></span>
+                
+              
+                
+                  
+                       and
+                  
+                  <span><a href="/tags/#events">Events</a></span>
+                
+              .
+          </div>
+        
+    
+</main>
+
+<hr>
+
+<nav id="pagination">
+    
+        <a href="/archive/5/">&larr; Older posts</a>
+    
+    <span class="page-number">Page 4 of 7</span>
+    
+        
+            <a href="/archive/3/">Newer posts &rarr;</a>
+        
+    
+</nav>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>

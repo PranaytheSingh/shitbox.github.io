@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>Arch Linux on Docker Revisited</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/2016/01/construction.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="Arch Linux on Docker Revisited">
+    
+    
+        <meta name="twitter:description" content="&lt;p&gt;Back in &lt;a href=&quot;/2014/07/14/arch-docker-baseimage/&quot;&gt;2014&lt;/a&gt; when I was learning about &lt;a href=&quot;https://docker.com&quot;&gt;Docker&lt;/a&gt; I got around to making a base image for &lt;a href=&quot;http://archlinux.org/&quot;&gt;Arch Linux&lt;/a&gt;. It was a really fun exploration and I got to know a lot more about how Docker worked from it. I’d highly suggest trying to make your own sometime!&lt;/p&gt;
+
+">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/2016/01/construction.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">Arch Linux on Docker Revisited</a></h1>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main>
+    <article>
+        <p>Back in <a href="/2014/07/14/arch-docker-baseimage/">2014</a> when I was learning about <a href="https://docker.com">Docker</a> I got around to making a base image for <a href="http://archlinux.org/">Arch Linux</a>. It was a really fun exploration and I got to know a lot more about how Docker worked from it. I’d highly suggest trying to make your own sometime!</p>
+
+<p>Docker has matured a lot since, and I’ve enjoyed following it. I took some time this last week to revisit my Arch Linux image and ensure it’s still functional. I wasn’t surprised when the scripts continued to work just fine, even after two years.</p>
+
+<p>With nothing broken, I knew I only had one choice. <strong>I had to improve it!</strong></p>
+
+<blockquote>
+  <p>Want to get started? See it on the hub <a href="https://hub.docker.com/r/hoverbear/archlinux/">here</a>, Github <a href="https://github.com/Hoverbear/docker-archlinux">here</a>, or pull it down with <code class="highlighter-rouge">docker run --tty --interactive --rm hoverbear/archlinux /bin/bash</code> and play around.</p>
+</blockquote>
+
+<h2 id="improvements">Improvements</h2>
+
+<p>I spent most of my time working on having the <a href="http://travis-ci.org/">Travis-CI</a> service be able to build and deploy new versions in an automated fashion. This was primarily, for me, a trust thing. I don’t feel comfortable running containers I haven’t seen the build process for, and you shouldn’t either.</p>
+
+<p>While the Docker Hub has “Automated” builds there doesn’t seem to be much of a solution for having trusted base images, only images built via a <code class="highlighter-rouge">Dockerfile</code>. Perhaps there is a way to scheme and subvert this via the <code class="highlighter-rouge">scratch</code> image but I did not find this avenue enjoyable.</p>
+
+<p>Thankfully, Travis did this job stellarly after a few hiccups. The biggest problem was that Travis runs a version of Ubuntu LTS and the <em>normal</em> Arch install process assumes it’s happening on a relatively recent Linux, if not Arch itself.</p>
+
+<p>I got around this problem in a slightly dirty way and pinned recent versions of the necessary packages, then upgraded the host into a (slightly terrifying) abomination. I’d like to find a cleaner way of doing this, possibly from inside of a <code class="highlighter-rouge">docker</code> container like in the <code class="highlighter-rouge">Makefile</code>.</p>
+
+<h2 id="playing-around">Playing Around</h2>
+
+<p>What’s a good blog post without some fun examples?</p>
+
+<p><strong>Spawning 10 Arch containers in parallel and having them all pipe to the same file:</strong></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">for </span>i <span class="k">in</span> <span class="o">{</span>1..10<span class="o">}</span><span class="p">;</span> <span class="k">do</span> <span class="o">(</span>docker run <span class="nt">--rm</span> <span class="nt">-v</span> <span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/here hoverbear/archlinux /bin/bash <span class="nt">-c</span> <span class="s2">"echo </span><span class="nv">$i</span><span class="s2"> &gt;&gt; here/checkin"</span> &amp;<span class="o">)</span><span class="p">;</span> <span class="k">done</span>
+</code></pre></div></div>
+
+<p>A few seconds later:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span><span class="nb">cat </span>checkin
+6
+3
+4
+5
+1
+8
+10
+2
+7
+9
+</code></pre></div></div>
+
+<p><strong>Making an image to build your favorite Rust project:</strong></p>
+
+<div class="language-dockerfile highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">FROM</span><span class="s"> hoverbear/archlinux</span>
+<span class="k">MAINTAINER</span><span class="s"> Andrew Hobden &lt;andrew@hoverbear.org&gt;</span>
+
+<span class="c"># It's always a good idea to update Arch, then install deps.</span>
+<span class="k">RUN </span>pacman <span class="nt">-Syu</span>
+<span class="k">RUN </span>pacman <span class="nt">-S</span> git file awk gcc <span class="nt">--noconfirm</span>
+
+<span class="c"># Install Multirust</span>
+<span class="k">RUN </span>git clone <span class="nt">--recursive</span> https://github.com/brson/multirust
+<span class="k">WORKDIR</span><span class="s"> multirust</span>
+<span class="k">RUN </span>git submodule update <span class="nt">--init</span>
+<span class="k">RUN </span>./build.sh
+<span class="k">RUN </span>./install.sh
+
+<span class="k">RUN </span>multirust default <span class="s2">"nightly"</span>
+
+<span class="c"># /source - Should mount the user code.</span>
+<span class="k">VOLUME</span><span class="s"> [ "/source" ]</span>
+
+<span class="c"># Change the Workdir to /source</span>
+<span class="k">WORKDIR</span><span class="s"> /source</span>
+</code></pre></div></div>
+
+<p>Running it inside your favorite project folder:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker run <span class="nt">-t</span> <span class="nt">-i</span> <span class="nt">--rm</span><span class="o">=</span><span class="nb">true</span> <span class="nt">-v</span> <span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/source rust cargo build
+</code></pre></div></div>
+
+<p>You can even get this image <a href="https://hub.docker.com/r/hoverbear/rust/">here</a> if you’d like!</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>I hope you have a great time using this image and please let me know if there is any way I can make it better!</p>
+
+    </article>
+
+    <aside class="post-meta">
+  
+    Posted on
+    <time datetime="2016-01-13T00:00:00-08:00">13 Jan 2016</time>
+  
+
+  
+    
+      
+        , into
+        
+        <span><a href="/tags/#containers">Containers</a></span>
+      
+    
+      
+        
+             and
+        
+        <span><a href="/tags/#arch-linux">Arch Linux</a></span>
+      
+    .
+  
+
+  
+</aside>
+
+</main>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>

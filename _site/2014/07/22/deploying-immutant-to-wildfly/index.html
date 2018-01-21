@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>Deploying Immutant to Wildfly</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/cover.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="Deploying Immutant to Wildfly">
+    
+    
+        <meta name="twitter:description" content="&lt;p&gt;Currently, the &lt;a href=&quot;http://immutant.org/tutorials/wildfly/index.html&quot;&gt;tutorial on deploying to Wildfly with Immutant 2&lt;/a&gt; is not written. Furthermore,the JBoss documentation isn’t particularly tailored towards Clojure applications.&lt;/p&gt;
+
+">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/cover.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">Deploying Immutant to Wildfly</a></h1>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main>
+    <article>
+        <p>Currently, the <a href="http://immutant.org/tutorials/wildfly/index.html">tutorial on deploying to Wildfly with Immutant 2</a> is not written. Furthermore,the JBoss documentation isn’t particularly tailored towards Clojure applications.</p>
+
+<p>So, let’s take a look at how to do this using the convenient <a href="https://registry.hub.docker.com/u/jboss/">dockerfiles provided by the JBoss project</a>. We’ll use Docker to simplify deployment and setup of Wildfly, but instructions for a non-docker application should be similar.</p>
+
+<h3 id="create-a-basic-immutant-application">Create a basic Immutant application.</h3>
+<p>Starting from a <code class="highlighter-rouge">lein new app learning</code> command, set up your project like so:</p>
+
+<p><strong>project.clj</strong>:</p>
+
+<div class="language-clojure highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">(</span><span class="nf">defproject</span><span class="w"> </span><span class="n">learning</span><span class="w"> </span><span class="s">"0.1.0-SNAPSHOT"</span><span class="w">
+  </span><span class="no">:description</span><span class="w"> </span><span class="s">"FIXME: write description"</span><span class="w">
+  </span><span class="no">:url</span><span class="w"> </span><span class="s">"http://example.com/FIXME"</span><span class="w">
+  </span><span class="no">:license</span><span class="w"> </span><span class="p">{</span><span class="no">:name</span><span class="w"> </span><span class="s">"MPL"</span><span class="w">
+            </span><span class="no">:url</span><span class="w"> </span><span class="s">"http://choosealicense.com/licenses/mpl-2.0/"</span><span class="p">}</span><span class="w">
+  </span><span class="no">:dependencies</span><span class="w"> </span><span class="p">[[</span><span class="n">org.clojure/clojure</span><span class="w"> </span><span class="s">"1.6.0"</span><span class="p">]</span><span class="w">
+                 </span><span class="p">[</span><span class="n">org.immutant/immutant</span><span class="w"> </span><span class="s">"2.x.incremental.186"</span><span class="p">]</span><span class="w">
+                 </span><span class="p">[</span><span class="n">compojure</span><span class="w"> </span><span class="s">"1.1.8"</span><span class="p">]]</span><span class="w">
+  </span><span class="no">:repositories</span><span class="w"> </span><span class="p">[[</span><span class="s">"Immutant incremental builds"</span><span class="w">
+                  </span><span class="s">"http://downloads.immutant.org/incremental/"</span><span class="p">]]</span><span class="w">
+  </span><span class="no">:plugins</span><span class="w"> </span><span class="p">[[</span><span class="n">lein-immutant</span><span class="w"> </span><span class="s">"2.0.0-SNAPSHOT"</span><span class="p">]]</span><span class="w">
+  </span><span class="no">:ring</span><span class="w"> </span><span class="p">{</span><span class="no">:handler</span><span class="w"> </span><span class="n">learning.core/app</span><span class="p">}</span><span class="w">
+  </span><span class="no">:main</span><span class="w"> </span><span class="o">^</span><span class="no">:skip-aot</span><span class="w"> </span><span class="n">learning.core</span><span class="w">
+  </span><span class="no">:target-path</span><span class="w"> </span><span class="s">"target/%s"</span><span class="w">
+  </span><span class="no">:profiles</span><span class="w"> </span><span class="p">{</span><span class="no">:uberjar</span><span class="w"> </span><span class="p">{</span><span class="no">:aot</span><span class="w"> </span><span class="no">:all</span><span class="p">}})</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Note how <code class="highlighter-rouge">lein-immutant</code> is in the <code class="highlighter-rouge">:plugins</code> field. This will give us access to the <code class="highlighter-rouge">lein immutant &lt;command&gt;</code> commands.</p>
+
+<p><strong>src/learning/core.clj</strong>:</p>
+
+<div class="language-clojure highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">(</span><span class="nf">ns</span><span class="w"> </span><span class="n">learning.core</span><span class="w">
+  </span><span class="p">(</span><span class="no">:use</span><span class="w"> </span><span class="n">compojure.core</span><span class="p">)</span><span class="w">
+  </span><span class="p">(</span><span class="no">:require</span><span class="w"> </span><span class="p">[</span><span class="n">compojure.route</span><span class="w">    </span><span class="no">:as</span><span class="w"> </span><span class="n">route</span><span class="p">]</span><span class="w">
+            </span><span class="p">[</span><span class="n">immutant.web</span><span class="w">       </span><span class="no">:as</span><span class="w"> </span><span class="n">immutant</span><span class="p">])</span><span class="w">
+  </span><span class="p">(</span><span class="no">:gen-class</span><span class="p">))</span><span class="w">
+
+</span><span class="p">(</span><span class="k">defn</span><span class="w"> </span><span class="n">handler</span><span class="w">
+  </span><span class="s">"Comment"</span><span class="w">
+  </span><span class="p">[]</span><span class="w">
+  </span><span class="s">"&lt;h1&gt;Hello World&lt;/h1&gt;"</span><span class="p">)</span><span class="w">
+
+</span><span class="p">(</span><span class="nf">defroutes</span><span class="w"> </span><span class="n">app</span><span class="w">
+  </span><span class="s">"The router."</span><span class="w">
+  </span><span class="p">(</span><span class="nf">GET</span><span class="w"> </span><span class="s">"/learning/test"</span><span class="w"> </span><span class="p">[]</span><span class="w"> </span><span class="p">(</span><span class="nf">handler</span><span class="p">))</span><span class="w">
+  </span><span class="p">(</span><span class="nf">route/not-found</span><span class="w">
+       </span><span class="s">"&lt;h1&gt;Page not found&lt;/h1&gt;"</span><span class="p">))</span><span class="w">
+
+</span><span class="p">(</span><span class="k">defn</span><span class="w"> </span><span class="n">-main</span><span class="w">
+  </span><span class="s">"Start the server"</span><span class="w">
+  </span><span class="p">[</span><span class="o">&amp;</span><span class="w"> </span><span class="n">args</span><span class="p">]</span><span class="w">
+  </span><span class="p">(</span><span class="nf">immutant/run</span><span class="w"> </span><span class="n">app</span><span class="p">))</span><span class="w">
+</span></code></pre></div></div>
+
+<p>After speaking to the fine folks on the #immutant IRC channel on Freenode, we determined that Immutant seemed to have some issues with routing while running on JBoss. The route <code class="highlighter-rouge">/learning/test</code> <em>should</em> be just <code class="highlighter-rouge">/test</code> as far as I am able to tell, the problem will become apparent later.</p>
+
+<p><strong>Dockerfile</strong>:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>FROM jboss/wildfly
+RUN /opt/wildfly/bin/add-user.sh hoverbear hunter2 --silent
+ADD target/base+system+user+dev/learning.war /opt/wildfly/standalone/deployments/
+</code></pre></div></div>
+
+<h3 id="build-the-immutant-application">Build the Immutant Application</h3>
+
+<p>Wildfly seems to expect <code class="highlighter-rouge">.war</code> files for deployment. Thankfully Immutant provides this via the plugin declared in the <code class="highlighter-rouge">project.clj</code>.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>lein immutant war
+</code></pre></div></div>
+
+<p>The output should be similar to:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>➜ lein immutant war
+Compiling learning.core
+Created /home/hoverbear/learning/target/uberjar/learning-0.1.0-SNAPSHOT.jar
+Created /home/hoverbear/learning/target/uberjar/learning-0.1.0-SNAPSHOT-standalone.jar
+Creating /home/hoverbear/learning/target/base+system+user+dev/learning.war
+</code></pre></div></div>
+
+<p>Notice how the resulting <code class="highlighter-rouge">.war</code> file is the same which is ADDed by the <code class="highlighter-rouge">Dockerfile</code>.</p>
+
+<h3 id="building-the-docker-image">Building the Docker Image</h3>
+
+<p>Next, build the Docker image, make sure you’re in the project directory.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker build <span class="nt">-t</span> wildfly-learning <span class="nb">.</span>
+</code></pre></div></div>
+
+<p>If you haven’t pulled the <code class="highlighter-rouge">jboss/wildfly</code> base image before, this first command might take awhile. Future builds will be very fast as it won’t need to pull the base image.</p>
+
+<h3 id="running-the-container">Running the Container</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker run <span class="nt">-p</span> 8080:8080 <span class="nt">-p</span> 9990:9990 wildfly-learning
+</code></pre></div></div>
+
+<p>There should be a considerable log of output.</p>
+
+<h3 id="testing">Testing</h3>
+
+<p>From there, you should be able to visit <code class="highlighter-rouge">http://localhost:8080/learning/test</code> and see “Hello World” in bold text. Visiting any other <code class="highlighter-rouge">/learning/*</code> url should yield a bold “Page not found” with a smaller 404 error underneath. Visiting a URL like <code class="highlighter-rouge">/learn</code> will give a different 404 page.</p>
+
+<h3 id="visiting-the-wildfly-console">Visiting the Wildfly console</h3>
+
+<p>You should be able to visit <code class="highlighter-rouge">http://localhost:9990/console/App.html</code> and view the Wildfly admin interface, you might need to log in with details from the Dockerfile.</p>
+
+<p>Browsing to the “Runtime &gt; Manage Deployments” page will allow you to play with some settings.</p>
+
+<h3 id="notes">Notes</h3>
+<p>This is, obviously, not a production deployment.</p>
+
+    </article>
+
+    <aside class="post-meta">
+  
+    Posted on
+    <time datetime="2014-07-22T00:00:00-07:00">22 Jul 2014</time>
+  
+
+  
+    
+      
+        , into
+        
+        <span><a href="/tags/#uvic">UVic</a></span>
+      
+    
+      
+        
+             and
+        
+        <span><a href="/tags/#tutorials">Tutorials</a></span>
+      
+    .
+  
+
+  
+</aside>
+
+</main>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>

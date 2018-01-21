@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>Init - Runlevels and Targets</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/cover.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="Init - Runlevels and Targets">
+    
+    
+        <meta name="twitter:description" content="&lt;p&gt;In this post, we’ll look at how runlevels work in two major init systems, systemd and OpenRC. If you’re interested in trying out &lt;code class=&quot;highlighter-rouge&quot;&gt;systemd&lt;/code&gt;, I’d suggest using an &lt;a href=&quot;https://www.archlinux.org/download/&quot;&gt;Arch Linux Live ISO&lt;/a&gt;. For those interested in trying OpenRC, check out &lt;a href=&quot;http://www.funtoo.org/Funtoo_Linux_Installation&quot;&gt;Funtoo&lt;/a&gt;. Both of these will work great in your favorite virtualization solution.&lt;/p&gt;
+
+">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/cover.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">Init - Runlevels and Targets</a></h1>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main>
+    <article>
+        <p>In this post, we’ll look at how runlevels work in two major init systems, systemd and OpenRC. If you’re interested in trying out <code class="highlighter-rouge">systemd</code>, I’d suggest using an <a href="https://www.archlinux.org/download/">Arch Linux Live ISO</a>. For those interested in trying OpenRC, check out <a href="http://www.funtoo.org/Funtoo_Linux_Installation">Funtoo</a>. Both of these will work great in your favorite virtualization solution.</p>
+
+<h1 id="openrc">OpenRC</h1>
+
+<p>OpenRC uses runlevels in very much the same way as sysvinit (or BSD init). At any given time the system is in one of the defined runlevels, there are three internal runlevels and four user defined runlevels.</p>
+
+<p><strong>Internal Runlevels:</strong></p>
+
+<ul>
+  <li><code class="highlighter-rouge">sysinit</code>: Initialize the system.</li>
+  <li><code class="highlighter-rouge">shutdown</code>: Power off the system.</li>
+  <li><code class="highlighter-rouge">reboot</code>: Rebooting the system.</li>
+</ul>
+
+<p><strong>User Runlevels:</strong></p>
+
+<ul>
+  <li><code class="highlighter-rouge">boot</code>: Starts all system-necessary services for other runlevels.
+<code class="highlighter-rouge">default</code>: Used for day-to-day-operations</li>
+  <li><code class="highlighter-rouge">nonetwork</code>: Used when no network connectivity is required.</li>
+  <li><code class="highlighter-rouge">single</code>: Single-user mode.</li>
+</ul>
+
+<p>A system transitions between runlevels like so:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sysinit -&gt; boot -&gt; default -&gt; shutdown
+</code></pre></div></div>
+
+<p>The services controlled by a particular runlevel are controlled by <code class="highlighter-rouge">/etc/inittab</code> and via the <code class="highlighter-rouge">rc-update</code> command.</p>
+
+<p>On a modern <a href="http://www.funtoo.org/Funtoo_Hosting">Funtoo LXC Container</a>, your runlevels  might look like this:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>± <span class="c"># rc-update -v</span>
+             bootmisc | boot
+         busybox-ntpd |
+     busybox-watchdog |
+          consolefont |
+                 dbus |
+                devfs |                       sysinit
+               dhcpcd |
+                dmesg |                       sysinit
+                 fsck | boot
+           git-daemon |
+                  gpm |
+             hostname | boot
+              hwclock | boot
+             iptables |      default
+              keymaps | boot
+            killprocs |              shutdown
+    kmod-static-nodes |                       sysinit
+                <span class="nb">local</span> |      default
+           localmount | boot
+              modules | boot
+             mount-ro |              shutdown
+                 mtab | boot
+               murmur |
+           netif.eth0 |      default
+             netif.lo |                       sysinit
+           netif.tmpl |
+             netmount |      default
+                nginx |      default
+              numlock |
+              openvpn |      default
+              pciparm |
+              postfix |
+               procfs | boot
+            pydoc-2.7 |
+            pydoc-3.3 |
+            pydoc-3.4 |
+                redis |
+                 root | boot
+               rsyncd |
+            savecache |              shutdown
+                 sshd |      default
+                 swap | boot
+            swapfiles | boot
+              swclock |
+               sysctl | boot
+                sysfs |                       sysinit
+         termencoding | boot
+         tmpfiles.dev |                       sysinit
+       tmpfiles.setup | boot
+                 udev |                       sysinit
+           udev-mount |                       sysinit
+       udev-postmount | boot
+              urandom | boot
+</code></pre></div></div>
+
+<p>Services can be added to runlevels with:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>rc-update add &lt;service&gt; &lt;runlevel&gt;
+</code></pre></div></div>
+
+<p>Or removed with:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>rc-update del &lt;service&gt; &lt;runlevel&gt;
+</code></pre></div></div>
+
+<p>Changing between runlevels is done via the <code class="highlighter-rouge">rc &lt;runlevel&gt;</code> command, but most users will never need to do this as runlevels are (mostly) managed by the system.</p>
+
+<p>In the case where a user does want to change runlevels in this way, it is often such that they are utilizing <a href="http://www.funtoo.org/Stacked_Runlevels">Stacked Runlevels</a>.</p>
+
+<p>For example, if a user wanted to differentiate which services were running on their laptop when it was powered or on battery, they could create two separate runlevels stacked atop <code class="highlighter-rouge">default</code>. While plugged in, the laptop could be running test databases or any number of services, but after changing runlevels these services could be disabled to save on battery.</p>
+
+<h4 id="benefits">Benefits</h4>
+
+<ul>
+  <li><strong>Simple:</strong> There are (normally) only 7 runlevels, and for most of it’s time the system remains on the <code class="highlighter-rouge">default</code> runlevel.</li>
+  <li><strong>Established:</strong>  <code class="highlighter-rouge">init</code> and <code class="highlighter-rouge">sysvinit</code> have been using runlevels for ages.</li>
+  <li><strong>Sufficient:</strong> Runlevels have been shown to provide sufficient functionality for most applications.</li>
+</ul>
+
+<h4 id="downfalls">Downfalls</h4>
+
+<ul>
+  <li><strong>Inflexible:</strong> While there are ways to create ‘Stacked Runlevels’, the system is not very capable of more exotic requirements.</li>
+  <li><strong>Aging:</strong> Modern systems, especially desktops and laptops, frequently change their hardware (inserting a USB stick), or network settings (Changing between WiFi networks), steps have been taken by system designers to handle these stumbling blocks, but it’s not longer always sufficient to scan once for hardware, for example.</li>
+</ul>
+
+<h1 id="systemd">systemd</h1>
+
+<p><code class="highlighter-rouge">systemd</code> uses targets instead of runlevels. Each target has a unique name, and multiple targets can be active at one time. Since most distributions using systemd have migrated from a runlevel based init system, there are targets which roughly correspond to the runlevels used by OpenRC, <code class="highlighter-rouge">init</code>, and <code class="highlighter-rouge">sysvinit</code>.</p>
+
+<ul>
+  <li><code class="highlighter-rouge">poweroff</code>: Halt the system.</li>
+  <li><code class="highlighter-rouge">rescue</code>: Single user mode.</li>
+  <li><code class="highlighter-rouge">multi-user</code>: Multi-user, non-graphical. User-defined/Site-specific runlevels.</li>
+  <li><code class="highlighter-rouge">graphical</code>: Multi-user, graphical. Usually multi-user + graphical login.</li>
+  <li><code class="highlighter-rouge">reboot</code>: Reboot</li>
+  <li><code class="highlighter-rouge">emergency</code>: Emergency Shell</li>
+</ul>
+
+<p>It’s important to understand that these are not necessarily the only active targets. In the case of the <code class="highlighter-rouge">graphical</code> target, a display manager service like <code class="highlighter-rouge">kdm</code> might be started, this target would also activate the <code class="highlighter-rouge">multi-user</code> target.</p>
+
+<p>The <code class="highlighter-rouge">multi-user</code> target might also activate a service like <code class="highlighter-rouge">dbus</code>, and another target named <code class="highlighter-rouge">basic</code>. This is interesting because it allows us to cleanly compose and extend the system to suit our needs.</p>
+
+<p>A <code class="highlighter-rouge">.target</code> file resides in <code class="highlighter-rouge">/usr/lib/systemd/system</code> or <code class="highlighter-rouge">/usr/lib/systemd/system/</code> and looks like this:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[Unit]
+Description=Graphical Interface
+Documentation=man:systemd.special(7)
+Requires=multi-user.target
+After=multi-user.target
+Conflicts=rescue.target
+Wants=display-manager.service
+AllowIsolate=yes
+</code></pre></div></div>
+
+<p>This file would be accompanied by a <code class="highlighter-rouge">&lt;target&gt;.wants</code> directory containing the services it should enable.</p>
+
+<p>Targets can be controlled very similar to systemd’s <code class="highlighter-rouge">.service</code> unit files, you just need to add <code class="highlighter-rouge">.target</code> at the end.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>systemctl status graphical.target
+± % systemctl status graphical.target
+graphical.target - Graphical Interface
+Loaded: loaded <span class="o">(</span>/lib/systemd/system/graphical.target<span class="p">;</span> enabled<span class="o">)</span>
+Active: active since Thu 2014-09-25 21:21:26 PDT<span class="p">;</span> 4 days ago
+Docs: man:systemd.special<span class="o">(</span>7<span class="o">)</span>
+
+ Sep 25 21:21:26 aluminum systemd[1]: Starting Graphical Interface.
+ Sep 25 21:21:26 aluminum systemd[1]: Reached target Graphical Interface.
+</code></pre></div></div>
+
+<p>The <code class="highlighter-rouge">.target</code> based approach allows for various services to be grouped in a logical manner. For example, is is the state of targets on a modern Fedora Desktop:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>± % systemctl list-units <span class="nt">--type</span><span class="o">=</span>target <span class="nt">--all</span>
+UNIT                   LOAD      ACTIVE   SUB    DESCRIPTION
+basic.target           loaded    active   active Basic System
+bluetooth.target       loaded    active   active Bluetooth
+cryptsetup-pre.target  loaded    inactive dead   Encrypted Volumes <span class="o">(</span>Pre<span class="o">)</span>
+cryptsetup.target      loaded    active   active Encrypted Volumes
+emergency.target       loaded    inactive dead   Emergency Mode
+final.target           loaded    inactive dead   Final Step
+getty.target           loaded    active   active Login Prompts
+graphical.target       loaded    active   active Graphical Interface
+local-fs-pre.target    loaded    active   active Local File Systems <span class="o">(</span>Pre<span class="o">)</span>
+local-fs.target        loaded    active   active Local File Systems
+multi-user.target      loaded    active   active Multi-User System
+network-online.target  loaded    inactive dead   Network is Online
+network.target         loaded    active   active Network
+nfs.target             loaded    active   active Network File System Server
+nss-user-lookup.target loaded    inactive dead   User and Group Name Lookups
+paths.target           loaded    active   active Paths
+remote-fs-pre.target   loaded    inactive dead   Remote File Systems <span class="o">(</span>Pre<span class="o">)</span>
+remote-fs.target       loaded    active   active Remote File Systems
+rescue.target          loaded    inactive dead   Rescue Mode
+shutdown.target        loaded    inactive dead   Shutdown
+sleep.target           loaded    inactive dead   Sleep
+slices.target          loaded    active   active Slices
+sockets.target         loaded    active   active Sockets
+sound.target           loaded    active   active Sound Card
+suspend.target         loaded    active   active Suspend
+swap.target            loaded    active   active Swap
+sysinit.target         loaded    active   active System Initialization
+syslog.target          not-found inactive dead   syslog.target
+time-sync.target       loaded    inactive dead   System Time Synchronized
+timers.target          loaded    active   active Timers
+umount.target          loaded    inactive dead   Unmount All Filesystems
+
+LOAD   <span class="o">=</span> Reflects whether the unit definition was properly loaded.
+ACTIVE <span class="o">=</span> The high-level unit activation state, i.e. generalization of SUB.
+SUB    <span class="o">=</span> The low-level unit activation state, values depend on unit type.
+
+31 loaded units listed.
+To show all installed unit files use <span class="s1">'systemctl list-unit-files'</span><span class="nb">.</span>
+</code></pre></div></div>
+
+<h4 id="benefits-1">Benefits</h4>
+
+<ul>
+  <li><strong>Composition</strong>: Allows for services to be composed together in logical, user-defined groups easily.</li>
+  <li><strong>Configuration</strong>: It’s simple to add custom targets.</li>
+  <li><strong>Less Restrictive</strong>: Since multiple targets can be active at a given time, the system’s behavior can be more finely defined.</li>
+</ul>
+
+<h4 id="downfalls-1">Downfalls</h4>
+
+<ul>
+  <li><strong>Complexity</strong>: A sufficiently sophisticated installation could be composed of dozens of targets, and can require a deeper understanding of the system.</li>
+</ul>
+
+<h1 id="further-reading">Further Reading</h1>
+<ul>
+  <li><a href="http://0pointer.de/blog/projects/systemd.html">Rethinking PID 1</a></li>
+  <li><a href="https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/System_Administrators_Guide/sect-Managing_Services_with_systemd-Targets.html">Red Hat: Working with systemd Targets</a></li>
+  <li><a href="http://www.freedesktop.org/software/systemd/man/systemd.target.html">Systemd Target</a></li>
+  <li><a href="http://0pointer.de/blog/projects/systemd-update.html">Systemd status update 1</a></li>
+  <li><a href="http://0pointer.de/blog/projects/systemd-update-2.html">Systemd status update 2</a></li>
+  <li><a href="http://0pointer.de/blog/projects/systemd-update-3.html">Systemd status update 3</a></li>
+  <li><a href="http://wiki.gentoo.org/wiki/Comparison_of_init_systems">Comparison of init Systems</a></li>
+  <li><a href="http://skarnet.org/software/s6/why.html">s6 why?</a></li>
+  <li><a href="https://www.gentoo.org/doc/en/handbook/handbook-x86.xml?part=2&amp;chap=4#doc_chap5">Initscripts (Gentoo Handbook)</a></li>
+  <li><a href="http://www.funtoo.org/Stacked_Runlevels">Stacked Rulevels (Funtoo Wiki)</a></li>
+</ul>
+
+    </article>
+
+    <aside class="post-meta">
+  
+    Posted on
+    <time datetime="2014-09-29T00:00:00-07:00">29 Sep 2014</time>
+  
+
+  
+    
+      
+        , into
+        
+        <span><a href="/tags/#tutorials">Tutorials</a></span>
+      
+    .
+  
+
+  
+</aside>
+
+</main>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>

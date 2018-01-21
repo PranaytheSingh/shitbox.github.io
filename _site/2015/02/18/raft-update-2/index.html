@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>Raft: Progress on the Log</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/cover.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="Raft: Progress on the Log">
+    
+    
+        <meta name="twitter:description" content="&lt;p&gt;I’ve spent the majority of my free time this last week working on &lt;a href=&quot;https://github.com/hoverbear/raft&quot;&gt;Raft&lt;/a&gt;. As you can see from this &lt;a href=&quot;https://github.com/Hoverbear/raft/issues/1&quot;&gt;issue&lt;/a&gt; I’ve been mostly working on the idea of transactions.&lt;/p&gt;
+
+">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/cover.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">Raft: Progress on the Log</a></h1>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main>
+    <article>
+        <p>I’ve spent the majority of my free time this last week working on <a href="https://github.com/hoverbear/raft">Raft</a>. As you can see from this <a href="https://github.com/Hoverbear/raft/issues/1">issue</a> I’ve been mostly working on the idea of transactions.</p>
+
+<p>A lot has taken shape in the codebase. It still will panic at <code class="highlighter-rouge">unimplemented!()</code> about 300ms after you start a node, but “That’s a feature!”</p>
+
+<blockquote>
+  <p>Note: All interfaces and code are not final, and are for educational and interest purposes.</p>
+</blockquote>
+
+<h2 id="hacking-up-a-persistent-log">Hacking up a Persistent Log</h2>
+
+<p>Probably one of the coolest little projects I worked on was writing the <code class="highlighter-rouge">persistent_state</code> of a <code class="highlighter-rouge">RaftNode</code>. This is the data that the Raft protocol requires be written on stable storage each update.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/// Persistent state
+/// **Must be updated to stable storage before RPC response.**
+pub struct PersistentState&lt;T: Encodable + Decodable + Send + Clone&gt; {
+    current_term: u64,
+    voted_for: Option&lt;u64&gt;,      // request_vote cares if this is `None`
+    log: File,
+    last_index: u64,             // The last index of the file.
+}
+</code></pre></div></div>
+
+<p>So, the reason this needs to be written to disk is so that in theory if we have a crash, we can recover. I haven’t implemented resuming from a previous log, but I think that’ll be a fun thing to do.</p>
+
+<p>Here’s what a log looks like right now:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>➜  raft git:(master) ✗ cat /tmp/test_path
+                   0                    0
+1 IkZvbyI
+2 IkJhciI
+</code></pre></div></div>
+
+<p>The first line is where we store <code class="highlighter-rouge">current_term</code> and <code class="highlighter-rouge">voted_for</code> (in that order). All previous lines are pairs of <code class="highlighter-rouge">$term  $V</code> where <code class="highlighter-rouge">V</code> is the base64 encoded JSON encoded version of <code class="highlighter-rouge">T</code>, which is anything that implemented <code class="highlighter-rouge">Decode</code> and <code class="highlighter-rouge">Encode</code>.</p>
+
+<blockquote>
+  <p>I’d really like to not Base64 encode JSON encoded data. If you have a suggestion, please open an issue! I’m currently looking at using <a href="https://github.com/TyOverby/bincode">bincode</a> instead. See <a href="https://github.com/Hoverbear/raft/issues/4">this issue</a>.</p>
+</blockquote>
+
+<p>My reasoning for what <code class="highlighter-rouge">V</code> looks like is that I’m using <code class="highlighter-rouge">\n</code> to delimit index entries for the log, so any sort of output that I store can’t have any <code class="highlighter-rouge">\n</code> symbols. In theory I could sanitize my input, but I’d argue that the cost of sanitization would be less than just Base64 encoding it.</p>
+
+<h3 id="on-new-toys">On New Toys</h3>
+
+<p>After using them, new <code class="highlighter-rouge">fs</code> and <code class="highlighter-rouge">io</code> modules are pretty sweet (At the time of writing this is <code class="highlighter-rouge">rustc 1.0.0-nightly (b63cee4a1 2015-02-14 17:01:11 +0000)</code>).</p>
+
+<p>Working with the new <code class="highlighter-rouge">Result&lt;T&gt;</code> was a bit weird as we used to use <code class="highlighter-rouge">Result&lt;T,E&gt;</code>. The new <code class="highlighter-rouge">Result&lt;T&gt;</code> handles almost identical in my experience (and you don’t need to specify long errors in every function definition!).</p>
+
+<h3 id="creating-files">Creating Files</h3>
+
+<p>This was, surprisingly, a bit of a stumbling block for me. <code class="highlighter-rouge">File::open()</code> gives you read access, while <code class="highlighter-rouge">File::create()</code> gives you write, but if you’re hoping to open a file then <em>read and write</em> to it, you’ll need to use <a href="http://doc.rust-lang.org/std/fs/struct.OpenOptions.html"><code class="highlighter-rouge">OpenOptions</code></a>.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>let mut open_opts = OpenOptions::new();
+open_opts.read(true);
+open_opts.write(true);
+open_opts.create(true);
+let mut file = open_opts.open(&amp;log_path).unwrap();
+</code></pre></div></div>
+
+<h3 id="manipulating-files">Manipulating Files</h3>
+
+<p>Working with files means you generally deal with <code class="highlighter-rouge">Cursor</code>s into the file. You can navigate around a file like so:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>let start =
+	self.log.seek(io::SeekFrom::Start(0));
+let offset_from_start =
+	self.log.seek(io::SeekFrom::Start(8));
+let very_end =
+	self.log.seek(io::SeekFrom::End(0));
+let current =
+	self.log.seek(io::SeekFrom::Current(0));
+</code></pre></div></div>
+
+<p>This is key, because it controls your position in the file for <em>most</em> other operations. You can try it out with the code below on the <a href="http://is.gd/rnOgNO">playpen</a>.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#![feature(io)]
+#![feature(fs)]
+#![feature(path)]
+use std::fs::OpenOptions;
+use std::io::{Read, Write, Seek, SeekFrom};
+fn main() {
+    let mut open_opts = OpenOptions::new();
+    open_opts.read(true);
+    open_opts.write(true);
+    open_opts.create(true);
+    let mut file = open_opts.open(&amp;Path::new("/tmp/test")).unwrap();
+    let mut read = String::new();
+
+    write!(&amp;mut file, "Foo bar baz").unwrap();
+    file.seek(SeekFrom::End(-3)).unwrap();
+    file.read_to_string(&amp;mut read).unwrap();
+    println!("{}", read); // Outputs "baz"
+
+    read = String::new();
+
+    file.seek(SeekFrom::End(-7)).unwrap();
+    write!(&amp;mut file, "dog").unwrap();
+    file.seek(SeekFrom::Start(0)).unwrap();
+    file.read_to_string(&amp;mut read).unwrap();
+    println!("{}", read); // Outputs "Foo dog baz"
+}
+</code></pre></div></div>
+
+<p>Now that we can write into files, how do we make sure we have a consistent space for data? The first line of our log contains two <code class="highlighter-rouge">u64</code>s which can take up to 20 digits each. Using this, we can modify our <code class="highlighter-rouge">write!()</code> call to use more specialize formatting options.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>write!(&amp;mut self.log, "{:20} {:20}\n",
+	self.current_term, self.voted_for.unwrap_or(0))
+</code></pre></div></div>
+
+<p>The <code class="highlighter-rouge">{:20}</code> is a formatting option that ensures it takes up consistent space. <a href="http://doc.rust-lang.org/std/fmt/#syntax">More on that here</a>.</p>
+
+<h3 id="scanning-through">Scanning Through</h3>
+
+<p>Since we have a handle on moving around our file cursor we can start using other things like <code class="highlighter-rouge">.chars()</code> on the file to get it to spit out characters.</p>
+
+<blockquote>
+  <p>Make sure to <code class="highlighter-rouge">.seek()</code> then build your iterator, otherwise ownership woes will be upon you!</p>
+</blockquote>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/// Moves `line` lines into the file. Purposefully goes "one extra" line because the first line is metadata.
+/// Returns the number of bytes containing `line` lines.
+fn move_to(&amp;mut self, line: u64) -&gt; io::Result&lt;u64&gt; {
+    // Gotcha: The first line is NOT a log entry.
+    let mut lines_read = 0u64;
+    self.log.seek(io::SeekFrom::Start(0)); // Take the start.
+    // Go until we've reached `line` new lines.
+    let _ = self.log.by_ref().chars().skip_while(|opt| {
+        match *opt {
+            Ok(val) =&gt; {
+                if val == '\n' {
+                    lines_read += 1;
+                    if lines_read &gt; line { // Greater than here because the first line is a bust.
+                        false // At right location.
+                    } else {
+                        true // Not done yet, more lines to go.
+                    }
+                } else {
+                    true // Not a new line.
+                }
+            },
+            _ =&gt; false // At EOF. Nothing more.
+        }
+    }).next(); // Side effects.
+    self.log.seek(io::SeekFrom::Current(0)) // Where are we?
+}
+</code></pre></div></div>
+
+<p>As you can see, the <code class="highlighter-rouge">move_to()</code> function’s main traversing is not done by <code class="highlighter-rouge">seek()</code>, it’s done by an iterator! Once we set the cursor to <code class="highlighter-rouge">Start(0)</code> we can set up an iterator with <code class="highlighter-rouge">log.by_ref().chars().skip_while()</code>. <code class="highlighter-rouge">by_ref()</code> gets us a reference so we don’t stumble into <em>move</em> issues. <code class="highlighter-rouge">.chars()</code> lets us pull <code class="highlighter-rouge">char</code> types instead of <code class="highlighter-rouge">u8</code>. <code class="highlighter-rouge">.skip_while()</code> lets us walk over the file, disgarding values as we finish looking at them.</p>
+
+<p>Finally, at the end you might notice a <code class="highlighter-rouge">.next()</code>, this is because iterators are lazy… So up until that’s called, nothing is actually even done! Very neat.</p>
+
+<p>Looking forward, I’d like to not require going from the start forward every <code class="highlighter-rouge">.move_to()</code> call.</p>
+
+<h3 id="retrieving-an-entry">Retrieving an Entry</h3>
+
+<p>Now that we can effectively scan through the file and get the correct position, how do we retrieve entries? Here is what <code class="highlighter-rouge">retrieve_entry</code> looks like (Note there is <code class="highlighter-rouge">retrieve_entries</code> too which is very similar):</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pub fn retrieve_entry(&amp;mut self, index: u64) -&gt; io::Result&lt;(u64, T)&gt; {
+    // Move to the correct line.
+    let position = self.move_to(index);
+    let mut chars = self.log.by_ref()
+        .chars()
+        // Only go until the end of the file, `None`
+        .take_while(|val| val.is_ok())
+        // Drop anything not `Some(val)`
+        .filter_map(|val| val.ok())
+        // Take the line.
+        .take_while(|&amp;val| val != '\n')
+        // Bring it into a String.
+        .collect::&lt;String&gt;();
+    let mut splits = chars.split(' ');
+    // Use a scope!
+    let term = {
+        // `.and_then()` is great for dealing with Options.
+        let chunk = splits.next()
+            .and_then(|v| v.parse::&lt;u64&gt;().ok());
+        match chunk {
+            Some(v) =&gt; v,
+            None =&gt; return Err(io::Error::new(io::ErrorKind::InvalidInput, "Could not parse term.", None)),
+        }
+    };
+    let encoded = {
+        let chunk = splits.next();
+        match chunk {
+            Some(v) =&gt; v,
+            None =&gt; return Err(io::Error::new(io::ErrorKind::InvalidInput, "Could not parse encoded data.", None)),
+        }
+    };
+    // Decode the value.
+    let decoded: T = PersistentState::decode(encoded.to_string())
+        .ok().expect("Could not unwrap log entry.");
+    Ok((term, decoded))
+}
+</code></pre></div></div>
+
+<p>This code makes use of iterators, scopes, and options in, what I consider, a fairly clean way. After moving to the correct line, <code class="highlighter-rouge">chars</code> takes in one line of the file and it gets chunked into two pieces along a delimiter. Then the values of that chunk iterator are parsed.</p>
+
+<p>One stumbling block I had was that <code class="highlighter-rouge">v.parse::&lt;u64&gt;()</code> returned <a href="http://doc.rust-lang.org/std/str/trait.StrExt.html#tymethod.parse"><code class="highlighter-rouge">&lt;F as FromStr&gt;::Err</code></a> instead of an <code class="highlighter-rouge">IoError</code> like <code class="highlighter-rouge">io::Result&lt;_&gt;</code> expects. This means that I couldn’t just <code class="highlighter-rouge">try!()</code> the expression. Looking at <a href="http://doc.rust-lang.org/std/io/struct.Error.html"><code class="highlighter-rouge">io::Error</code></a> I was able to find the <code class="highlighter-rouge">InvalidInput</code> variant that suited my needs.</p>
+
+<h3 id="purging-and-appending">Purging and Appending</h3>
+
+<p>Part of the Raft protocol dictates that purging and appending must be able to happen to the log. Here’s purge:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/// Do *not* invoke this unless you update the `last_index`!
+fn purge_from_bytes(&amp;mut self, from_bytes: u64) -&gt; io::Result&lt;()&gt; {
+    self.log.set_len(from_bytes) // Chop off the file at the given position.
+}
+/// Removes all entries from `from` to the last entry, inclusively.
+pub fn purge_from_index(&amp;mut self, from_line: u64) -&gt; io::Result&lt;()&gt; {
+    let position = try!(self.move_to(from_line));
+    self.last_index = from_line - 1;
+    self.purge_from_bytes(position)
+}
+</code></pre></div></div>
+
+<p>Since purging will always remove all lines <strong>after</strong> a given line, we can just use <code class="highlighter-rouge">.set_len()</code>, which is convienent since otherwise the only real way I’ve seen to remove “some” lines is to read in the file and write it back out again entirely, which kind of sucks.</p>
+
+<p>I split <code class="highlighter-rouge">purge_from_bytes()</code> and <code class="highlighter-rouge">purge_from_index()</code> up because <code class="highlighter-rouge">append_entries()</code> will use it. Here it is:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/// Appends `entries` after `prev_log_index` and `prev_log_term`.
+pub fn append_entries(&amp;mut self, prev_log_index: u64, prev_log_term: u64,
+                      entries: Vec&lt;(u64, T)&gt;) -&gt; io::Result&lt;()&gt; {
+    // TODO: No checking of `prev_log_index` &amp; `prev_log_term` yet... Do we need to?
+    let position = try!(self.move_to(prev_log_index + 1));
+    let number = entries.len();
+    try!(self.purge_from_bytes(position)); // Update `last_log_index` later.
+    for (term, entry) in entries {
+        // TODO: I don't like the "doubling" here. How can we do this better?
+        write!(&amp;mut self.log, "{} {}\n", term, PersistentState::encode(entry));
+    }
+    self.last_index = if prev_log_index == 0 {
+        number as u64 - 1
+    } else { prev_log_index + number as u64 };
+    Ok(())
+}
+</code></pre></div></div>
+
+<p>You’ll notice the first line is a <code class="highlighter-rouge">// TODO:</code> because there are no safety checks to make sure that things are as they should be. The semantics of these checks are specified in the Raft paper, and should be easy to implement, I just haven’t gotten to it yet! (Midterm week, yuck!) Otherwise, the code for this is fairly straightforward.</p>
+
+<h3 id="testing">Testing</h3>
+
+<p>One of my favorite things about Rust is the built in tooling for testing. Here’s what the start of my log test looks like:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#[test]
+fn test_persistent_state() {
+    let path = Path::new("/tmp/test_path");
+    fs::remove_file(&amp;path.clone());
+    let mut state = PersistentState::new(0, path.clone());
+    // Add 0, 1
+    assert_eq!(state.append_entries(0, 0,
+        vec![(0, "Zero".to_string()),
+             (1, "One".to_string())]),
+        Ok(()));
+    // Check index.
+    assert_eq!(state.get_last_index(), 1);
+    // Check 0
+    assert_eq!(state.retrieve_entry(0),
+        Ok((0, "Zero".to_string())));
+    // Check 0, 1
+    assert_eq!(state.retrieve_entries(0, 1),
+        Ok(vec![(0, "Zero".to_string()),
+                (1, "One".to_string())
+        ]));
+    // ...
+</code></pre></div></div>
+
+<p>Let me be clear <strong>I love this.</strong> It makes it so easy to unit test code. One gotcha I discovered is that <code class="highlighter-rouge">cargo test</code> captures all your stdout… So you can do <code class="highlighter-rouge">cargo test -- --nocapture</code> to disable that!</p>
+
+<h2 id="explore-and-help">Explore and Help!</h2>
+
+<blockquote>
+  <p>https://github.com/Hoverbear/raft</p>
+</blockquote>
+
+<p>Would you like to explore, give feedback, or contribute? Please do! Publicly you can just make an issue on Github, or privately just shoot me an email. (I’m sure you can find it on Github or here…)</p>
+
+<p><strong>Discussion of this post is on <a href="https://www.reddit.com/r/rust/comments/2wctv2/raft_update_2_hacking_up_the_log/">Reddit</a>.</strong></p>
+
+    </article>
+
+    <aside class="post-meta">
+  
+    Posted on
+    <time datetime="2015-02-18T00:00:00-08:00">18 Feb 2015</time>
+  
+
+  
+    
+      
+        , into
+        
+        <span><a href="/tags/#raft">Raft</a></span>
+      
+    
+      
+        
+             and
+        
+        <span><a href="/tags/#rust">Rust</a></span>
+      
+    .
+  
+
+  
+</aside>
+
+</main>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>

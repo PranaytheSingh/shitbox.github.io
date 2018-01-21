@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>Raft: New Crates!</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/cover.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="Raft: New Crates!">
+    
+    
+        <meta name="twitter:description" content="&lt;p&gt;We’ve been resoundingly busy with our &lt;a href=&quot;http://raftconsensus.github.io/&quot;&gt;Raft&lt;/a&gt; implementation after a brief period of calm in the early summer! I’ll be posting a few bits over the next weeks to help people both learn Rust, and learn about Raft!&lt;/p&gt;
+
+">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/cover.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">Raft: New Crates!</a></h1>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main>
+    <article>
+        <p>We’ve been resoundingly busy with our <a href="http://raftconsensus.github.io/">Raft</a> implementation after a brief period of calm in the early summer! I’ll be posting a few bits over the next weeks to help people both learn Rust, and learn about Raft!</p>
+
+<p>As a result of Raft development two new crates have been put together for general consumption! Both of these are macro-centric and lead mainly by James.</p>
+
+<h2 id="a-useful-error-pattern">A Useful Error Pattern</h2>
+
+<p>Working with Raft we discovered a useful error pattern for making use of things like <code class="highlighter-rouge">try!()</code>. Let’s quickly recap on why error handling can be a pain sometimes.</p>
+
+<p>Let’s say you’re off happily using <code class="highlighter-rouge">.read()</code> on some file descriptor (maybe a <code class="highlighter-rouge">TcpStream</code>) and than performing some action which may also result in an error. So you write a function like so:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">io</span><span class="p">::</span><span class="n">Read</span><span class="p">;</span>
+<span class="k">fn</span> <span class="n">read_and_action</span><span class="o">&lt;</span><span class="n">R</span><span class="p">:</span> <span class="n">Read</span><span class="o">&gt;</span><span class="p">(</span><span class="n">reader</span><span class="p">:</span> <span class="n">R</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">Result</span><span class="o">&lt;</span><span class="nb">String</span><span class="p">,</span> <span class="n">_</span><span class="o">&gt;</span> <span class="p">{</span>
+	<span class="k">let</span> <span class="n">buf</span> <span class="o">=</span> <span class="nn">Vec</span><span class="p">::</span><span class="nf">with_capacity</span><span class="p">(</span><span class="mi">10</span><span class="p">);</span>
+    <span class="nd">try!</span><span class="p">(</span><span class="n">reader</span><span class="nf">.read</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="n">buf</span><span class="p">));</span>
+    <span class="nd">try!</span><span class="p">(</span><span class="nn">String</span><span class="p">::</span><span class="nf">from_utf8</span><span class="p">(</span><span class="n">buf</span><span class="p">))</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>But wait! There is a problem here! The first <code class="highlighter-rouge">try!()</code> and the second <code class="highlighter-rouge">try!()</code> have <em>different errors</em> that they might return. <strong>This won’t work.</strong> Even worse, in a sufficiently complex library or application there can be many <code class="highlighter-rouge">Error</code> types in play!</p>
+
+<p>We identified this very early in Raft and came up with a eloquent solution: Create an <code class="highlighter-rouge">Error</code> composed of the various possible errors! James went ahead and actually made a <a href="https://github.com/james-darkfox/rs-wrapped_enum-macro">fantastic macro</a> that you can use to do the same easily!</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">/// A simple convienence type.</span>
+<span class="k">pub</span> <span class="k">type</span> <span class="n">Result</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">=</span> <span class="nn">std</span><span class="p">::</span><span class="nn">result</span><span class="p">::</span><span class="n">Result</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">Error</span><span class="o">&gt;</span><span class="p">;</span>
+
+<span class="c">// From crate: https://github.com/james-darkfox/rs-wrapped_enum-macro</span>
+<span class="nd">wrapped_enum!</span><span class="p">{</span>
+    <span class="nd">#[derive(Debug)]</span>
+    <span class="k">pub</span> <span class="k">enum</span> <span class="n">Error</span> <span class="p">{</span>
+    	<span class="c">// Cap'n Proto Errors</span>
+        <span class="nf">CapnProto</span><span class="p">(</span><span class="nn">capnp</span><span class="p">::</span><span class="n">Error</span><span class="p">),</span>
+        <span class="c">// Cap'n Proto schema errors</span>
+        <span class="nf">SchemaError</span><span class="p">(</span><span class="nn">capnp</span><span class="p">::</span><span class="n">NotInSchema</span><span class="p">),</span>
+        <span class="c">// std::io errors</span>
+        <span class="nf">Io</span><span class="p">(</span><span class="nn">io</span><span class="p">::</span><span class="n">Error</span><span class="p">),</span>
+        <span class="c">// Our very own!</span>
+        <span class="nf">Raft</span><span class="p">(</span><span class="n">RaftError</span><span class="p">),</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">impl</span> <span class="nn">fmt</span><span class="p">::</span><span class="n">Display</span> <span class="k">for</span> <span class="n">Error</span> <span class="p">{</span>
+    <span class="k">fn</span> <span class="nf">fmt</span><span class="p">(</span><span class="o">&amp;</span><span class="k">self</span><span class="p">,</span> <span class="n">f</span><span class="p">:</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="nn">fmt</span><span class="p">::</span><span class="n">Formatter</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nn">fmt</span><span class="p">::</span><span class="n">Result</span> <span class="p">{</span>
+        <span class="k">match</span> <span class="o">*</span><span class="k">self</span> <span class="p">{</span>
+            <span class="nn">Error</span><span class="p">::</span><span class="nf">CapnProto</span><span class="p">(</span><span class="k">ref</span> <span class="n">error</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="nn">fmt</span><span class="p">::</span><span class="nn">Display</span><span class="p">::</span><span class="nf">fmt</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">f</span><span class="p">),</span>
+            <span class="nn">Error</span><span class="p">::</span><span class="nf">SchemaError</span><span class="p">(</span><span class="k">ref</span> <span class="n">error</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="nn">fmt</span><span class="p">::</span><span class="nn">Display</span><span class="p">::</span><span class="nf">fmt</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">f</span><span class="p">),</span>
+            <span class="nn">Error</span><span class="p">::</span><span class="nf">Io</span><span class="p">(</span><span class="k">ref</span> <span class="n">error</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="nn">fmt</span><span class="p">::</span><span class="nn">Display</span><span class="p">::</span><span class="nf">fmt</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">f</span><span class="p">),</span>
+            <span class="nn">Error</span><span class="p">::</span><span class="nf">Raft</span><span class="p">(</span><span class="k">ref</span> <span class="n">error</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="nn">fmt</span><span class="p">::</span><span class="nn">Debug</span><span class="p">::</span><span class="nf">fmt</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">f</span><span class="p">),</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>With this machinery in place our previous example starts to work, fantastic! This has saved us so much headache and complication in our code. Want it? Click one of the badges below!</p>
+
+<p><a href="https://crates.io/crates/wrapped_enum"><img src="https://img.shields.io/crates/v/wrapped_enum.svg" alt="" /></a>
+<a href="https://crates.io/crates/wrapped_enum"><img src="https://img.shields.io/crates/d/wrapped_enum.svg" alt="" /></a></p>
+
+<h2 id="scoped-logging">Scoped Logging</h2>
+
+<p>Okay, let’s take a minute to remember how frigging awesome the <a href="https://crates.io/crates/log"><code class="highlighter-rouge">log</code></a> crate is. If you’ve got a project, large or small, this crate is super handy for helping trace, debug, and log whatever you need and to do it only when needed! The best part about the log crate is that when logs are off it’s a simple <code class="highlighter-rouge">noop</code>.</p>
+
+<p>One problem we identified, however, was that sometimes it was very difficult to identify the source of a log message. Asking “Did it come from <code class="highlighter-rouge">foo</code> or <code class="highlighter-rouge">bar</code>?” is only fun so many times.</p>
+
+<p>James and Dan put together the <a href="https://github.com/james-darkfox/rs-scoped_log"><code class="highlighter-rouge">scoped_log</code></a> crate to help with this. Check out the documentation there for a usage example.</p>
+
+<p>When we use this crate with tests (which makes it all that much more awesome!) we use the following macro.</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">/// Prepares the environment testing. Should be called as the first line of every test with the</span>
+<span class="c">/// name of the test as the only argument.</span>
+<span class="nd">#[cfg(test)]</span>
+<span class="nd">macro_rules!</span> <span class="n">setup_test</span> <span class="p">{</span>
+    <span class="p">(</span><span class="nv">$test_name:expr</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="p">(</span>
+        <span class="k">let</span> <span class="n">_</span> <span class="o">=</span> <span class="nn">env_logger</span><span class="p">::</span><span class="nf">init</span><span class="p">();</span>
+        <span class="nd">push_log_scope!</span><span class="p">(</span><span class="nv">$test_name</span><span class="p">);</span>
+    <span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Now our logs look like this:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>INFO:raft::replica: test_apply_client_message: ElectionTimeout
+INFO:raft::replica: test_election_3: ElectionTimeout
+INFO:raft::replica: test_election_2: ElectionTimeout
+INFO:raft::replica: test_apply_client_message: transitioning to Leader
+INFO:raft::replica: test_election_5: ElectionTimeout
+INFO:raft::replica: test_election_5: transitioning to Candidate
+DEBUG:raft::replica: test_election_5: Replica { id: 3, state: Follower, term: 0, index: 0 }: RequestVoteRequest from Replica { id: 0, term: 1, latest_log_term: 0, latest_log_index: 0 }
+</code></pre></div></div>
+
+<p>Much more context that we <em>barely</em> have to tool. Fantastic! This crate even maintains the same <code class="highlighter-rouge">noop</code> characteristic of the <code class="highlighter-rouge">log</code> crate which it heavily relies on. Want it?</p>
+
+<p><a href="https://crates.io/crates/scoped_log"><img src="https://img.shields.io/crates/v/scoped_log.svg" alt="" /></a>
+<a href="https://crates.io/crates/scoped_log"><img src="https://img.shields.io/crates/d/scoped_log.svg" alt="" /></a></p>
+
+<h2 id="travis--cargo">Travis &amp; Cargo!</h2>
+
+<p>If you’ve read any of my other articles you probably know I <strong>love</strong> tooling and automation. After my <a href="http://hoverbear.org/2015/03/07/rust-travis-github-pages/">Rust, Travis, and Github Pages</a> article <a href="https://github.com/huonw">Huon</a> created the fantastic <a href="https://github.com/huonw/travis-cargo"><code class="highlighter-rouge">travis-cargo</code></a> tool! It’s incredible!</p>
+
+<p>With its help we’ve moved to a <code class="highlighter-rouge">sudo</code>-less build and overall things work much better. I’ll talk more about out tooling and infrastructure in a later post!</p>
+
+<h1 id="aside-contributors">Aside: Contributors!!!</h1>
+
+<p>We now have 3 whole code contributors to Raft! This includes <a href="https://github.com/danburkert">Dan Burkert</a>, <a href="https://github.com/james-darkfox">James McGlashan</a>, and <a href="https://github.com/hoverbear/">myself</a> (Andrew Hobden). I’d like to thank both James and Dan for their awesome work, interest, and mentorship!</p>
+
+    </article>
+
+    <aside class="post-meta">
+  
+    Posted on
+    <time datetime="2015-07-16T00:00:00-07:00">16 Jul 2015</time>
+  
+
+  
+    
+      
+        , into
+        
+        <span><a href="/tags/#rust">Rust</a></span>
+      
+    
+      
+        ,
+        
+        <span><a href="/tags/#raft">Raft</a></span>
+      
+    
+      
+        
+            , and
+        
+        <span><a href="/tags/#uvic">UVic</a></span>
+      
+    .
+  
+
+  
+</aside>
+
+</main>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>

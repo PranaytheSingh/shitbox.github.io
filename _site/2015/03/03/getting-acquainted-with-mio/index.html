@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>Getting Acquainted with MIO</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/cover.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="Getting Acquainted with MIO">
+    
+    
+        <meta name="twitter:description" content="&lt;p&gt;One of my next goals in my &lt;a href=&quot;http://hoverbear.org/tag/raft/&quot;&gt;Raft&lt;/a&gt; project is to tame the &lt;code class=&quot;highlighter-rouge&quot;&gt;tick()&lt;/code&gt; with &lt;a href=&quot;https://github.com/carllerche/mio&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;mio&lt;/code&gt;&lt;/a&gt;. In this post, we’ll explore what it is, what it can do, and why it matters. First things first: What is MIO?&lt;/p&gt;
+
+">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/cover.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">Getting Acquainted with MIO</a></h1>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main>
+    <article>
+        <p>One of my next goals in my <a href="http://hoverbear.org/tag/raft/">Raft</a> project is to tame the <code class="highlighter-rouge">tick()</code> with <a href="https://github.com/carllerche/mio"><code class="highlighter-rouge">mio</code></a>. In this post, we’ll explore what it is, what it can do, and why it matters. First things first: What is MIO?</p>
+
+<blockquote>
+  <p>MIO is a lightweight IO library for Rust with a focus on adding as little overhead as possible over the OS abstractions.</p>
+</blockquote>
+
+<p>Now you’re probably thinking… “So what? We have plenty of shiny stuff in the new <code class="highlighter-rouge">std::io</code>…” and you’re right! But hold off on judgement until you read this:</p>
+
+<blockquote>
+  <p>Features</p>
+
+  <ul>
+    <li>Event loop backed by <code class="highlighter-rouge">epoll</code>, <code class="highlighter-rouge">kqueue</code>.</li>
+    <li>Zero allocations at runtime</li>
+    <li>Non-blocking TCP, UDP and Unix domain sockets</li>
+    <li>High performance timer system</li>
+    <li>Thread safe message channel for cross thread communication</li>
+  </ul>
+</blockquote>
+
+<p>Okay, here it’s starting to get interesting. <code class="highlighter-rouge">epoll</code>, and <code class="highlighter-rouge">kqueue</code> are event notification interfaces available in Linux, and the BSDs (Darwin included). Zero allocations are great for performance, and non-blocking sockets are insanely useful for network applications.</p>
+
+<p>For a Raft context, the ability to use evented timers is applicable for heartbeats and election timings.</p>
+
+<p>If you’ve used <code class="highlighter-rouge">node.js</code>, <code class="highlighter-rouge">io.js</code>, or Python’s Twisted framework event loops might be familiar to you. <em>Yes I know callback hell sucks!</em> Fear not, this is Rust, not some scruffy loosely-typed, garbage-collected, non-blocking language!</p>
+
+<h2 id="the-general-idea">The General Idea</h2>
+
+<p>MIO works off this general concept:</p>
+
+<ul>
+  <li>Make a thread for the <code class="highlighter-rouge">EventLoop</code>.</li>
+  <li>Register interest with <code class="highlighter-rouge">IOHandle</code>s.</li>
+  <li>Supply the loop with a <code class="highlighter-rouge">Handler</code>.</li>
+  <li>Run your code.</li>
+</ul>
+
+<h2 id="hello-world">Hello, World</h2>
+
+<p>The following program is a nice, simple example of what MIO looks like:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>extern crate mio;
+use mio::*;
+use std::fmt::Debug;
+
+fn main() {
+    // Create an event loop
+    let mut event_loop = EventLoop::&lt;(), String&gt;::new().unwrap();
+    let sender = event_loop.channel();
+    sender.send("Hello".to_string()).unwrap();
+    // Start it
+    event_loop.run(&amp;mut BearHandler).unwrap();
+}
+
+struct BearHandler;
+
+impl&lt;T, M: Send + Debug&gt; Handler&lt;T, M&gt; for BearHandler {
+    /// A message has been delivered
+    fn notify(&amp;mut self, _reactor: &amp;mut EventLoop&lt;T, M&gt;, msg: M) {
+        println!("{:?}", msg);
+    }
+}
+</code></pre></div></div>
+
+<p>A <strong>lot</strong> is going on here. Let’s take a closer look.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>EventLoop::&lt;(), String&gt;::new();
+</code></pre></div></div>
+
+<p>This creates a new <code class="highlighter-rouge">EventLoop</code>. The Event loop uses <code class="highlighter-rouge">T</code> tokens of type <code class="highlighter-rouge">()</code>, and channels that consume and pass <code class="highlighter-rouge">M: Send</code> of type <code class="highlighter-rouge">String</code>. You can use anything that implements <code class="highlighter-rouge">Send</code> for messages.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>event_loop.channel();
+</code></pre></div></div>
+
+<p>This gives us a channel to send <code class="highlighter-rouge">String</code>s. When we <code class="highlighter-rouge">send()</code> later our <code class="highlighter-rouge">BearHandler</code> wakes up and invokes <code class="highlighter-rouge">notify</code>.</p>
+
+<p>From there, <code class="highlighter-rouge">notify</code> prints out the message. In a real application, this is where your business logic would be to determine what to do with the message.</p>
+
+<h2 id="getting-a-handler">Getting a Handle(r)</h2>
+
+<p>A Handler can implement some or all of the following functions:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pub trait Handler&lt;T: Token, M: Send&gt; {
+    /// A registered IoHandle has available data to read
+    fn readable(&amp;mut self, reactor: &amp;mut EventLoop&lt;T, M&gt;, hint: ReadHint, token: T);
+    /// A registered IoHandle is available to write to
+    fn writable(&amp;mut self, reactor: &amp;mut EventLoop&lt;T, M&gt;, token: T);
+    /// A registered timer has expired
+    fn timeout(&amp;mut self, reactor: &amp;mut EventLoop&lt;T, M&gt;, token: T);
+    /// A message has been delivered
+    fn notify(&amp;mut self, reactor: &amp;mut EventLoop&lt;T, M&gt;, msg: M);
+    /// A signal has been delivered to the process
+    fn signal(&amp;mut self, reactor: &amp;mut EventLoop&lt;T, M&gt;, info: mio::SigInfo);
+}
+</code></pre></div></div>
+
+<p>So this is a lot more then just sending some <code class="highlighter-rouge">String</code>s around! Did you doubt me?</p>
+
+<p>What’s really cool is your <code class="highlighter-rouge">Handler</code> can have a data backing since it’s just a trait that you can implement yourself! Let’s do that now:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>extern crate mio;
+use mio::*;
+
+fn main() {
+    // Create an event loop
+    let mut event_loop = EventLoop::&lt;(), u64&gt;::new().unwrap();
+    let sender = event_loop.channel();
+    for i in 0.. 5 {
+        sender.send(i).unwrap();
+    }
+    // Start it
+    event_loop.run(&amp;mut BearHandler(0)).unwrap();
+}
+
+struct BearHandler(u64);
+
+impl&lt;T&gt; Handler&lt;T, u64&gt; for BearHandler {
+    fn notify(&amp;mut self, _reactor: &amp;mut EventLoop&lt;T, u64&gt;, msg: u64) {
+        self.0 += msg;
+        println!("Message: {}, Total: {}", msg, self.0);
+    }
+}
+</code></pre></div></div>
+
+<p>Output:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Message: 0, Total: 0
+Message: 1, Total: 1
+Message: 2, Total: 3
+Message: 3, Total: 6
+Message: 4, Total: 10
+</code></pre></div></div>
+
+<p>In this case, our <code class="highlighter-rouge">BearHandler</code> was a humble <code class="highlighter-rouge">u64</code> tuple which we mutated, but you could easily make this a more complicated <code class="highlighter-rouge">struct</code>.</p>
+
+<h2 id="registered-interest">Registered Interest</h2>
+
+<p>Just sending messages isn’t particularly interesting, let’s wire up some new interests.</p>
+
+<p>Alright, so let’s take our humble little <code class="highlighter-rouge">BearHandler</code> and build it into a bit of a state mutation game:</p>
+
+<ul>
+  <li>Each time a timer fire (every 250ms) send a UDP packet to some socket.</li>
+  <li>Each time that socket gets hit decrement a <code class="highlighter-rouge">count</code> by 1.</li>
+  <li>Each time on the channel increment it by that much.</li>
+</ul>
+
+<p>First, we’ll modify the <code class="highlighter-rouge">BearHandler</code> to reflect these changes. First, we’ll make it a proper <code class="highlighter-rouge">struct</code> and let it store a pair of sockets as well as it’s <code class="highlighter-rouge">count</code>.</p>
+
+<p>Second, we’ll implement the <code class="highlighter-rouge">readable</code>, <code class="highlighter-rouge">timeout</code>, and <code class="highlighter-rouge">notify</code>. Note in the <code class="highlighter-rouge">readable</code> we take care to drain the socket. Also, note how the <code class="highlighter-rouge">timeout</code> doesn’t need to reset itself, we can clear it with <a href="https://carllerche.github.io/mio/mio/struct.EventLoop.html#method.clear_timeout"><code class="highlighter-rouge">clear_timeout</code></a> if we want.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>impl Handler&lt;Token, u64&gt; for BearHandler {
+    fn readable(&amp;mut self, _reactor: &amp;mut EventLoop&lt;Token, u64&gt;, _token: Token, _hint: ReadHint) {
+        let mut buffer = buf::RingBuf::new(1024);
+        // Drain socket, otherwise infinite loop!
+        net::TryRecv::recv_from(&amp;self.listener, &amp;mut buffer.writer()).unwrap();
+        self.count -= 1;
+        println!("Decremented, Total: {}", self.count);
+    }
+    fn timeout(&amp;mut self, reactor: &amp;mut EventLoop&lt;Token, u64&gt;, _token: Token) {
+        self.sender.send_to(&amp;[0], "127.0.0.1:12345").unwrap();
+        // Reset
+        reactor.timeout(TIMEOUT, Duration::milliseconds(250)).unwrap();
+        println!("Timeout");
+    }
+
+    fn notify(&amp;mut self, _reactor: &amp;mut EventLoop&lt;Token, u64&gt;, msg: u64) {
+        self.count += msg;
+        println!("Increment by: {}, Total: {}", msg, self.count);
+    }
+}
+</code></pre></div></div>
+
+<p>Next, registering the various events, we’ll use some of MIO’s <code class="highlighter-rouge">mio::net</code> items:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>const LISTENER: Token = Token(0);
+const TIMEOUT:  Token = Token(1);
+fn main() {
+    // Create an event loop
+    let mut event_loop = EventLoop::&lt;Token, u64&gt;::new().unwrap();
+    // Register Interest
+    let listener = UdpSocket::bind("127.0.0.1:12345").unwrap();
+    event_loop.register(&amp;listener, LISTENER).unwrap(); // Token lets us distinguish.
+    // Increments
+    let incrementer = event_loop.channel();
+    for i in 0.. 5 {
+        incrementer.send(i).unwrap();
+    }
+    // Decrements
+    event_loop.timeout(TIMEOUT, Duration::milliseconds(250)).unwrap();
+    // Start it
+    let sender = UdpSocket::bind("127.0.0.1:12346").unwrap();
+    event_loop.run(&amp;mut BearHandler {
+        count: 0,
+        listener: listener,
+        sender: sender
+    }).unwrap();
+}
+</code></pre></div></div>
+
+<p>Output:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Increment by: 0, Total: 0
+Increment by: 1, Total: 1
+Increment by: 2, Total: 3
+Increment by: 3, Total: 6
+Increment by: 4, Total: 10
+Timeout
+Decremented, Total: 9
+Timeout
+Decremented, Total: 8
+Timeout
+Decremented, Total: 7
+Timeout
+Decremented, Total: 6
+Timeout
+Decremented, Total: 5
+Timeout
+Decremented, Total: 4
+Timeout
+Decremented, Total: 3
+Timeout
+Decremented, Total: 2
+Timeout
+Decremented, Total: 1
+Timeout
+Decremented, Total: 0
+</code></pre></div></div>
+
+<blockquote>
+  <p>By the way, in our examples MIO will take over the main thread and block. In a normal application you’ll want to kick it off into a new thread when you <code class="highlighter-rouge">start()</code> it.</p>
+</blockquote>
+
+<h2 id="learn-more">Learn More</h2>
+
+<ul>
+  <li>I found Wycats’ <a href="https://github.com/wycats/mio-book"><code class="highlighter-rouge">mio-book</code></a> repo very useful.</li>
+  <li>As always, the <a href="https://carllerche.github.io/mio/mio/index.html">docs</a> were a great help.</li>
+  <li>This post is <a href="https://www.reddit.com/r/rust/comments/2xvtll/getting_acquainted_with_mio/"><strong>discussed on Reddit</strong></a>.</li>
+  <li>This post is also <a href="https://news.ycombinator.com/item?id=9143255"><strong>discussed on Hacker News</strong></a>!</li>
+</ul>
+
+<h2 id="help-out">Help Out!</h2>
+
+<p>We’re tracking progress on integrating MIO into Raft with <a href="https://github.com/Hoverbear/raft/issues/6">this issue</a>. Feel free to weigh in or help out!</p>
+
+<blockquote>
+  <p>A <strong>huge</strong> thanks to <a href="https://github.com/Hoverbear/raft/commits/master?author=danburkert"><strong>@danburkert</strong></a> for their contributions this week!</p>
+</blockquote>
+
+    </article>
+
+    <aside class="post-meta">
+  
+    Posted on
+    <time datetime="2015-03-03T00:00:00-08:00">03 Mar 2015</time>
+  
+
+  
+    
+      
+        , into
+        
+        <span><a href="/tags/#raft">Raft</a></span>
+      
+    
+      
+        
+             and
+        
+        <span><a href="/tags/#rust">Rust</a></span>
+      
+    .
+  
+
+  
+</aside>
+
+</main>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>

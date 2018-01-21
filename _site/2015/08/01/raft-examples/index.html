@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>Raft Progress & Examples!</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/2015/08/boat.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="Raft Progress &amp; Examples!">
+    
+    
+        <meta name="twitter:description" content="&lt;p&gt;We’ve also got couple nice working examples! Yes, they’re ready to play with!&lt;/p&gt;
+
+">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/2015/08/boat.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">Raft Progress & Examples!</a></h1>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main>
+    <article>
+        <p>We’ve also got couple nice working examples! Yes, they’re ready to play with!</p>
+
+<blockquote>
+  <p>Can’t wait, need code? Visit <a href="https://github.com/hoverbear/raft">Raft</a> and check out the <code class="highlighter-rouge">examples/</code> directory!</p>
+</blockquote>
+
+<h1 id="progress-report">Progress Report</h1>
+
+<p>The core Raft consensus algorithm now is quite functional! We’re still lacking log compaction (but have support for snapshotting already prepared) and have not implemented dynamic membership changes. These things are on our <a href="https://github.com/Hoverbear/raft/milestones/Full%20Paper%20Implementation">road map</a>!</p>
+
+<p>We’ve been building more tests and examples recently, Dan landed <a href="https://github.com/Hoverbear/raft/pull/64">this bundle</a> which got us into a good state! Next I landed <a href="https://github.com/Hoverbear/raft/pull/67"><code class="highlighter-rouge">query</code></a> and some <a href="https://github.com/Hoverbear/raft/pull/73">example expansion</a> which gave us some examples that work!</p>
+
+<h2 id="examples">Examples</h2>
+
+<p>There are now <a href="https://github.com/Hoverbear/raft/blob/master/examples/register.rs"><code class="highlighter-rouge">register</code></a> and <a href="https://github.com/Hoverbear/raft/blob/master/examples/hashmap.rs"><code class="highlighter-rouge">hashmap</code></a> examples in the <code class="highlighter-rouge">examples/</code> directory. These show simplistic examples of the flexibility of the module we’ve created. There are plentiful comments in the examples and our module documentation is definitely getting better.</p>
+
+<p>The <a href="https://github.com/Hoverbear/raft/blob/master/examples/register.rs"><code class="highlighter-rouge">register</code></a> example uses <a href="https://github.com/TyOverby/bincode">TyOverby’s <code class="highlighter-rouge">bincode</code></a> and replicates a simple buffer.</p>
+
+<p>The <a href="https://github.com/Hoverbear/raft/blob/master/examples/hashmap.rs"><code class="highlighter-rouge">hashmap</code></a> example demonstrates <a href="https://github.com/serde-rs/serde">Erickt’s <code class="highlighter-rouge">serde</code></a> and replicates a common <code class="highlighter-rouge">HashMap</code> over a collection of nodes.</p>
+
+<p>Please feel encouraged to give feedback and experiences if you play some!</p>
+
+<h2 id="distributed-examples">Distributed Examples</h2>
+
+<p>I’ll be working on some distributed testing and scripting for use with Puppet in the future as I fiddle more with the excellent <a href="http://gee-project.org">GEE</a>.</p>
+
+<h2 id="sosp2015">SOSP’2015</h2>
+
+<p>We’ve submitted a poster to <a href="http://www.ssrc.ucsc.edu/sosp15/callForPosters.html">SOSP’2015</a>! Wow! Check out the <a href="https://github.com/Hoverbear/raft/issues/69">issue</a> to see what we submitted.</p>
+
+<p>It was fun and we went for a “old school cereal box” feel like the <a href="http://capnproto.org/">Cap’n Proto site</a>.</p>
+
+<blockquote>
+  <p><a href="http://www.meetup.com/Rust-Bay-Area/events/219696985/">Psst</a>, <a href="https://github.com/Hoverbear/raft/issues/74">there’s something brewing on the horizon…</a></p>
+</blockquote>
+
+    </article>
+
+    <aside class="post-meta">
+  
+    Posted on
+    <time datetime="2015-08-01T00:00:00-07:00">01 Aug 2015</time>
+  
+
+  
+    
+      
+        , into
+        
+        <span><a href="/tags/#rust">Rust</a></span>
+      
+    
+      
+        ,
+        
+        <span><a href="/tags/#raft">Raft</a></span>
+      
+    
+      
+        
+            , and
+        
+        <span><a href="/tags/#uvic">UVic</a></span>
+      
+    .
+  
+
+  
+</aside>
+
+</main>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>

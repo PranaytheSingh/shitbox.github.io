@@ -1,0 +1,28 @@
+# Site settings
+title: ShitBox 
+author: Pranay Singh
+email: zeppez@protonmail.com
+description: 
+    Exploring, fascinating and amusing
+url: "https://shitbox.xyz"
+baseurl: ""
+
+# Media
+cover: "/assets/images/cover.jpg"
+logo: "/assets/images/logo.png"
+
+# Build settings
+paginate: 10
+paginate_path: "/archive/:num"
+markdown: kramdown
+permalink: pretty
+exclude: ["_drafts"]
+
+kramdown:
+  auto_ids: true
+  math_engine: mathjax
+  syntax_highlighter: rouge
+
+# social icons and sharing options
+twitter_username:  
+github_username: shitbox

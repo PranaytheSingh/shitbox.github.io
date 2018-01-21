@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>The Future with Futures</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/2017/03/space.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="The Future with Futures">
+    
+    
+        <meta name="twitter:description" content="&lt;p&gt;Recently there has been a lot of progress in the Rust language towards a robust asynchronous stack. In this article we’ll take a look at what these things are, take a tour of what’s available, play with some examples, and talk about how the pieces fit together.&lt;/p&gt;
+
+">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/2017/03/space.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">The Future with Futures</a></h1>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main>
+    <article>
+        <p>Recently there has been a lot of progress in the Rust language towards a robust asynchronous stack. In this article we’ll take a look at what these things are, take a tour of what’s available, play with some examples, and talk about how the pieces fit together.</p>
+
+<p>We’ll get started with the <code class="highlighter-rouge">futures</code> crate to start, move on to <code class="highlighter-rouge">futures_cpupool</code>, and then eventually to <code class="highlighter-rouge">tokio</code>. We will assume you have some knowledge of programming, and have at least thought about trying Rust before.</p>
+
+<h2 id="what-are-futures-and-async">What are Futures and Async?</h2>
+
+<p>When writing code to do some action which may take some time, such as requesting a resource from a remote host, it is not always desirable to block further execution of our program. This is particularly true in the case where we are writing a web server, or performing a large number of complex calculations.</p>
+
+<p>One way of handling this is to spawn threads and discretely slice up tasks to be distributed across threads. This is not always as convienent or as easy as it may sound. Suddenly we are forced to figure out how tasks are best split, how to allocate resources, to program against race conditions, and manage interthread communication.</p>
+
+<p>As a community we’ve learnt some techniques over the years, such as CPU pools which allow a number of threads to cooperate on a task, and ‘future’ values which resolve to their intended value after they are finished some computation. These provide us useful and powerful tools that makes it easier, safer, and more fun to write such code.</p>
+
+<p>If you’ve ever developed in Javascript you may already be familiar with asynchronous programming and the idea of Promises. Futures in Rust are very similar to this, but we’re provided more control and more responsibility. With this comes greater power.</p>
+
+<h2 id="how-we-got-here">How We Got Here</h2>
+
+<p>Much of this async work has been in development since green threads were removed from Rust around the 0.7 release. There have been several projects related to futures and async since, their influence can be felt by what we have now and what is on the horizon.</p>
+
+<p>Much of the async story today is founded on the ideas and lessons learned from <code class="highlighter-rouge">std</code>’s green threads, <a href="https://github.com/carllerche/mio"><code class="highlighter-rouge">mio</code></a>, <a href="https://github.com/rustcc/coroutine-rs"><code class="highlighter-rouge">coroutine</code></a>, and <a href="https://github.com/tailhook/rotor"><code class="highlighter-rouge">rotor</code></a>. <code class="highlighter-rouge">mio</code> in particular is a foundation of nearly the entire async area of Rust. If you have interest in seeing high quality systems code I highly reccomend paying some attention to this project.</p>
+
+<p>Today, <a href="https://tokio.rs/"><code class="highlighter-rouge">tokio</code></a> and <a href="https://github.com/alexcrichton/futures-rs"><code class="highlighter-rouge">futures</code></a> are the focus of much community effort. Recently <a href="https://tokio.rs/blog/tokio-0-1/">Tokio accounced its first release</a>, while futures have been relatively stable for a couple months. This has spurned a large amount of development within the community to support and leverage these new capabilities.</p>
+
+<h2 id="getting-started">Getting Started</h2>
+
+<p>The <code class="highlighter-rouge">futures</code> crate offers a number of structures and abstractions to <em>enable</em> building asynchronous code. By itself it’s quite simple, and through its clever design it is fundamentally a zero cost abstraction. This is an important thing to keep in mind as we work through our examples: Writing code with futures should have no performance overhead over code without.</p>
+
+<p>When compiled futures <a href="https://aturon.github.io/blog/2016/08/11/futures/">boil down to actual state machines</a> while still allowing us to write our code in a relatively familiar ‘callback style’ pattern. If you’ve already been using Rust then working with Futures will feel very similar to how iterators feel.</p>
+
+<p>One of the things we’ll commonly do in this section is “sleep a little bit” on a thread to simulate some asynchronous action. In order to do this let’s create a little function:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">extern</span> <span class="n">crate</span> <span class="n">rand</span><span class="p">;</span>
+
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="n">thread</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">time</span><span class="p">::</span><span class="n">Duration</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">rand</span><span class="p">::</span><span class="nn">distributions</span><span class="p">::{</span><span class="n">Range</span><span class="p">,</span> <span class="n">IndependentSample</span><span class="p">};</span>
+
+<span class="c">// This function sleeps for a bit, then returns how long it slept.</span>
+<span class="k">pub</span> <span class="k">fn</span> <span class="nf">sleep_a_little_bit</span><span class="p">()</span> <span class="k">-&gt;</span> <span class="nb">u64</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">generator</span> <span class="o">=</span> <span class="nn">rand</span><span class="p">::</span><span class="nf">thread_rng</span><span class="p">();</span>
+    <span class="k">let</span> <span class="n">possibilities</span> <span class="o">=</span> <span class="nn">Range</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1000</span><span class="p">);</span>
+
+    <span class="k">let</span> <span class="n">choice</span> <span class="o">=</span> <span class="n">possibilities</span><span class="nf">.ind_sample</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="n">generator</span><span class="p">);</span>
+
+    <span class="k">let</span> <span class="n">a_little_bit</span> <span class="o">=</span> <span class="nn">Duration</span><span class="p">::</span><span class="nf">from_millis</span><span class="p">(</span><span class="n">choice</span><span class="p">);</span>
+    <span class="nn">thread</span><span class="p">::</span><span class="nf">sleep</span><span class="p">(</span><span class="n">a_little_bit</span><span class="p">);</span>
+    <span class="n">choice</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Now that we’ve got that established we can use it in our first future. We’ll use a <code class="highlighter-rouge">oneshot</code> to delegate a task to another thread, then pick it up back in the main thread. A oneshot is essentially a single use channel, something can be sent from the sender to the receiver, then the channel is closed.</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">extern</span> <span class="n">crate</span> <span class="n">futures</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">crate</span> <span class="n">fun_with_futures</span><span class="p">;</span>
+
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="n">thread</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">futures</span><span class="p">::</span><span class="n">Future</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">futures</span><span class="p">::</span><span class="nn">sync</span><span class="p">::</span><span class="n">oneshot</span><span class="p">;</span>
+
+<span class="k">use</span> <span class="nn">fun_with_futures</span><span class="p">::</span><span class="n">sleep_a_little_bit</span><span class="p">;</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c">// This is a simple future built into the crate which feel sort of like</span>
+    <span class="c">// one-time channels. You get a (sender, receiver) when you invoke them.</span>
+    <span class="c">// Sending a value consumes that side of the channel, leaving only the reciever.</span>
+    <span class="k">let</span> <span class="p">(</span><span class="n">tx</span><span class="p">,</span> <span class="n">rx</span><span class="p">)</span> <span class="o">=</span> <span class="nn">oneshot</span><span class="p">::</span><span class="nf">channel</span><span class="p">();</span>
+
+    <span class="c">// We can spawn a thread to simulate an action that takes time, like a web</span>
+    <span class="c">// request. In this case it's just sleeping for a random time.</span>
+    <span class="nn">thread</span><span class="p">::</span><span class="nf">spawn</span><span class="p">(</span><span class="k">move</span> <span class="p">||</span> <span class="p">{</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"--&gt; START"</span><span class="p">);</span>
+
+        <span class="k">let</span> <span class="n">waited_for</span> <span class="o">=</span> <span class="nf">sleep_a_little_bit</span><span class="p">();</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"--- WAITED {}"</span><span class="p">,</span> <span class="n">waited_for</span><span class="p">);</span>
+        <span class="c">// This consumes the sender, we can't use it afterwards.</span>
+        <span class="n">tx</span><span class="nf">.complete</span><span class="p">(</span><span class="n">waited_for</span><span class="p">);</span>
+
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"&lt;-- END"</span><span class="p">);</span>
+    <span class="p">});</span>
+
+    <span class="c">// Now we can wait for it to finish</span>
+    <span class="k">let</span> <span class="n">result</span> <span class="o">=</span> <span class="n">rx</span><span class="nf">.wait</span><span class="p">()</span>
+        <span class="nf">.unwrap</span><span class="p">();</span>
+
+    <span class="c">// This value will be the same as the previous "WAITED" output.</span>
+    <span class="nd">println!</span><span class="p">(</span><span class="s">"{}"</span><span class="p">,</span> <span class="n">result</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>If we run this example we’ll see something like:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>--&gt; START
+--- WAITED 542
+&lt;-- END
+542
+</code></pre></div></div>
+
+<p>The output is exactly what we might expect if we were doing this via the <code class="highlighter-rouge">std</code> channels. The code looks similar as well. At this point we’re barely using Futures at all, so it shouldn’t be a huge surprise that there is nothing surprising happening here. Futures start to come into their own during much more complicated tasks.</p>
+
+<p>Next, let’s look at how we can work with a set of futures. In this example we’ll spawn a number of threads, have them do some long running task, and then collect all of the results into a vector.</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">extern</span> <span class="n">crate</span> <span class="n">futures</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">crate</span> <span class="n">fun_with_futures</span><span class="p">;</span>
+
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="n">thread</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">futures</span><span class="p">::</span><span class="n">Future</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">futures</span><span class="p">::</span><span class="nn">future</span><span class="p">::</span><span class="n">join_all</span><span class="p">;</span>
+
+<span class="k">use</span> <span class="nn">fun_with_futures</span><span class="p">::</span><span class="n">sleep_a_little_bit</span><span class="p">;</span>
+
+<span class="k">const</span> <span class="n">NUM_OF_TASKS</span><span class="p">:</span> <span class="nb">usize</span> <span class="o">=</span> <span class="mi">10</span><span class="p">;</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c">// We'll create a set to add a bunch of recievers to.</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">rx_set</span> <span class="o">=</span> <span class="nn">Vec</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span>
+
+    <span class="c">// Next we'll spawn up a bunch of threads doing 'something' for a bit then sending a value.</span>
+    <span class="k">for</span> <span class="n">index</span> <span class="n">in</span> <span class="mi">0</span><span class="o">..</span><span class="n">NUM_OF_TASKS</span> <span class="p">{</span>
+        <span class="c">// Here we create a future, this is a `oneshot` value which is consumed after use.</span>
+        <span class="k">let</span> <span class="p">(</span><span class="n">tx</span><span class="p">,</span> <span class="n">rx</span><span class="p">)</span> <span class="o">=</span> <span class="nn">futures</span><span class="p">::</span><span class="nf">oneshot</span><span class="p">();</span>
+        <span class="c">// Add the reciever to the vector we created earlier so we can collect on it.</span>
+        <span class="n">rx_set</span><span class="nf">.push</span><span class="p">(</span><span class="n">rx</span><span class="p">);</span>
+
+        <span class="c">// Spawning up a thread means things won't be executed sequentially, so this will actually</span>
+        <span class="c">// behave like an asynchronous value, so we can actually see how they work.</span>
+        <span class="nn">thread</span><span class="p">::</span><span class="nf">spawn</span><span class="p">(</span><span class="k">move</span> <span class="p">||</span> <span class="p">{</span>
+            <span class="nd">println!</span><span class="p">(</span><span class="s">"{} --&gt; START"</span><span class="p">,</span> <span class="n">index</span><span class="p">);</span>
+
+            <span class="k">let</span> <span class="n">waited_for</span> <span class="o">=</span> <span class="nf">sleep_a_little_bit</span><span class="p">();</span>
+            <span class="nd">println!</span><span class="p">(</span><span class="s">"{} --- WAITED {}"</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">waited_for</span><span class="p">);</span>
+
+            <span class="c">// Here we send back the index (and consume the sender).</span>
+            <span class="n">tx</span><span class="nf">.complete</span><span class="p">(</span><span class="n">index</span><span class="p">);</span>
+
+            <span class="nd">println!</span><span class="p">(</span><span class="s">"{} &lt;-- END"</span><span class="p">,</span> <span class="n">index</span><span class="p">);</span>
+        <span class="p">});</span>
+    <span class="p">}</span>
+
+    <span class="c">// `join_all` lets us join together the set of futures.</span>
+    <span class="k">let</span> <span class="n">result</span> <span class="o">=</span> <span class="nf">join_all</span><span class="p">(</span><span class="n">rx_set</span><span class="p">)</span>
+        <span class="c">// Block until they all are resolved.</span>
+        <span class="nf">.wait</span><span class="p">()</span>
+        <span class="c">// Check they all came out in the right order.</span>
+        <span class="nf">.map</span><span class="p">(|</span><span class="n">values</span><span class="p">|</span>
+            <span class="n">values</span><span class="nf">.iter</span><span class="p">()</span>
+                <span class="nf">.enumerate</span><span class="p">()</span>
+                <span class="nf">.all</span><span class="p">(|(</span><span class="n">index</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">value</span><span class="p">)|</span> <span class="n">index</span> <span class="o">==</span> <span class="n">value</span><span class="p">))</span>
+        <span class="c">// We'll be lazy and just unwrap the result.</span>
+        <span class="nf">.unwrap</span><span class="p">();</span>
+
+    <span class="nd">println!</span><span class="p">(</span><span class="s">"Job is done. Values returned in order: {}"</span><span class="p">,</span> <span class="n">result</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>The <code class="highlighter-rouge">map</code> call behaves just like the <code class="highlighter-rouge">map</code> of an <code class="highlighter-rouge">Option&lt;T&gt;</code> or a <code class="highlighter-rouge">Result&lt;T,E&gt;</code>. It transforms some <code class="highlighter-rouge">Future&lt;T&gt;</code> into some <code class="highlighter-rouge">Future&lt;U&gt;</code>.  Running this example in output similar to the following:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>0 --&gt; START
+1 --&gt; START
+3 --&gt; START
+2 --&gt; START
+4 --&gt; START
+5 --&gt; START
+6 --&gt; START
+7 --&gt; START
+8 --&gt; START
+9 --&gt; START
+4 --- WAITED 124
+4 &lt;-- END
+1 --- WAITED 130
+1 &lt;-- END
+0 --- WAITED 174
+0 &lt;-- END
+2 --- WAITED 268
+2 &lt;-- END
+6 --- WAITED 445
+6 &lt;-- END
+3 --- WAITED 467
+3 &lt;-- END
+9 --- WAITED 690
+9 &lt;-- END
+8 --- WAITED 694
+8 &lt;-- END
+5 --- WAITED 743
+5 &lt;-- END
+7 --- WAITED 802
+7 &lt;-- END
+Job is done. Values returned in order: true
+</code></pre></div></div>
+
+<p>In this example we can observe that all of the futures started, waited various times, then finished. They did not finish in order, but the resulting vector did come out in the correct order. Again, this result is not entirely surprising and we could have done something very similar with <code class="highlighter-rouge">std</code>’s channels.</p>
+
+<blockquote>
+  <p>Remember, futures are a basic building block, not a batteries included solution. They are intended to be built on top of.</p>
+</blockquote>
+
+<p>We’ll cover one more example which will feel fairly familiar to people who have used the channels from <code class="highlighter-rouge">std</code>, then we’ll start doing more interesting stuff.</p>
+
+<p>The next primitive from <code class="highlighter-rouge">futures</code> we’ll use is the <a href="https://docs.rs/futures/0.1.10/futures/sync/mpsc/fn.channel.html"><code class="highlighter-rouge">futures::sync::mpsc::channel</code></a> which behaves similar to the <a href="https://doc.rust-lang.org/std/sync/mpsc/fn.channel.html"><code class="highlighter-rouge">std::sync::mpsc::channel</code></a>. We’ll build a channel then pass off the sender <code class="highlighter-rouge">tx</code> to another thread, then we’ll fire a series of messages along the channel. The <code class="highlighter-rouge">rx</code> side of the channel can then be used similarly to an <code class="highlighter-rouge">Iterator</code>.</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">extern</span> <span class="n">crate</span> <span class="n">futures</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">crate</span> <span class="n">fun_with_futures</span><span class="p">;</span>
+
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="n">thread</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">futures</span><span class="p">::</span><span class="nn">future</span><span class="p">::{</span><span class="n">Future</span><span class="p">,</span> <span class="n">ok</span><span class="p">};</span>
+<span class="k">use</span> <span class="nn">futures</span><span class="p">::</span><span class="nn">stream</span><span class="p">::</span><span class="n">Stream</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">futures</span><span class="p">::</span><span class="nn">sync</span><span class="p">::</span><span class="n">mpsc</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">futures</span><span class="p">::</span><span class="n">Sink</span><span class="p">;</span>
+
+<span class="k">use</span> <span class="nn">fun_with_futures</span><span class="p">::</span><span class="n">sleep_a_little_bit</span><span class="p">;</span>
+
+<span class="k">const</span> <span class="n">BUFFER_SIZE</span><span class="p">:</span> <span class="nb">usize</span> <span class="o">=</span> <span class="mi">10</span><span class="p">;</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c">// A channel represents a stream and will yield a series of futures.</span>
+
+    <span class="c">// We're using a bounded channel here with a limited size.</span>
+    <span class="k">let</span> <span class="p">(</span><span class="k">mut</span> <span class="n">tx</span><span class="p">,</span> <span class="n">rx</span><span class="p">)</span> <span class="o">=</span> <span class="nn">mpsc</span><span class="p">::</span><span class="nf">channel</span><span class="p">(</span><span class="n">BUFFER_SIZE</span><span class="p">);</span>
+
+    <span class="nn">thread</span><span class="p">::</span><span class="nf">spawn</span><span class="p">(</span><span class="k">move</span> <span class="p">||</span> <span class="p">{</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"--&gt; START THREAD"</span><span class="p">);</span>
+        <span class="c">// We'll have the stream produce a series of values.</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="n">in</span> <span class="mi">0</span><span class="o">..</span><span class="mi">10</span> <span class="p">{</span>
+
+            <span class="k">let</span> <span class="n">waited_for</span> <span class="o">=</span> <span class="nf">sleep_a_little_bit</span><span class="p">();</span>
+            <span class="nd">println!</span><span class="p">(</span><span class="s">"--- THREAD WAITED {}"</span><span class="p">,</span> <span class="n">waited_for</span><span class="p">);</span>
+
+            <span class="c">// When we `send()` a value it consumes the sender. Returning</span>
+            <span class="c">// a 'new' sender which we have to handle. In this case we just</span>
+            <span class="c">// re-assign.</span>
+            <span class="k">match</span> <span class="n">tx</span><span class="nf">.send</span><span class="p">(</span><span class="n">waited_for</span><span class="p">)</span><span class="nf">.wait</span><span class="p">()</span> <span class="p">{</span>
+                <span class="c">// Why do we need to do this? This is how back pressure is implemented.</span>
+                <span class="c">// When the buffer is full `wait()` will block.</span>
+                <span class="nf">Ok</span><span class="p">(</span><span class="n">new_tx</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="n">tx</span> <span class="o">=</span> <span class="n">new_tx</span><span class="p">,</span>
+                <span class="nf">Err</span><span class="p">(</span><span class="n">_</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="nd">panic!</span><span class="p">(</span><span class="s">"Oh no!"</span><span class="p">),</span>
+            <span class="p">}</span>
+
+        <span class="p">}</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"&lt;-- END THREAD"</span><span class="p">);</span>
+        <span class="c">// Here the stream is dropped.</span>
+    <span class="p">});</span>
+
+    <span class="c">// We can `.fold()` like we would an iterator. In fact we can do many</span>
+    <span class="c">// things like we would an iterator.</span>
+    <span class="k">let</span> <span class="n">sum</span> <span class="o">=</span> <span class="n">rx</span><span class="nf">.fold</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">|</span><span class="n">acc</span><span class="p">,</span> <span class="n">val</span><span class="p">|</span> <span class="p">{</span>
+            <span class="c">// Notice when we run that this is happening after each item of</span>
+            <span class="c">// the stream resolves, like an iterator.</span>
+            <span class="nd">println!</span><span class="p">(</span><span class="s">"--- FOLDING {} INTO {}"</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="n">acc</span><span class="p">);</span>
+            <span class="c">// `ok()` is a simple way to say "Yes this worked."</span>
+            <span class="c">// `err()` also exists.</span>
+            <span class="nf">ok</span><span class="p">(</span><span class="n">acc</span> <span class="o">+</span> <span class="n">val</span><span class="p">)</span>
+        <span class="p">})</span>
+        <span class="nf">.wait</span><span class="p">()</span>
+        <span class="nf">.unwrap</span><span class="p">();</span>
+    <span class="nd">println!</span><span class="p">(</span><span class="s">"SUM {}"</span><span class="p">,</span> <span class="n">sum</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>The output will be similar to the following:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>--&gt; START THREAD
+--- THREAD WAITED 166
+--- FOLDING 166 INTO 0
+--- THREAD WAITED 554
+--- FOLDING 554 INTO 166
+--- THREAD WAITED 583
+--- FOLDING 583 INTO 720
+--- THREAD WAITED 175
+--- FOLDING 175 INTO 1303
+--- THREAD WAITED 136
+--- FOLDING 136 INTO 1478
+--- THREAD WAITED 155
+--- FOLDING 155 INTO 1614
+--- THREAD WAITED 90
+--- FOLDING 90 INTO 1769
+--- THREAD WAITED 986
+--- FOLDING 986 INTO 1859
+--- THREAD WAITED 830
+--- FOLDING 830 INTO 2845
+--- THREAD WAITED 21
+&lt;-- END THREAD
+--- FOLDING 21 INTO 3675
+SUM 3696
+</code></pre></div></div>
+
+<p>Now that we’re familiar with these basic ideas we can move on to working with <code class="highlighter-rouge">futures_cpupool</code>.</p>
+
+<h2 id="dipping-our-toes-into-the-cpu-pool">Dipping Our Toes Into the CPU Pool</h2>
+
+<p>Earlier we alluded to the idea of using futures with a CPU pool where we didn’t have to manage which thread did which work, but in our examples so far we’ve still had to manually spin up threads. So let’s fix that.</p>
+
+<p>The <a href="https://docs.rs/futures-cpupool/0.1.3/futures_cpupool/"><code class="highlighter-rouge">futures_cpupool</code></a> crate offers us this functionality. Let’s take a look at a basic example which does nearly the same thing as our second example above:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">extern</span> <span class="n">crate</span> <span class="n">futures</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">crate</span> <span class="n">fun_with_futures</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">crate</span> <span class="n">futures_cpupool</span><span class="p">;</span>
+
+<span class="k">use</span> <span class="nn">futures</span><span class="p">::</span><span class="nn">future</span><span class="p">::{</span><span class="n">Future</span><span class="p">,</span> <span class="n">join_all</span><span class="p">};</span>
+<span class="k">use</span> <span class="nn">futures_cpupool</span><span class="p">::</span><span class="n">Builder</span><span class="p">;</span>
+
+<span class="k">use</span> <span class="nn">fun_with_futures</span><span class="p">::</span><span class="n">sleep_a_little_bit</span><span class="p">;</span>
+
+<span class="c">// Feel free to change me!</span>
+<span class="k">const</span> <span class="n">NUM_OF_TASKS</span><span class="p">:</span> <span class="nb">usize</span> <span class="o">=</span> <span class="mi">10</span><span class="p">;</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c">// Creates a CpuPool with workers equal to the cores on the machine.</span>
+    <span class="k">let</span> <span class="n">pool</span> <span class="o">=</span> <span class="nn">Builder</span><span class="p">::</span><span class="nf">new</span><span class="p">()</span>
+        <span class="nf">.create</span><span class="p">();</span>
+
+    <span class="c">// Create a batch of futures.</span>
+    <span class="k">let</span> <span class="n">futures</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="n">NUM_OF_TASKS</span><span class="p">)</span>
+        <span class="c">// Tell the pool to run a closure.</span>
+        <span class="nf">.map</span><span class="p">(|</span><span class="n">index</span><span class="p">|</span> <span class="n">pool</span><span class="nf">.spawn_fn</span><span class="p">(</span><span class="k">move</span> <span class="p">||</span> <span class="p">{</span>
+
+            <span class="nd">println!</span><span class="p">(</span><span class="s">"{} --&gt; START"</span><span class="p">,</span> <span class="n">index</span><span class="p">);</span>
+            <span class="k">let</span> <span class="n">waited_for</span> <span class="o">=</span> <span class="nf">sleep_a_little_bit</span><span class="p">();</span>
+            <span class="nd">println!</span><span class="p">(</span><span class="s">"{} &lt;-- WAITED {}"</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">waited_for</span><span class="p">);</span>
+
+            <span class="c">// We need to return a result!</span>
+            <span class="c">// Why? Futures were implemented with I/O in mind!</span>
+            <span class="k">let</span> <span class="n">result</span><span class="p">:</span> <span class="n">Result</span><span class="o">&lt;</span><span class="n">_</span><span class="p">,</span> <span class="p">()</span><span class="o">&gt;</span> <span class="o">=</span> <span class="nf">Ok</span><span class="p">(</span><span class="n">index</span><span class="p">);</span>
+
+            <span class="n">result</span>
+        <span class="p">}))</span><span class="py">.collect</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;&gt;</span><span class="p">();</span>
+
+    <span class="c">// We wait on all the futures here and see if they came back in order.</span>
+    <span class="k">let</span> <span class="n">result</span> <span class="o">=</span> <span class="nf">join_all</span><span class="p">(</span><span class="n">futures</span><span class="p">)</span>
+        <span class="c">// Check they all came out in the right order.</span>
+        <span class="nf">.map</span><span class="p">(|</span><span class="n">values</span><span class="p">|</span>
+            <span class="n">values</span><span class="nf">.iter</span><span class="p">()</span>
+                <span class="nf">.enumerate</span><span class="p">()</span>
+                <span class="nf">.all</span><span class="p">(|(</span><span class="n">index</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">value</span><span class="p">)|</span> <span class="n">index</span> <span class="o">==</span> <span class="n">value</span><span class="p">))</span>
+        <span class="nf">.wait</span><span class="p">()</span>
+        <span class="nf">.unwrap</span><span class="p">();</span>
+    <span class="nd">println!</span><span class="p">(</span><span class="s">"Job is done. Values returned in order: {:?}"</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>This outputs something similar to the following:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>0 --&gt; START
+1 --&gt; START
+2 --&gt; START
+3 --&gt; START
+4 --&gt; START
+5 --&gt; START
+6 --&gt; START
+7 --&gt; START
+0 &lt;-- WAITED 37
+8 --&gt; START
+2 &lt;-- WAITED 86
+9 --&gt; START
+3 &lt;-- WAITED 110
+6 &lt;-- WAITED 326
+9 &lt;-- WAITED 458
+4 &lt;-- WAITED 568
+5 &lt;-- WAITED 748
+7 &lt;-- WAITED 757
+1 &lt;-- WAITED 794
+8 &lt;-- WAITED 838
+Job is done. Values returned in order: true
+</code></pre></div></div>
+
+<p>This time we didn’t need to manage threads or which thread does what. The pool just handled it for us. This is pretty handy. We can be rather arbitrary with what we do with the pool. For example different spawned tasks can return different types:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">extern</span> <span class="n">crate</span> <span class="n">futures</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">crate</span> <span class="n">fun_with_futures</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">crate</span> <span class="n">futures_cpupool</span><span class="p">;</span>
+
+<span class="k">use</span> <span class="nn">futures</span><span class="p">::</span><span class="nn">future</span><span class="p">::</span><span class="n">Future</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">futures_cpupool</span><span class="p">::</span><span class="n">Builder</span><span class="p">;</span>
+
+<span class="k">use</span> <span class="nn">fun_with_futures</span><span class="p">::</span><span class="n">sleep_a_little_bit</span><span class="p">;</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c">// Creates a CpuPool with workers equal to the cores on the machine.</span>
+    <span class="k">let</span> <span class="n">pool</span> <span class="o">=</span> <span class="nn">Builder</span><span class="p">::</span><span class="nf">new</span><span class="p">()</span>
+        <span class="nf">.create</span><span class="p">();</span>
+
+    <span class="c">// Note the two spawns return different types.</span>
+    <span class="k">let</span> <span class="n">returns_string</span> <span class="o">=</span> <span class="n">pool</span><span class="nf">.spawn_fn</span><span class="p">(</span><span class="k">move</span> <span class="p">||</span> <span class="p">{</span>
+        <span class="nf">sleep_a_little_bit</span><span class="p">();</span>
+        <span class="c">// We need to return a result!</span>
+        <span class="k">let</span> <span class="n">result</span><span class="p">:</span> <span class="n">Result</span><span class="o">&lt;</span><span class="n">_</span><span class="p">,</span> <span class="p">()</span><span class="o">&gt;</span> <span class="o">=</span> <span class="nf">Ok</span><span class="p">(</span><span class="s">"First"</span><span class="p">);</span>
+
+        <span class="n">result</span>
+    <span class="p">});</span>
+
+    <span class="k">let</span> <span class="n">returns_integer</span> <span class="o">=</span> <span class="n">pool</span><span class="nf">.spawn_fn</span><span class="p">(</span><span class="k">move</span> <span class="p">||</span> <span class="p">{</span>
+        <span class="nf">sleep_a_little_bit</span><span class="p">();</span>
+        <span class="c">// We need to return a result!</span>
+        <span class="k">let</span> <span class="n">result</span><span class="p">:</span> <span class="n">Result</span><span class="o">&lt;</span><span class="n">_</span><span class="p">,</span> <span class="p">()</span><span class="o">&gt;</span> <span class="o">=</span> <span class="nf">Ok</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span>
+
+        <span class="n">result</span>
+    <span class="p">});</span>
+
+    <span class="c">// Wait for the jobs to finish.</span>
+    <span class="k">let</span> <span class="n">resulting_string</span> <span class="o">=</span> <span class="n">returns_string</span><span class="nf">.wait</span><span class="p">()</span>
+        <span class="nf">.unwrap</span><span class="p">();</span>
+
+    <span class="k">let</span> <span class="n">resulting_integer</span> <span class="o">=</span> <span class="n">returns_integer</span><span class="nf">.wait</span><span class="p">()</span>
+        <span class="nf">.unwrap</span><span class="p">();</span>
+    
+    <span class="nd">println!</span><span class="p">(</span><span class="s">"{}, {}"</span><span class="p">,</span> <span class="n">resulting_string</span><span class="p">,</span> <span class="n">resulting_integer</span><span class="p">);</span>
+    <span class="c">// Returns `First, 2`</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>This means that we can create a CPU pool and delegate arbitrary tasks to it throughout the lifetime of our program. It may be that you want to create multiple pools to prevent starvation, for example a pool with 2 workers for network connections, and another with 2 workers for delayed jobs.</p>
+
+<h2 id="visiting-tokios-core">Visiting Tokio’s Core</h2>
+
+<p>The <a href="https://tokio.rs/"><code class="highlighter-rouge">tokio</code></a> project has been developed closely alongside of <code class="highlighter-rouge">futures</code> and the projects share many authors. The project has a number of crates intended for building asynchronous applications. In the <code class="highlighter-rouge">tokio-core</code> crate there are things like the main event loop, TCP handlers, and timeouts. Building on top of that are crates such as <code class="highlighter-rouge">tokio-proto</code> and <code class="highlighter-rouge">tokio-service</code> which build on top of these constructs.</p>
+
+<p>We’ll start with just <code class="highlighter-rouge">tokio-core</code> and doing a simple HTTP GET request. Note since we’re not actually using a HTTP client we need to handle all the details ourselves. Here’s what that looks like:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">extern</span> <span class="n">crate</span> <span class="n">futures</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">crate</span> <span class="n">tokio_core</span><span class="p">;</span>
+
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">net</span><span class="p">::</span><span class="n">ToSocketAddrs</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">futures</span><span class="p">::</span><span class="nn">future</span><span class="p">::</span><span class="n">Future</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">tokio_core</span><span class="p">::</span><span class="nn">io</span><span class="p">::{</span><span class="n">read_to_end</span><span class="p">,</span> <span class="n">write_all</span><span class="p">};</span>
+<span class="k">use</span> <span class="nn">tokio_core</span><span class="p">::</span><span class="nn">reactor</span><span class="p">::</span><span class="n">Core</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">tokio_core</span><span class="p">::</span><span class="nn">net</span><span class="p">::</span><span class="n">TcpStream</span><span class="p">;</span>
+
+<span class="k">const</span> <span class="n">DOMAIN</span><span class="p">:</span> <span class="o">&amp;</span><span class="nv">'static</span> <span class="nb">str</span> <span class="o">=</span> <span class="s">"google.com"</span><span class="p">;</span>
+<span class="k">const</span> <span class="n">PORT</span><span class="p">:</span> <span class="nb">u16</span> <span class="o">=</span> <span class="mi">80</span><span class="p">;</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c">// Create the event loop that will drive this server.</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">core</span> <span class="o">=</span> <span class="nn">Core</span><span class="p">::</span><span class="nf">new</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">();</span>
+    <span class="k">let</span> <span class="n">handle</span> <span class="o">=</span> <span class="n">core</span><span class="nf">.handle</span><span class="p">();</span>
+
+    <span class="c">// Get a socket address from a domain name.</span>
+    <span class="k">let</span> <span class="n">socket_addr</span> <span class="o">=</span> <span class="p">(</span><span class="n">DOMAIN</span><span class="p">,</span> <span class="n">PORT</span><span class="p">)</span><span class="nf">.to_socket_addrs</span><span class="p">()</span>
+        <span class="nf">.map</span><span class="p">(|</span><span class="n">iter</span><span class="p">|</span> <span class="n">iter</span><span class="py">.collect</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;&gt;</span><span class="p">())</span>
+        <span class="nf">.unwrap</span><span class="p">()[</span><span class="mi">0</span><span class="p">];</span>
+    
+    <span class="c">// Connect with a handle to the core event loop.</span>
+    <span class="k">let</span> <span class="n">response</span> <span class="o">=</span> <span class="nn">TcpStream</span><span class="p">::</span><span class="nf">connect</span><span class="p">(</span><span class="o">&amp;</span><span class="n">socket_addr</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">handle</span><span class="p">)</span>
+        <span class="nf">.and_then</span><span class="p">(|</span><span class="n">socket</span><span class="p">|</span> <span class="p">{</span>
+            <span class="c">// Write a raw GET request onto the socket.</span>
+            <span class="nf">write_all</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="nd">format!</span><span class="p">(</span><span class="s">"</span><span class="err">\</span><span class="s">
+                GET / HTTP/1.0</span><span class="se">\r\n</span><span class="err">\</span><span class="s">
+                Host: {}</span><span class="se">\r\n</span><span class="err">\</span><span class="s">
+                </span><span class="se">\r\n</span><span class="err">\</span><span class="s">
+            "</span><span class="p">,</span> <span class="n">DOMAIN</span><span class="p">))</span>
+        <span class="p">})</span><span class="nf">.and_then</span><span class="p">(|(</span><span class="n">socket</span><span class="p">,</span> <span class="n">_request</span><span class="p">)|</span> <span class="p">{</span>
+            <span class="c">// Read the response into a buffer.</span>
+            <span class="nf">read_to_end</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="nn">Vec</span><span class="p">::</span><span class="nf">new</span><span class="p">())</span>
+        <span class="p">});</span>
+
+    <span class="c">// Fire the task off onto the event loop.</span>
+    <span class="k">let</span> <span class="p">(</span><span class="n">_socket</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span> <span class="o">=</span> <span class="n">core</span><span class="nf">.run</span><span class="p">(</span><span class="n">response</span><span class="p">)</span><span class="nf">.unwrap</span><span class="p">();</span>
+
+    <span class="c">// Parse the data and output it.</span>
+    <span class="nd">println!</span><span class="p">(</span><span class="s">"{}"</span><span class="p">,</span> <span class="nn">String</span><span class="p">::</span><span class="nf">from_utf8</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="nf">.unwrap</span><span class="p">());</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>This looks a bit different than what we’ve previously been doing with our futures. <a href="https://docs.rs/tokio-core/0.1.4/tokio_core/reactor/struct.Core.html"><code class="highlighter-rouge">Core::new()</code></a> is how we create an event loop, or ‘Reactor’, which we can get <a href="https://docs.rs/tokio-core/0.1.4/tokio_core/reactor/struct.Handle.html"><code class="highlighter-rouge">Handle</code>s</a> which we use when issuing tasks such as <code class="highlighter-rouge">TcpStream::Connect</code>. You can learn more about the basics of the Reactor <a href="https://tokio.rs/docs/getting-started/reactor/">here</a>.</p>
+
+<p>Working with the types provided by Tokio is slightly different than working with those provided by <code class="highlighter-rouge">std</code>, however many of the ideas and concepts are the same. Many of the changes are due to the differences between syncronous and asynchronous I/O.</p>
+
+<p>Near the end of the example we have <code class="highlighter-rouge">core.run()</code> which is a way to fire off <strong>one off</strong> tasks and get a return value from them, similar to how we were using futures. Tokio also provides a <code class="highlighter-rouge">spawn()</code> and <code class="highlighter-rouge">spawn_fn()</code> functions which are executed in the background and must do their own handling of errors, making it ideal for tasks such as responding to new connections.</p>
+
+<p>Let’s play with <code class="highlighter-rouge">spawn_fn()</code> in our next example by making a simple server.</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">extern</span> <span class="n">crate</span> <span class="n">futures</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">crate</span> <span class="n">tokio_core</span><span class="p">;</span>
+
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">net</span><span class="p">::</span><span class="n">SocketAddr</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">futures</span><span class="p">::</span><span class="nn">future</span><span class="p">::</span><span class="n">Future</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">futures</span><span class="p">::</span><span class="n">Stream</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">tokio_core</span><span class="p">::</span><span class="nn">io</span><span class="p">::{</span><span class="n">read_to_end</span><span class="p">,</span> <span class="n">write_all</span><span class="p">};</span>
+<span class="k">use</span> <span class="nn">tokio_core</span><span class="p">::</span><span class="nn">reactor</span><span class="p">::</span><span class="n">Core</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">tokio_core</span><span class="p">::</span><span class="nn">net</span><span class="p">::</span><span class="n">TcpListener</span><span class="p">;</span>
+
+<span class="k">const</span> <span class="n">LISTEN_TO</span><span class="p">:</span> <span class="o">&amp;</span><span class="nv">'static</span> <span class="nb">str</span> <span class="o">=</span> <span class="s">"0.0.0.0:8080"</span><span class="p">;</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c">// Create the event loop that will drive this server.</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">core</span> <span class="o">=</span> <span class="nn">Core</span><span class="p">::</span><span class="nf">new</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">();</span>
+    <span class="k">let</span> <span class="n">handle</span> <span class="o">=</span> <span class="n">core</span><span class="nf">.handle</span><span class="p">();</span>
+
+    <span class="c">// Get a SocketAddr</span>
+    <span class="k">let</span> <span class="n">socket</span><span class="p">:</span> <span class="n">SocketAddr</span> <span class="o">=</span> <span class="n">LISTEN_TO</span><span class="nf">.parse</span><span class="p">()</span>
+        <span class="nf">.unwrap</span><span class="p">();</span>
+    
+    <span class="c">// Start listening.</span>
+    <span class="k">let</span> <span class="n">listener</span> <span class="o">=</span> <span class="nn">TcpListener</span><span class="p">::</span><span class="nf">bind</span><span class="p">(</span><span class="o">&amp;</span><span class="n">socket</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">handle</span><span class="p">)</span>
+        <span class="nf">.unwrap</span><span class="p">();</span>
+    
+    <span class="c">// For each incoming connection...</span>
+    <span class="k">let</span> <span class="n">server</span> <span class="o">=</span> <span class="n">listener</span><span class="nf">.incoming</span><span class="p">()</span><span class="nf">.for_each</span><span class="p">(|(</span><span class="n">stream</span><span class="p">,</span> <span class="n">_client_addr</span><span class="p">)|</span> <span class="p">{</span>
+        <span class="c">// Spawn the task on the reactor.</span>
+        <span class="n">handle</span><span class="nf">.spawn_fn</span><span class="p">(||</span> <span class="p">{</span>
+            <span class="c">// Read until EOF</span>
+            <span class="nf">read_to_end</span><span class="p">(</span><span class="n">stream</span><span class="p">,</span> <span class="nn">Vec</span><span class="p">::</span><span class="nf">new</span><span class="p">())</span>
+                <span class="nf">.and_then</span><span class="p">(|(</span><span class="n">socket</span><span class="p">,</span> <span class="n">data</span><span class="p">)|</span> <span class="p">{</span>
+                    <span class="c">// Write the recieved data.</span>
+                    <span class="nf">write_all</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+                <span class="p">})</span>
+                <span class="c">// Errors have to be handled internally.</span>
+                <span class="nf">.map</span><span class="p">(|</span><span class="n">_</span><span class="p">|</span> <span class="p">())</span>
+                <span class="nf">.map_err</span><span class="p">(|</span><span class="n">_</span><span class="p">|</span> <span class="p">())</span>
+        <span class="p">});</span>
+
+        <span class="nf">Ok</span><span class="p">(())</span> <span class="c">// keep accepting connections</span>
+    <span class="p">});</span>
+
+    <span class="c">// Run the reactor.</span>
+    <span class="n">core</span><span class="nf">.run</span><span class="p">(</span><span class="n">server</span><span class="p">)</span><span class="nf">.unwrap</span><span class="p">();</span>
+<span class="p">}</span>
+<span class="c">// Throw some data at it with `echo "Test" | nc 127.0.0.1 8080`</span>
+</code></pre></div></div>
+
+<p>Running <code class="highlighter-rouge">echo "Test" | nc 127.0.0.1 8080</code> in another terminal echos back the data sent.</p>
+
+<p>However, our example here isn’t very useful, or idiomatic! For example, we can’t use something like <code class="highlighter-rouge">telnet</code> or <code class="highlighter-rouge">curl</code> to interact with it. It’s a start though. Let’s do better.</p>
+
+<p>We’ll improve on our previous example by using a <a href="https://docs.rs/tokio-core/0.1.4/tokio_core/io/trait.Codec.html"><code class="highlighter-rouge">Codec</code></a>. <code class="highlighter-rouge">Codec</code>s allow us to describe how to encode and decode the frames a <code class="highlighter-rouge">TcpStream</code> (or anything else that can be <code class="highlighter-rouge">framed()</code>). It asks us to define an <code class="highlighter-rouge">In</code> and an <code class="highlighter-rouge">Out</code> type as well as <code class="highlighter-rouge">encode()</code> and <code class="highlighter-rouge">decode()</code> functions.</p>
+
+<p>Here’s what our example with <code class="highlighter-rouge">EchoCodec</code> could look like:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">extern</span> <span class="n">crate</span> <span class="n">futures</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">crate</span> <span class="n">tokio_core</span><span class="p">;</span>
+
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">net</span><span class="p">::</span><span class="n">SocketAddr</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">futures</span><span class="p">::</span><span class="nn">future</span><span class="p">::</span><span class="n">Future</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">futures</span><span class="p">::</span><span class="n">Stream</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">io</span><span class="p">::</span><span class="n">Result</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">tokio_core</span><span class="p">::</span><span class="nn">io</span><span class="p">::{</span><span class="n">Codec</span><span class="p">,</span> <span class="n">EasyBuf</span><span class="p">,</span> <span class="n">Io</span><span class="p">};</span>
+<span class="k">use</span> <span class="nn">tokio_core</span><span class="p">::</span><span class="nn">reactor</span><span class="p">::</span><span class="n">Core</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">tokio_core</span><span class="p">::</span><span class="nn">net</span><span class="p">::</span><span class="n">TcpListener</span><span class="p">;</span>
+
+<span class="k">const</span> <span class="n">LISTEN_TO</span><span class="p">:</span> <span class="o">&amp;</span><span class="nv">'static</span> <span class="nb">str</span> <span class="o">=</span> <span class="s">"0.0.0.0:8080"</span><span class="p">;</span>
+
+<span class="c">// Codecs can have state, but this one doesn't.</span>
+<span class="k">struct</span> <span class="n">EchoCodec</span><span class="p">;</span>
+<span class="k">impl</span> <span class="n">Codec</span> <span class="k">for</span> <span class="n">EchoCodec</span> <span class="p">{</span>
+    <span class="c">// Associated types which define the data taken/produced by the codec.</span>
+    <span class="k">type</span> <span class="n">In</span> <span class="o">=</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">u8</span><span class="o">&gt;</span><span class="p">;</span>
+    <span class="k">type</span> <span class="n">Out</span> <span class="o">=</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">u8</span><span class="o">&gt;</span><span class="p">;</span>
+
+    <span class="c">// Returns `Ok(Some(In))` if there is a frame, `Ok(None)` if it needs more data.</span>
+    <span class="k">fn</span> <span class="nf">decode</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="k">self</span><span class="p">,</span> <span class="n">buf</span><span class="p">:</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="n">EasyBuf</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">Result</span><span class="o">&lt;</span><span class="nb">Option</span><span class="o">&lt;</span><span class="nn">Self</span><span class="p">::</span><span class="n">In</span><span class="o">&gt;&gt;</span> <span class="p">{</span>
+        <span class="c">// It's important to drain the buffer!</span>
+        <span class="k">let</span> <span class="n">amount</span> <span class="o">=</span> <span class="n">buf</span><span class="nf">.len</span><span class="p">();</span>
+        <span class="k">let</span> <span class="n">data</span> <span class="o">=</span> <span class="n">buf</span><span class="nf">.drain_to</span><span class="p">(</span><span class="n">amount</span><span class="p">);</span>
+        <span class="nf">Ok</span><span class="p">(</span><span class="nf">Some</span><span class="p">(</span><span class="n">data</span><span class="nf">.as_slice</span><span class="p">()</span><span class="nf">.into</span><span class="p">()))</span>
+    <span class="p">}</span>
+
+    <span class="c">// Produces a frame.</span>
+    <span class="k">fn</span> <span class="nf">encode</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="k">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">:</span> <span class="nn">Self</span><span class="p">::</span><span class="n">Out</span><span class="p">,</span> <span class="n">buf</span><span class="p">:</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">u8</span><span class="o">&gt;</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">Result</span><span class="o">&lt;</span><span class="p">()</span><span class="o">&gt;</span> <span class="p">{</span>
+        <span class="n">buf</span><span class="nf">.extend</span><span class="p">(</span><span class="n">msg</span><span class="p">);</span>
+        <span class="nf">Ok</span><span class="p">(())</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c">// Create the event loop that will drive this server.</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">core</span> <span class="o">=</span> <span class="nn">Core</span><span class="p">::</span><span class="nf">new</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">();</span>
+    <span class="k">let</span> <span class="n">handle</span> <span class="o">=</span> <span class="n">core</span><span class="nf">.handle</span><span class="p">();</span>
+
+    <span class="c">// Get a SocketAddr</span>
+    <span class="k">let</span> <span class="n">socket</span><span class="p">:</span> <span class="n">SocketAddr</span> <span class="o">=</span> <span class="n">LISTEN_TO</span><span class="nf">.parse</span><span class="p">()</span>
+        <span class="nf">.unwrap</span><span class="p">();</span>
+    
+    <span class="c">// Start listening.</span>
+    <span class="k">let</span> <span class="n">listener</span> <span class="o">=</span> <span class="nn">TcpListener</span><span class="p">::</span><span class="nf">bind</span><span class="p">(</span><span class="o">&amp;</span><span class="n">socket</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">handle</span><span class="p">)</span>
+        <span class="nf">.unwrap</span><span class="p">();</span>
+    
+    <span class="c">// For each incoming connection...</span>
+    <span class="k">let</span> <span class="n">server</span> <span class="o">=</span> <span class="n">listener</span><span class="nf">.incoming</span><span class="p">()</span><span class="nf">.for_each</span><span class="p">(|(</span><span class="n">stream</span><span class="p">,</span> <span class="n">_client_addr</span><span class="p">)|</span> <span class="p">{</span>
+        <span class="c">// Spawn the task on the reactor.</span>
+        <span class="n">handle</span><span class="nf">.spawn_fn</span><span class="p">(||</span> <span class="p">{</span>
+            <span class="c">// Using our codec, split the in/out into frames.</span>
+            <span class="k">let</span> <span class="p">(</span><span class="n">writer</span><span class="p">,</span> <span class="n">reader</span><span class="p">)</span> <span class="o">=</span> <span class="n">stream</span><span class="nf">.framed</span><span class="p">(</span><span class="n">EchoCodec</span><span class="p">)</span><span class="nf">.split</span><span class="p">();</span>
+            <span class="c">// Here we just sink any data recieved directly back into the socket.</span>
+            <span class="n">reader</span><span class="nf">.forward</span><span class="p">(</span><span class="n">writer</span><span class="p">)</span>
+                <span class="c">// We need to handle errors internally.</span>
+                <span class="nf">.map</span><span class="p">(|</span><span class="n">_</span><span class="p">|</span> <span class="p">())</span>
+                <span class="nf">.map_err</span><span class="p">(|</span><span class="n">_</span><span class="p">|</span> <span class="p">())</span>
+        <span class="p">});</span>
+
+        <span class="nf">Ok</span><span class="p">(())</span> <span class="c">// keep accepting connections</span>
+    <span class="p">});</span>
+
+    <span class="c">// Run the reactor.</span>
+    <span class="n">core</span><span class="nf">.run</span><span class="p">(</span><span class="n">server</span><span class="p">)</span><span class="nf">.unwrap</span><span class="p">();</span>
+<span class="p">}</span>
+<span class="c">// Throw some data at it with `echo "Test" | nc 127.0.0.1 8080`</span>
+</code></pre></div></div>
+
+<p>If you test this out you’ll find the same behaviour as the previous example. With a little change we can even make it handle lines instead of entire messages, we’ll borrow some code from Tokio’s examples to do this:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">// Codecs can have state, but this one doesn't.</span>
+<span class="k">struct</span> <span class="n">EchoCodec</span><span class="p">;</span>
+<span class="k">impl</span> <span class="n">Codec</span> <span class="k">for</span> <span class="n">EchoCodec</span> <span class="p">{</span>
+    <span class="c">// Associated types which define the data taken/produced by the codec.</span>
+    <span class="k">type</span> <span class="n">In</span> <span class="o">=</span> <span class="nb">String</span><span class="p">;</span>
+    <span class="k">type</span> <span class="n">Out</span> <span class="o">=</span> <span class="nb">String</span><span class="p">;</span>
+
+    <span class="c">// Returns `Ok(Some(In))` if there is a frame, `Ok(None)` if it needs more data.</span>
+    <span class="k">fn</span> <span class="nf">decode</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="k">self</span><span class="p">,</span> <span class="n">buf</span><span class="p">:</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="n">EasyBuf</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nn">io</span><span class="p">::</span><span class="n">Result</span><span class="o">&lt;</span><span class="nb">Option</span><span class="o">&lt;</span><span class="nn">Self</span><span class="p">::</span><span class="n">In</span><span class="o">&gt;&gt;</span> <span class="p">{</span>
+        <span class="k">match</span> <span class="n">buf</span><span class="nf">.as_slice</span><span class="p">()</span><span class="nf">.iter</span><span class="p">()</span><span class="nf">.position</span><span class="p">(|</span><span class="o">&amp;</span><span class="n">b</span><span class="p">|</span> <span class="n">b</span> <span class="o">==</span> <span class="n">b</span><span class="sc">'\n'</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nf">Some</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="p">{</span>
+                <span class="c">// Drain from the buffer (this is important!)</span>
+                <span class="k">let</span> <span class="n">line</span> <span class="o">=</span> <span class="n">buf</span><span class="nf">.drain_to</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>
+
+                <span class="c">// Also remove the '\n'.</span>
+                <span class="n">buf</span><span class="nf">.drain_to</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+
+                <span class="c">// Turn this data into a UTF string and return it in a Frame.</span>
+                <span class="k">match</span> <span class="nn">str</span><span class="p">::</span><span class="nf">from_utf8</span><span class="p">(</span><span class="n">line</span><span class="nf">.as_slice</span><span class="p">())</span> <span class="p">{</span>
+                    <span class="nf">Ok</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="nf">Ok</span><span class="p">(</span><span class="nf">Some</span><span class="p">(</span><span class="n">s</span><span class="nf">.to_string</span><span class="p">())),</span>
+                    <span class="nf">Err</span><span class="p">(</span><span class="n">_</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="nf">Err</span><span class="p">(</span><span class="nn">io</span><span class="p">::</span><span class="nn">Error</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="nn">io</span><span class="p">::</span><span class="nn">ErrorKind</span><span class="p">::</span><span class="n">Other</span><span class="p">,</span>
+                                                <span class="s">"invalid UTF-8"</span><span class="p">)),</span>
+                <span class="p">}</span>
+            <span class="p">},</span>
+            <span class="nb">None</span> <span class="k">=&gt;</span> <span class="nf">Ok</span><span class="p">(</span><span class="nb">None</span><span class="p">),</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="c">// Produces a frame.</span>
+    <span class="k">fn</span> <span class="nf">encode</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="k">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">:</span> <span class="nn">Self</span><span class="p">::</span><span class="n">Out</span><span class="p">,</span> <span class="n">buf</span><span class="p">:</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">u8</span><span class="o">&gt;</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nn">io</span><span class="p">::</span><span class="n">Result</span><span class="o">&lt;</span><span class="p">()</span><span class="o">&gt;</span> <span class="p">{</span>
+        <span class="n">buf</span><span class="nf">.extend</span><span class="p">(</span><span class="n">msg</span><span class="nf">.as_bytes</span><span class="p">());</span>
+        <span class="c">// Add the necessary newline.</span>
+        <span class="n">buf</span><span class="nf">.push</span><span class="p">(</span><span class="n">b</span><span class="sc">'\n'</span><span class="p">);</span>
+        <span class="nf">Ok</span><span class="p">(())</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Running this example you can connect with <code class="highlighter-rouge">nc 127.0.0.1 8080</code> and send some lines of text, then get them back. Notice how we didn’t have to change the rest of the code at all in order to make this change? All we had to do was change the behaivor of the codec.</p>
+
+<p>Now let’s try making a codec that encodes and decodes HTTP 1.1 GET and POST requests made from <code class="highlighter-rouge">curl</code> that we can build on later:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">enum</span> <span class="n">ExampleRequest</span> <span class="p">{</span>
+    <span class="n">Get</span> <span class="p">{</span> <span class="n">url</span><span class="p">:</span> <span class="nb">String</span> <span class="p">},</span>
+    <span class="n">Post</span> <span class="p">{</span> <span class="n">url</span><span class="p">:</span> <span class="nb">String</span><span class="p">,</span> <span class="n">content</span><span class="p">:</span> <span class="nb">String</span> <span class="p">},</span>
+<span class="p">}</span>
+
+<span class="k">enum</span> <span class="n">ExampleResponse</span> <span class="p">{</span>
+    <span class="n">NotFound</span><span class="p">,</span>
+    <span class="nb">Ok</span> <span class="p">{</span> <span class="n">content</span><span class="p">:</span> <span class="nb">String</span> <span class="p">},</span>
+<span class="p">}</span>
+
+<span class="c">// Codecs can have state, but this one doesn't.</span>
+<span class="k">struct</span> <span class="n">ExampleCodec</span><span class="p">;</span>
+<span class="k">impl</span> <span class="n">Codec</span> <span class="k">for</span> <span class="n">ExampleCodec</span> <span class="p">{</span>
+    <span class="c">// Associated types which define the data taken/produced by the codec.</span>
+    <span class="k">type</span> <span class="n">In</span> <span class="o">=</span> <span class="n">ExampleRequest</span><span class="p">;</span>
+    <span class="k">type</span> <span class="n">Out</span> <span class="o">=</span> <span class="n">ExampleResponse</span><span class="p">;</span>
+
+    <span class="c">// Returns `Ok(Some(In))` if there is a frame, `Ok(None)` if it needs more data.</span>
+    <span class="k">fn</span> <span class="nf">decode</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="k">self</span><span class="p">,</span> <span class="n">buf</span><span class="p">:</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="n">EasyBuf</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nn">io</span><span class="p">::</span><span class="n">Result</span><span class="o">&lt;</span><span class="nb">Option</span><span class="o">&lt;</span><span class="nn">Self</span><span class="p">::</span><span class="n">In</span><span class="o">&gt;&gt;</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">content_so_far</span> <span class="o">=</span> <span class="nn">String</span><span class="p">::</span><span class="nf">from_utf8_lossy</span><span class="p">(</span><span class="n">buf</span><span class="nf">.as_slice</span><span class="p">())</span>
+            <span class="nf">.to_mut</span><span class="p">()</span>
+            <span class="nf">.clone</span><span class="p">();</span>
+
+        <span class="c">// Request headers/content in HTTP 1.1 are split by double newline.</span>
+        <span class="k">match</span> <span class="n">content_so_far</span><span class="nf">.find</span><span class="p">(</span><span class="s">"</span><span class="se">\r\n\r\n</span><span class="s">"</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nf">Some</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="p">{</span>
+                <span class="c">// Drain from the buffer (this is important!)</span>
+                <span class="k">let</span> <span class="k">mut</span> <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="k">let</span> <span class="n">tmp</span> <span class="o">=</span> <span class="n">buf</span><span class="nf">.drain_to</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>
+                    <span class="nn">String</span><span class="p">::</span><span class="nf">from_utf8_lossy</span><span class="p">(</span><span class="n">tmp</span><span class="nf">.as_slice</span><span class="p">())</span>
+                        <span class="nf">.to_mut</span><span class="p">()</span>
+                        <span class="nf">.clone</span><span class="p">()</span>
+                <span class="p">};</span>
+                <span class="n">buf</span><span class="nf">.drain_to</span><span class="p">(</span><span class="mi">4</span><span class="p">);</span> <span class="c">// Also remove the '\r\n\r\n'.</span>
+
+                <span class="c">// Get the method and drain.</span>
+                <span class="k">let</span> <span class="n">method</span> <span class="o">=</span> <span class="n">headers</span><span class="nf">.find</span><span class="p">(</span><span class="s">" "</span><span class="p">)</span>
+                    <span class="nf">.map</span><span class="p">(|</span><span class="n">len</span><span class="p">|</span> <span class="n">headers</span><span class="nf">.drain</span><span class="p">(</span><span class="o">..</span><span class="n">len</span><span class="p">)</span><span class="py">.collect</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">String</span><span class="o">&gt;</span><span class="p">());</span>
+
+                <span class="n">headers</span><span class="nf">.drain</span><span class="p">(</span><span class="o">..</span><span class="mi">1</span><span class="p">);</span> <span class="c">// Get rid of the space.</span>
+
+                <span class="c">// Since the method was drained we can do it again to get the url.</span>
+                <span class="k">let</span> <span class="n">url</span> <span class="o">=</span> <span class="n">headers</span><span class="nf">.find</span><span class="p">(</span><span class="s">" "</span><span class="p">)</span>
+                    <span class="nf">.map</span><span class="p">(|</span><span class="n">len</span><span class="p">|</span> <span class="n">headers</span><span class="nf">.drain</span><span class="p">(</span><span class="o">..</span><span class="n">len</span><span class="p">)</span><span class="py">.collect</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">String</span><span class="o">&gt;</span><span class="p">())</span>
+                    <span class="nf">.unwrap_or_default</span><span class="p">();</span>
+
+                <span class="c">// The content of a POST.</span>
+                <span class="k">let</span> <span class="n">content</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="k">let</span> <span class="n">remaining</span> <span class="o">=</span> <span class="n">buf</span><span class="nf">.len</span><span class="p">();</span>
+                    <span class="k">let</span> <span class="n">tmp</span> <span class="o">=</span> <span class="n">buf</span><span class="nf">.drain_to</span><span class="p">(</span><span class="n">remaining</span><span class="p">);</span>
+                    <span class="nn">String</span><span class="p">::</span><span class="nf">from_utf8_lossy</span><span class="p">(</span><span class="n">tmp</span><span class="nf">.as_slice</span><span class="p">())</span>
+                        <span class="nf">.to_mut</span><span class="p">()</span>
+                        <span class="nf">.clone</span><span class="p">()</span>
+                <span class="p">};</span>
+
+                <span class="k">match</span> <span class="n">method</span> <span class="p">{</span>
+                    <span class="nf">Some</span><span class="p">(</span><span class="k">ref</span> <span class="n">method</span><span class="p">)</span> <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s">"GET"</span> <span class="k">=&gt;</span> <span class="p">{</span>
+                        <span class="nf">Ok</span><span class="p">(</span><span class="nf">Some</span><span class="p">(</span><span class="nn">ExampleRequest</span><span class="p">::</span><span class="n">Get</span> <span class="p">{</span> <span class="n">url</span><span class="p">:</span> <span class="n">url</span> <span class="p">}))</span>
+                    <span class="p">},</span>
+                    <span class="nf">Some</span><span class="p">(</span><span class="k">ref</span> <span class="n">method</span><span class="p">)</span> <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s">"POST"</span> <span class="k">=&gt;</span> <span class="p">{</span>
+                        <span class="nf">Ok</span><span class="p">(</span><span class="nf">Some</span><span class="p">(</span><span class="nn">ExampleRequest</span><span class="p">::</span><span class="n">Post</span> <span class="p">{</span> <span class="n">url</span><span class="p">:</span> <span class="n">url</span><span class="p">,</span> <span class="n">content</span><span class="p">:</span> <span class="n">content</span> <span class="p">}))</span>
+                    <span class="p">},</span>
+                    <span class="n">_</span> <span class="k">=&gt;</span> <span class="nf">Err</span><span class="p">(</span><span class="nn">io</span><span class="p">::</span><span class="nn">Error</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="nn">io</span><span class="p">::</span><span class="nn">ErrorKind</span><span class="p">::</span><span class="n">Other</span><span class="p">,</span> <span class="s">"invalid"</span><span class="p">))</span>
+                <span class="p">}</span>
+            <span class="p">},</span>
+            <span class="nb">None</span> <span class="k">=&gt;</span> <span class="nf">Ok</span><span class="p">(</span><span class="nb">None</span><span class="p">),</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="c">// Produces a frame.</span>
+    <span class="k">fn</span> <span class="nf">encode</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="k">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">:</span> <span class="nn">Self</span><span class="p">::</span><span class="n">Out</span><span class="p">,</span> <span class="n">buf</span><span class="p">:</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">u8</span><span class="o">&gt;</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nn">io</span><span class="p">::</span><span class="n">Result</span><span class="o">&lt;</span><span class="p">()</span><span class="o">&gt;</span> <span class="p">{</span>
+        <span class="k">match</span> <span class="n">msg</span> <span class="p">{</span>
+            <span class="nn">ExampleResponse</span><span class="p">::</span><span class="n">NotFound</span> <span class="k">=&gt;</span> <span class="p">{</span>
+                <span class="n">buf</span><span class="nf">.extend</span><span class="p">(</span><span class="n">b</span><span class="s">"HTTP/1.1 404 Not Found</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+                <span class="n">buf</span><span class="nf">.extend</span><span class="p">(</span><span class="n">b</span><span class="s">"Content-Length: 0</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+                <span class="n">buf</span><span class="nf">.extend</span><span class="p">(</span><span class="n">b</span><span class="s">"Connection: close</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+            <span class="p">},</span>
+            <span class="nn">ExampleResponse</span><span class="p">::</span><span class="nb">Ok</span> <span class="p">{</span> <span class="n">content</span><span class="p">:</span> <span class="n">v</span> <span class="p">}</span> <span class="k">=&gt;</span>  <span class="p">{</span>
+                <span class="n">buf</span><span class="nf">.extend</span><span class="p">(</span><span class="n">b</span><span class="s">"HTTP/1.1 200 Ok</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+                <span class="n">buf</span><span class="nf">.extend</span><span class="p">(</span><span class="nd">format!</span><span class="p">(</span><span class="s">"Content-Length: {}</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">v</span><span class="nf">.len</span><span class="p">())</span><span class="nf">.as_bytes</span><span class="p">());</span>
+                <span class="n">buf</span><span class="nf">.extend</span><span class="p">(</span><span class="n">b</span><span class="s">"Connection: close</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+                <span class="n">buf</span><span class="nf">.extend</span><span class="p">(</span><span class="n">b</span><span class="s">"</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+                <span class="n">buf</span><span class="nf">.extend</span><span class="p">(</span><span class="n">v</span><span class="nf">.as_bytes</span><span class="p">());</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="n">buf</span><span class="nf">.extend</span><span class="p">(</span><span class="n">b</span><span class="s">"</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+        <span class="nf">Ok</span><span class="p">(())</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Let’s be honest with ourselves here, this is very naive and is obviously incomplete! However it works for <code class="highlighter-rouge">curl -vvvv localhost:8080</code> and <code class="highlighter-rouge">curl -vvvv localhost:8080 --data hello</code>, and we got to learn a bit about how to use Tokio. So far so good! Let’s build on it.</p>
+
+<h2 id="services-and-protocols">Services and Protocols</h2>
+
+<p><code class="highlighter-rouge">tokio-core</code> is, by definition, minimal. The <code class="highlighter-rouge">tokio-proto</code> and <code class="highlighter-rouge">tokio-service</code> crates build atop it to create common abstractions which we can use for various applications.</p>
+
+<p>In this next example we’ll build off our previous example of our naive HTTP server. Since the code chunks are starting to get significant let’s work with isolated bits and we’ll show the full example at the very end.</p>
+
+<p>Our goal will be to build an ultra simple web server that responds to GET/POST requests. A POST to <code class="highlighter-rouge">/cats</code> with the data <code class="highlighter-rouge">meow</code> should return a <code class="highlighter-rouge">200</code> OK with the old value (if any) as the data, and any future GET to <code class="highlighter-rouge">/cats</code> should return <code class="highlighter-rouge">meow</code> as well until it is replaced. Our goal is simplicity and learning, not being robust or perfect.</p>
+
+<p>First, we’ll go ahead and define our protocol. We’ll use a simple pipelined, non-streaming protocol. This code is quite generic and will generally look quite similar for different implementations. <code class="highlighter-rouge">tokio-proto</code> allow us to define the general style of our network. The <a href="https://docs.rs/tokio-proto/0.1.0/tokio_proto/"><code class="highlighter-rouge">tokio-proto</code> docs</a> provide a good explanation of the differences.</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">use</span> <span class="nn">tokio_proto</span><span class="p">::</span><span class="nn">pipeline</span><span class="p">::</span><span class="n">ServerProto</span><span class="p">;</span>
+
+<span class="c">// Like codecs, protocols can carry state too!</span>
+<span class="k">struct</span> <span class="n">ExampleProto</span><span class="p">;</span>
+<span class="k">impl</span><span class="o">&lt;</span><span class="n">T</span><span class="p">:</span> <span class="n">Io</span> <span class="o">+</span> <span class="nv">'static</span><span class="o">&gt;</span> <span class="n">ServerProto</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="k">for</span> <span class="n">ExampleProto</span> <span class="p">{</span>
+    <span class="c">// These types must match the corresponding codec types:</span>
+    <span class="k">type</span> <span class="n">Request</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">ExampleCodec</span> <span class="k">as</span> <span class="n">Codec</span><span class="o">&gt;</span><span class="p">::</span><span class="n">In</span><span class="p">;</span>
+    <span class="k">type</span> <span class="n">Response</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">ExampleCodec</span> <span class="k">as</span> <span class="n">Codec</span><span class="o">&gt;</span><span class="p">::</span><span class="n">Out</span><span class="p">;</span>
+
+    <span class="c">/// A bit of boilerplate to hook in the codec:</span>
+    <span class="k">type</span> <span class="n">Transport</span> <span class="o">=</span> <span class="n">Framed</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">ExampleCodec</span><span class="o">&gt;</span><span class="p">;</span>
+    <span class="k">type</span> <span class="n">BindTransport</span> <span class="o">=</span> <span class="n">Result</span><span class="o">&lt;</span><span class="nn">Self</span><span class="p">::</span><span class="n">Transport</span><span class="p">,</span> <span class="nn">io</span><span class="p">::</span><span class="n">Error</span><span class="o">&gt;</span><span class="p">;</span>
+    <span class="k">fn</span> <span class="nf">bind_transport</span><span class="p">(</span><span class="o">&amp;</span><span class="k">self</span><span class="p">,</span> <span class="n">io</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nn">Self</span><span class="p">::</span><span class="n">BindTransport</span> <span class="p">{</span>
+        <span class="nf">Ok</span><span class="p">(</span><span class="n">io</span><span class="nf">.framed</span><span class="p">(</span><span class="n">ExampleCodec</span><span class="p">))</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>The service is less generic, and handles our little “database” inside of it. Due to the <code class="highlighter-rouge">Proto</code> and the <code class="highlighter-rouge">Codec</code> already handling most of the complicated bits, it’s fairly straightforward. Services are reusable abstractions that operate over protocols.</p>
+
+<p>Here’s what our little HTTP example looks like:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">// Surprise! Services can also carry state.</span>
+<span class="nd">#[derive(Default)]</span>
+<span class="k">struct</span> <span class="n">ExampleService</span> <span class="p">{</span>
+    <span class="n">db</span><span class="p">:</span> <span class="nb">Arc</span><span class="o">&lt;</span><span class="n">Mutex</span><span class="o">&lt;</span><span class="n">HashMap</span><span class="o">&lt;</span><span class="nb">String</span><span class="p">,</span> <span class="nb">String</span><span class="o">&gt;&gt;&gt;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="k">impl</span> <span class="n">Service</span> <span class="k">for</span> <span class="n">ExampleService</span> <span class="p">{</span>
+    <span class="c">// These types must match the corresponding protocol types:</span>
+    <span class="k">type</span> <span class="n">Request</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">ExampleCodec</span> <span class="k">as</span> <span class="n">Codec</span><span class="o">&gt;</span><span class="p">::</span><span class="n">In</span><span class="p">;</span>
+    <span class="k">type</span> <span class="n">Response</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">ExampleCodec</span> <span class="k">as</span> <span class="n">Codec</span><span class="o">&gt;</span><span class="p">::</span><span class="n">Out</span><span class="p">;</span>
+
+    <span class="c">// For non-streaming protocols, service errors are always io::Error</span>
+    <span class="k">type</span> <span class="n">Error</span> <span class="o">=</span> <span class="nn">io</span><span class="p">::</span><span class="n">Error</span><span class="p">;</span>
+
+    <span class="c">// The future for computing the response; box it for simplicity.</span>
+    <span class="k">type</span> <span class="n">Future</span> <span class="o">=</span> <span class="n">BoxFuture</span><span class="o">&lt;</span><span class="nn">Self</span><span class="p">::</span><span class="n">Response</span><span class="p">,</span> <span class="nn">Self</span><span class="p">::</span><span class="n">Error</span><span class="o">&gt;</span><span class="p">;</span>
+
+    <span class="c">// Produce a future for computing a response from a request.</span>
+    <span class="k">fn</span> <span class="nf">call</span><span class="p">(</span><span class="o">&amp;</span><span class="k">self</span><span class="p">,</span> <span class="n">req</span><span class="p">:</span> <span class="nn">Self</span><span class="p">::</span><span class="n">Request</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nn">Self</span><span class="p">::</span><span class="n">Future</span> <span class="p">{</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"Request: {:?}"</span><span class="p">,</span> <span class="n">req</span><span class="p">);</span>
+        
+        <span class="c">// Deref the database.</span>
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">db</span> <span class="o">=</span> <span class="k">self</span><span class="py">.db</span><span class="nf">.lock</span><span class="p">()</span>
+            <span class="nf">.unwrap</span><span class="p">();</span> <span class="c">// This should only panic in extreme cirumstances.</span>
+        
+        <span class="c">// Return the appropriate value.</span>
+        <span class="k">let</span> <span class="n">res</span> <span class="o">=</span> <span class="k">match</span> <span class="n">req</span> <span class="p">{</span>
+            <span class="nn">ExampleRequest</span><span class="p">::</span><span class="n">Get</span> <span class="p">{</span> <span class="n">url</span><span class="p">:</span> <span class="n">url</span> <span class="p">}</span> <span class="k">=&gt;</span> <span class="p">{</span>
+                <span class="k">match</span> <span class="n">db</span><span class="nf">.get</span><span class="p">(</span><span class="o">&amp;</span><span class="n">url</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="nf">Some</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="nn">ExampleResponse</span><span class="p">::</span><span class="nb">Ok</span> <span class="p">{</span> <span class="n">content</span><span class="p">:</span> <span class="n">v</span><span class="nf">.clone</span><span class="p">()</span> <span class="p">},</span>
+                    <span class="nb">None</span> <span class="k">=&gt;</span> <span class="nn">ExampleResponse</span><span class="p">::</span><span class="n">NotFound</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">},</span>
+            <span class="nn">ExampleRequest</span><span class="p">::</span><span class="n">Post</span> <span class="p">{</span> <span class="n">url</span><span class="p">:</span> <span class="n">url</span><span class="p">,</span> <span class="n">content</span><span class="p">:</span> <span class="n">content</span> <span class="p">}</span> <span class="k">=&gt;</span> <span class="p">{</span>
+                <span class="k">match</span> <span class="n">db</span><span class="nf">.insert</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="nf">Some</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="nn">ExampleResponse</span><span class="p">::</span><span class="nb">Ok</span> <span class="p">{</span> <span class="n">content</span><span class="p">:</span> <span class="n">v</span> <span class="p">},</span>
+                    <span class="nb">None</span> <span class="k">=&gt;</span> <span class="nn">ExampleResponse</span><span class="p">::</span><span class="nb">Ok</span> <span class="p">{</span> <span class="n">content</span><span class="p">:</span> <span class="s">""</span><span class="nf">.into</span><span class="p">()</span> <span class="p">},</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">};</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"Database: {:?}"</span><span class="p">,</span> <span class="o">*</span><span class="n">db</span><span class="p">);</span>
+
+        <span class="c">// Return the result.</span>
+        <span class="nn">future</span><span class="p">::</span><span class="nf">finished</span><span class="p">(</span><span class="n">res</span><span class="p">)</span><span class="nf">.boxed</span><span class="p">()</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>At this point we have all the pieces and just need to put them all together. This requires some changes to our <code class="highlighter-rouge">main()</code> function like so:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c">// Get a SocketAddr</span>
+    <span class="k">let</span> <span class="n">socket</span><span class="p">:</span> <span class="n">SocketAddr</span> <span class="o">=</span> <span class="n">LISTEN_TO</span><span class="nf">.parse</span><span class="p">()</span>
+        <span class="nf">.unwrap</span><span class="p">();</span>
+    
+    <span class="c">// Create a server with the protocol.</span>
+    <span class="k">let</span> <span class="n">server</span> <span class="o">=</span> <span class="nn">TcpServer</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="n">ExampleProto</span><span class="p">,</span> <span class="n">socket</span><span class="p">);</span>
+    
+    <span class="c">// Create a database instance to provide to spawned services.</span>
+    <span class="k">let</span> <span class="n">db</span> <span class="o">=</span> <span class="nn">Arc</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="nn">Mutex</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="nn">HashMap</span><span class="p">::</span><span class="nf">new</span><span class="p">()));</span>
+
+    <span class="c">// Serve requests with our created service and a handle to the database.    </span>
+    <span class="n">server</span><span class="nf">.serve</span><span class="p">(</span><span class="k">move</span> <span class="p">||</span> <span class="nf">Ok</span><span class="p">(</span><span class="n">ExampleService</span> <span class="p">{</span> <span class="n">db</span><span class="p">:</span> <span class="n">db</span><span class="nf">.clone</span><span class="p">()</span> <span class="p">}));</span>
+<span class="p">}</span>
+<span class="c">// Throw some data at it with `curl 127.0.0.1 8080/foo` and `curl 127.0.0.1 8080 --data bar`</span>
+</code></pre></div></div>
+
+<p>Testing it out:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>curl localhost:8080/bear           
+<span class="nv">$ </span>curl localhost:8080/bear <span class="nt">--data</span> foo
+<span class="nv">$ </span>curl localhost:8080/bear           
+foo%                                                                                                                                                                   <span class="nv">$ </span>curl localhost:8080/bear <span class="nt">--data</span> bar
+foo%
+<span class="nv">$ </span>curl localhost:8080/bear
+bar%
+</code></pre></div></div>
+
+<p>This is great, we’ve created a little network connected database with a “REST-ish” API. I hope this has taught you a bit about Futures and Tokio, and inspired you to play around further!</p>
+
+<blockquote>
+  <p>This post was supported in part through a time allocation from <a href="http://asquera.de/">Asquera</a> and can be found <a href="http://asquera.de/blog/2017-03-01/the-future-with-futures/">here</a>. Thanks!</p>
+</blockquote>
+
+<h2 id="complete-tokio-example">Complete Tokio Example</h2>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">extern</span> <span class="n">crate</span> <span class="n">futures</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">crate</span> <span class="n">tokio_core</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">crate</span> <span class="n">tokio_proto</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">crate</span> <span class="n">tokio_service</span><span class="p">;</span>
+
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">net</span><span class="p">::</span><span class="n">SocketAddr</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">futures</span><span class="p">::</span><span class="nn">future</span><span class="p">::{</span><span class="k">self</span><span class="p">,</span> <span class="n">BoxFuture</span><span class="p">,</span> <span class="n">Future</span><span class="p">};</span>
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">sync</span><span class="p">::{</span><span class="n">Mutex</span><span class="p">,</span> <span class="nb">Arc</span><span class="p">};</span>
+<span class="k">use</span> <span class="nn">std</span><span class="p">::{</span><span class="n">io</span><span class="p">,</span> <span class="nb">str</span><span class="p">};</span>
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">collections</span><span class="p">::</span><span class="n">HashMap</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">tokio_core</span><span class="p">::</span><span class="nn">io</span><span class="p">::{</span><span class="n">Codec</span><span class="p">,</span> <span class="n">EasyBuf</span><span class="p">,</span> <span class="n">Io</span><span class="p">,</span> <span class="n">Framed</span><span class="p">};</span>
+<span class="k">use</span> <span class="nn">tokio_proto</span><span class="p">::</span><span class="n">TcpServer</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">tokio_proto</span><span class="p">::</span><span class="nn">pipeline</span><span class="p">::</span><span class="n">ServerProto</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">tokio_service</span><span class="p">::</span><span class="n">Service</span><span class="p">;</span>
+
+<span class="k">const</span> <span class="n">LISTEN_TO</span><span class="p">:</span> <span class="o">&amp;</span><span class="nv">'static</span> <span class="nb">str</span> <span class="o">=</span> <span class="s">"0.0.0.0:8080"</span><span class="p">;</span>
+
+<span class="nd">#[derive(Debug)]</span>
+<span class="k">enum</span> <span class="n">ExampleRequest</span> <span class="p">{</span>
+    <span class="n">Get</span> <span class="p">{</span> <span class="n">url</span><span class="p">:</span> <span class="nb">String</span> <span class="p">},</span>
+    <span class="n">Post</span> <span class="p">{</span> <span class="n">url</span><span class="p">:</span> <span class="nb">String</span><span class="p">,</span> <span class="n">content</span><span class="p">:</span> <span class="nb">String</span> <span class="p">},</span>
+<span class="p">}</span>
+
+<span class="k">enum</span> <span class="n">ExampleResponse</span> <span class="p">{</span>
+    <span class="n">NotFound</span><span class="p">,</span>
+    <span class="nb">Ok</span> <span class="p">{</span> <span class="n">content</span><span class="p">:</span> <span class="nb">String</span> <span class="p">},</span>
+<span class="p">}</span>
+
+<span class="c">// Codecs can have state, but this one doesn't.</span>
+<span class="k">struct</span> <span class="n">ExampleCodec</span><span class="p">;</span>
+<span class="k">impl</span> <span class="n">Codec</span> <span class="k">for</span> <span class="n">ExampleCodec</span> <span class="p">{</span>
+    <span class="c">// Associated types which define the data taken/produced by the codec.</span>
+    <span class="k">type</span> <span class="n">In</span> <span class="o">=</span> <span class="n">ExampleRequest</span><span class="p">;</span>
+    <span class="k">type</span> <span class="n">Out</span> <span class="o">=</span> <span class="n">ExampleResponse</span><span class="p">;</span>
+
+    <span class="c">// Returns `Ok(Some(In))` if there is a frame, `Ok(None)` if it needs more data.</span>
+    <span class="k">fn</span> <span class="nf">decode</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="k">self</span><span class="p">,</span> <span class="n">buf</span><span class="p">:</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="n">EasyBuf</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nn">io</span><span class="p">::</span><span class="n">Result</span><span class="o">&lt;</span><span class="nb">Option</span><span class="o">&lt;</span><span class="nn">Self</span><span class="p">::</span><span class="n">In</span><span class="o">&gt;&gt;</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">content_so_far</span> <span class="o">=</span> <span class="nn">String</span><span class="p">::</span><span class="nf">from_utf8_lossy</span><span class="p">(</span><span class="n">buf</span><span class="nf">.as_slice</span><span class="p">())</span>
+            <span class="nf">.to_mut</span><span class="p">()</span>
+            <span class="nf">.clone</span><span class="p">();</span>
+
+        <span class="c">// Request headers/content in HTTP 1.1 are split by double newline.</span>
+        <span class="k">match</span> <span class="n">content_so_far</span><span class="nf">.find</span><span class="p">(</span><span class="s">"</span><span class="se">\r\n\r\n</span><span class="s">"</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nf">Some</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="p">{</span>
+                <span class="c">// Drain from the buffer (this is important!)</span>
+                <span class="k">let</span> <span class="k">mut</span> <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="k">let</span> <span class="n">tmp</span> <span class="o">=</span> <span class="n">buf</span><span class="nf">.drain_to</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>
+                    <span class="nn">String</span><span class="p">::</span><span class="nf">from_utf8_lossy</span><span class="p">(</span><span class="n">tmp</span><span class="nf">.as_slice</span><span class="p">())</span>
+                        <span class="nf">.to_mut</span><span class="p">()</span>
+                        <span class="nf">.clone</span><span class="p">()</span>
+                <span class="p">};</span>
+                <span class="n">buf</span><span class="nf">.drain_to</span><span class="p">(</span><span class="mi">4</span><span class="p">);</span> <span class="c">// Also remove the '\r\n\r\n'.</span>
+
+                <span class="c">// Get the method and drain.</span>
+                <span class="k">let</span> <span class="n">method</span> <span class="o">=</span> <span class="n">headers</span><span class="nf">.find</span><span class="p">(</span><span class="s">" "</span><span class="p">)</span>
+                    <span class="nf">.map</span><span class="p">(|</span><span class="n">len</span><span class="p">|</span> <span class="n">headers</span><span class="nf">.drain</span><span class="p">(</span><span class="o">..</span><span class="n">len</span><span class="p">)</span><span class="py">.collect</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">String</span><span class="o">&gt;</span><span class="p">());</span>
+
+                <span class="n">headers</span><span class="nf">.drain</span><span class="p">(</span><span class="o">..</span><span class="mi">1</span><span class="p">);</span> <span class="c">// Get rid of the space.</span>
+
+                <span class="c">// Since the method was drained we can do it again to get the url.</span>
+                <span class="k">let</span> <span class="n">url</span> <span class="o">=</span> <span class="n">headers</span><span class="nf">.find</span><span class="p">(</span><span class="s">" "</span><span class="p">)</span>
+                    <span class="nf">.map</span><span class="p">(|</span><span class="n">len</span><span class="p">|</span> <span class="n">headers</span><span class="nf">.drain</span><span class="p">(</span><span class="o">..</span><span class="n">len</span><span class="p">)</span><span class="py">.collect</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">String</span><span class="o">&gt;</span><span class="p">())</span>
+                    <span class="nf">.unwrap_or_default</span><span class="p">();</span>
+
+                <span class="c">// The content of a POST.</span>
+                <span class="k">let</span> <span class="n">content</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="k">let</span> <span class="n">remaining</span> <span class="o">=</span> <span class="n">buf</span><span class="nf">.len</span><span class="p">();</span>
+                    <span class="k">let</span> <span class="n">tmp</span> <span class="o">=</span> <span class="n">buf</span><span class="nf">.drain_to</span><span class="p">(</span><span class="n">remaining</span><span class="p">);</span>
+                    <span class="nn">String</span><span class="p">::</span><span class="nf">from_utf8_lossy</span><span class="p">(</span><span class="n">tmp</span><span class="nf">.as_slice</span><span class="p">())</span>
+                        <span class="nf">.to_mut</span><span class="p">()</span>
+                        <span class="nf">.clone</span><span class="p">()</span>
+                <span class="p">};</span>
+
+                <span class="k">match</span> <span class="n">method</span> <span class="p">{</span>
+                    <span class="nf">Some</span><span class="p">(</span><span class="k">ref</span> <span class="n">method</span><span class="p">)</span> <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s">"GET"</span> <span class="k">=&gt;</span> <span class="p">{</span>
+                        <span class="nf">Ok</span><span class="p">(</span><span class="nf">Some</span><span class="p">(</span><span class="nn">ExampleRequest</span><span class="p">::</span><span class="n">Get</span> <span class="p">{</span> <span class="n">url</span><span class="p">:</span> <span class="n">url</span> <span class="p">}))</span>
+                    <span class="p">},</span>
+                    <span class="nf">Some</span><span class="p">(</span><span class="k">ref</span> <span class="n">method</span><span class="p">)</span> <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s">"POST"</span> <span class="k">=&gt;</span> <span class="p">{</span>
+                        <span class="nf">Ok</span><span class="p">(</span><span class="nf">Some</span><span class="p">(</span><span class="nn">ExampleRequest</span><span class="p">::</span><span class="n">Post</span> <span class="p">{</span> <span class="n">url</span><span class="p">:</span> <span class="n">url</span><span class="p">,</span> <span class="n">content</span><span class="p">:</span> <span class="n">content</span> <span class="p">}))</span>
+                    <span class="p">},</span>
+                    <span class="n">_</span> <span class="k">=&gt;</span> <span class="nf">Err</span><span class="p">(</span><span class="nn">io</span><span class="p">::</span><span class="nn">Error</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="nn">io</span><span class="p">::</span><span class="nn">ErrorKind</span><span class="p">::</span><span class="n">Other</span><span class="p">,</span> <span class="s">"invalid"</span><span class="p">))</span>
+                <span class="p">}</span>
+            <span class="p">},</span>
+            <span class="nb">None</span> <span class="k">=&gt;</span> <span class="nf">Ok</span><span class="p">(</span><span class="nb">None</span><span class="p">),</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="c">// Produces a frame.</span>
+    <span class="k">fn</span> <span class="nf">encode</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="k">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">:</span> <span class="nn">Self</span><span class="p">::</span><span class="n">Out</span><span class="p">,</span> <span class="n">buf</span><span class="p">:</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">u8</span><span class="o">&gt;</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nn">io</span><span class="p">::</span><span class="n">Result</span><span class="o">&lt;</span><span class="p">()</span><span class="o">&gt;</span> <span class="p">{</span>
+        <span class="k">match</span> <span class="n">msg</span> <span class="p">{</span>
+            <span class="nn">ExampleResponse</span><span class="p">::</span><span class="n">NotFound</span> <span class="k">=&gt;</span> <span class="p">{</span>
+                <span class="n">buf</span><span class="nf">.extend</span><span class="p">(</span><span class="n">b</span><span class="s">"HTTP/1.1 404 Not Found</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+                <span class="n">buf</span><span class="nf">.extend</span><span class="p">(</span><span class="n">b</span><span class="s">"Content-Length: 0</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+                <span class="n">buf</span><span class="nf">.extend</span><span class="p">(</span><span class="n">b</span><span class="s">"Connection: close</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+            <span class="p">},</span>
+            <span class="nn">ExampleResponse</span><span class="p">::</span><span class="nb">Ok</span> <span class="p">{</span> <span class="n">content</span><span class="p">:</span> <span class="n">v</span> <span class="p">}</span> <span class="k">=&gt;</span>  <span class="p">{</span>
+                <span class="n">buf</span><span class="nf">.extend</span><span class="p">(</span><span class="n">b</span><span class="s">"HTTP/1.1 200 Ok</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+                <span class="n">buf</span><span class="nf">.extend</span><span class="p">(</span><span class="nd">format!</span><span class="p">(</span><span class="s">"Content-Length: {}</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">v</span><span class="nf">.len</span><span class="p">())</span><span class="nf">.as_bytes</span><span class="p">());</span>
+                <span class="n">buf</span><span class="nf">.extend</span><span class="p">(</span><span class="n">b</span><span class="s">"Connection: close</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+                <span class="n">buf</span><span class="nf">.extend</span><span class="p">(</span><span class="n">b</span><span class="s">"</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+                <span class="n">buf</span><span class="nf">.extend</span><span class="p">(</span><span class="n">v</span><span class="nf">.as_bytes</span><span class="p">());</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="n">buf</span><span class="nf">.extend</span><span class="p">(</span><span class="n">b</span><span class="s">"</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+        <span class="nf">Ok</span><span class="p">(())</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c">// Like codecs, protocols can carry state too!</span>
+<span class="k">struct</span> <span class="n">ExampleProto</span><span class="p">;</span>
+<span class="k">impl</span><span class="o">&lt;</span><span class="n">T</span><span class="p">:</span> <span class="n">Io</span> <span class="o">+</span> <span class="nv">'static</span><span class="o">&gt;</span> <span class="n">ServerProto</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="k">for</span> <span class="n">ExampleProto</span> <span class="p">{</span>
+    <span class="c">// These types must match the corresponding codec types:</span>
+    <span class="k">type</span> <span class="n">Request</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">ExampleCodec</span> <span class="k">as</span> <span class="n">Codec</span><span class="o">&gt;</span><span class="p">::</span><span class="n">In</span><span class="p">;</span>
+    <span class="k">type</span> <span class="n">Response</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">ExampleCodec</span> <span class="k">as</span> <span class="n">Codec</span><span class="o">&gt;</span><span class="p">::</span><span class="n">Out</span><span class="p">;</span>
+
+    <span class="c">/// A bit of boilerplate to hook in the codec:</span>
+    <span class="k">type</span> <span class="n">Transport</span> <span class="o">=</span> <span class="n">Framed</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">ExampleCodec</span><span class="o">&gt;</span><span class="p">;</span>
+    <span class="k">type</span> <span class="n">BindTransport</span> <span class="o">=</span> <span class="n">Result</span><span class="o">&lt;</span><span class="nn">Self</span><span class="p">::</span><span class="n">Transport</span><span class="p">,</span> <span class="nn">io</span><span class="p">::</span><span class="n">Error</span><span class="o">&gt;</span><span class="p">;</span>
+    <span class="k">fn</span> <span class="nf">bind_transport</span><span class="p">(</span><span class="o">&amp;</span><span class="k">self</span><span class="p">,</span> <span class="n">io</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nn">Self</span><span class="p">::</span><span class="n">BindTransport</span> <span class="p">{</span>
+        <span class="nf">Ok</span><span class="p">(</span><span class="n">io</span><span class="nf">.framed</span><span class="p">(</span><span class="n">ExampleCodec</span><span class="p">))</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c">// Surprise! Services can also carry state.</span>
+<span class="nd">#[derive(Default)]</span>
+<span class="k">struct</span> <span class="n">ExampleService</span> <span class="p">{</span>
+    <span class="n">db</span><span class="p">:</span> <span class="nb">Arc</span><span class="o">&lt;</span><span class="n">Mutex</span><span class="o">&lt;</span><span class="n">HashMap</span><span class="o">&lt;</span><span class="nb">String</span><span class="p">,</span> <span class="nb">String</span><span class="o">&gt;&gt;&gt;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="k">impl</span> <span class="n">Service</span> <span class="k">for</span> <span class="n">ExampleService</span> <span class="p">{</span>
+    <span class="c">// These types must match the corresponding protocol types:</span>
+    <span class="k">type</span> <span class="n">Request</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">ExampleCodec</span> <span class="k">as</span> <span class="n">Codec</span><span class="o">&gt;</span><span class="p">::</span><span class="n">In</span><span class="p">;</span>
+    <span class="k">type</span> <span class="n">Response</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">ExampleCodec</span> <span class="k">as</span> <span class="n">Codec</span><span class="o">&gt;</span><span class="p">::</span><span class="n">Out</span><span class="p">;</span>
+
+    <span class="c">// For non-streaming protocols, service errors are always io::Error</span>
+    <span class="k">type</span> <span class="n">Error</span> <span class="o">=</span> <span class="nn">io</span><span class="p">::</span><span class="n">Error</span><span class="p">;</span>
+
+    <span class="c">// The future for computing the response; box it for simplicity.</span>
+    <span class="k">type</span> <span class="n">Future</span> <span class="o">=</span> <span class="n">BoxFuture</span><span class="o">&lt;</span><span class="nn">Self</span><span class="p">::</span><span class="n">Response</span><span class="p">,</span> <span class="nn">Self</span><span class="p">::</span><span class="n">Error</span><span class="o">&gt;</span><span class="p">;</span>
+
+    <span class="c">// Produce a future for computing a response from a request.</span>
+    <span class="k">fn</span> <span class="nf">call</span><span class="p">(</span><span class="o">&amp;</span><span class="k">self</span><span class="p">,</span> <span class="n">req</span><span class="p">:</span> <span class="nn">Self</span><span class="p">::</span><span class="n">Request</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nn">Self</span><span class="p">::</span><span class="n">Future</span> <span class="p">{</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"Request: {:?}"</span><span class="p">,</span> <span class="n">req</span><span class="p">);</span>
+        
+        <span class="c">// Deref the database.</span>
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">db</span> <span class="o">=</span> <span class="k">self</span><span class="py">.db</span><span class="nf">.lock</span><span class="p">()</span>
+            <span class="nf">.unwrap</span><span class="p">();</span> <span class="c">// This should only panic in extreme cirumstances.</span>
+        
+        <span class="c">// Return the appropriate value.</span>
+        <span class="k">let</span> <span class="n">res</span> <span class="o">=</span> <span class="k">match</span> <span class="n">req</span> <span class="p">{</span>
+            <span class="nn">ExampleRequest</span><span class="p">::</span><span class="n">Get</span> <span class="p">{</span> <span class="n">url</span><span class="p">:</span> <span class="n">url</span> <span class="p">}</span> <span class="k">=&gt;</span> <span class="p">{</span>
+                <span class="k">match</span> <span class="n">db</span><span class="nf">.get</span><span class="p">(</span><span class="o">&amp;</span><span class="n">url</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="nf">Some</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="nn">ExampleResponse</span><span class="p">::</span><span class="nb">Ok</span> <span class="p">{</span> <span class="n">content</span><span class="p">:</span> <span class="n">v</span><span class="nf">.clone</span><span class="p">()</span> <span class="p">},</span>
+                    <span class="nb">None</span> <span class="k">=&gt;</span> <span class="nn">ExampleResponse</span><span class="p">::</span><span class="n">NotFound</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">},</span>
+            <span class="nn">ExampleRequest</span><span class="p">::</span><span class="n">Post</span> <span class="p">{</span> <span class="n">url</span><span class="p">:</span> <span class="n">url</span><span class="p">,</span> <span class="n">content</span><span class="p">:</span> <span class="n">content</span> <span class="p">}</span> <span class="k">=&gt;</span> <span class="p">{</span>
+                <span class="k">match</span> <span class="n">db</span><span class="nf">.insert</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="nf">Some</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="nn">ExampleResponse</span><span class="p">::</span><span class="nb">Ok</span> <span class="p">{</span> <span class="n">content</span><span class="p">:</span> <span class="n">v</span> <span class="p">},</span>
+                    <span class="nb">None</span> <span class="k">=&gt;</span> <span class="nn">ExampleResponse</span><span class="p">::</span><span class="nb">Ok</span> <span class="p">{</span> <span class="n">content</span><span class="p">:</span> <span class="s">""</span><span class="nf">.into</span><span class="p">()</span> <span class="p">},</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">};</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"Database: {:?}"</span><span class="p">,</span> <span class="o">*</span><span class="n">db</span><span class="p">);</span>
+
+        <span class="c">// Return the result.</span>
+        <span class="nn">future</span><span class="p">::</span><span class="nf">finished</span><span class="p">(</span><span class="n">res</span><span class="p">)</span><span class="nf">.boxed</span><span class="p">()</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c">// Get a SocketAddr</span>
+    <span class="k">let</span> <span class="n">socket</span><span class="p">:</span> <span class="n">SocketAddr</span> <span class="o">=</span> <span class="n">LISTEN_TO</span><span class="nf">.parse</span><span class="p">()</span>
+        <span class="nf">.unwrap</span><span class="p">();</span>
+    
+    <span class="c">// Create a server with the protocol.</span>
+    <span class="k">let</span> <span class="n">server</span> <span class="o">=</span> <span class="nn">TcpServer</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="n">ExampleProto</span><span class="p">,</span> <span class="n">socket</span><span class="p">);</span>
+
+    <span class="c">// Create a database instance to provide to spawned services.</span>
+    <span class="k">let</span> <span class="n">db</span> <span class="o">=</span> <span class="nn">Arc</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="nn">Mutex</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="nn">HashMap</span><span class="p">::</span><span class="nf">new</span><span class="p">()));</span>
+
+    <span class="c">// Serve requests with our created service and a handle to the database.    </span>
+    <span class="n">server</span><span class="nf">.serve</span><span class="p">(</span><span class="k">move</span> <span class="p">||</span> <span class="nf">Ok</span><span class="p">(</span><span class="n">ExampleService</span> <span class="p">{</span> <span class="n">db</span><span class="p">:</span> <span class="n">db</span><span class="nf">.clone</span><span class="p">()</span> <span class="p">}));</span>
+<span class="p">}</span>
+<span class="c">// Throw some data at it with `curl 127.0.0.1 8080/foo` and `curl 127.0.0.1 8080 --data bar`</span>
+</code></pre></div></div>
+
+
+    </article>
+
+    <aside class="post-meta">
+  
+    Posted on
+    <time datetime="2017-03-01T00:00:00-08:00">01 Mar 2017</time>
+  
+
+  
+    
+      
+        , into
+        
+        <span><a href="/tags/#rust">Rust</a></span>
+      
+    
+      
+        
+             and
+        
+        <span><a href="/tags/#tutorials">Tutorials</a></span>
+      
+    .
+  
+
+  
+    <span class="image-credit">Image by: NASA</span>
+  
+</aside>
+
+</main>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>

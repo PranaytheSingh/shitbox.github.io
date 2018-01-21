@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>ShitBox</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/cover.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="http://0.0.0.0:4000">
+    
+    
+        <meta name="twitter:description" content="Exploring, fascinating and amusing">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/cover.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">ShitBox</a></h1>
+      <p class="description">Exploring, fascinating and amusing</p>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main id="index">
+    
+          <h2><a href="/2015/03/09/learning-capn-proto-rpc/">Learning Cap'n Proto RPC</a></h2>
+          <section class="excerpt">
+              <p>Awhile ago, I wrote a First Look at Cap’n Proto. Unfortunately I didn’t cover how to utilize it’s RPC capabilities. In Rust, this is via the capnp-rpc-rust crate. Let’s do that! What’s RPC? Remote Procedure Calls (RPC) are basically what they say on the box. You issue one from some client to some server and the server responds (or not!) with some response. Most protocols have some form of language-agnostic schema, not unlike SQL I suppose, which they use to describe interchange data (structs and fns). A tool is generally used to create a stub, which the programmer then architects....</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="09 March 2015">09 March 2015</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#raft">Raft</a></span>
+                
+              
+                
+                  
+                       and
+                  
+                  <span><a href="/tags/#rust">Rust</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2015/03/07/rust-travis-github-pages/">Rust, Travis, and Github Pages</a></h2>
+          <section class="excerpt">
+              <p>Rust is probably my favorite programming language (as the contents of this site suggests). My interests in networks, development operations, and systems programming align strongly with Rust. They’re pursuing the trifecta: Safe, Fast, Concurrent. It’s been a great learning journey for me so far and I learnt to write better code in all languages. Github Pages is Github’s very generous offering of web hosting to your projects. Basically, you create a branch gh-pages and push it to Github, then browse to https://$USERNAME.github.io/$REPOSITORY. TravisCI offers free continuous integration for open-source projects. It’s even integrated with rust-ci. I’ve had a great experience...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="07 March 2015">07 March 2015</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#rust">Rust</a></span>
+                
+              
+                
+                  
+                       and
+                  
+                  <span><a href="/tags/#tooling">Tooling</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2015/03/03/getting-acquainted-with-mio/">Getting Acquainted with MIO</a></h2>
+          <section class="excerpt">
+              <p>One of my next goals in my Raft project is to tame the tick() with mio. In this post, we’ll explore what it is, what it can do, and why it matters. First things first: What is MIO? MIO is a lightweight IO library for Rust with a focus on adding as little overhead as possible over the OS abstractions. Now you’re probably thinking… “So what? We have plenty of shiny stuff in the new std::io…” and you’re right! But hold off on judgement until you read this: Features Event loop backed by epoll, kqueue. Zero allocations at runtime Non-blocking...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="03 March 2015">03 March 2015</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#raft">Raft</a></span>
+                
+              
+                
+                  
+                       and
+                  
+                  <span><a href="/tags/#rust">Rust</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2015/02/26/on-c51/">On C-51</a></h2>
+          <section class="excerpt">
+              <p>I’ve been following the story about the proposed bill C-51 for a couple weeks now. When the Conservatives introduced the bill I was quite unimpressed with it’s lack of oversight, among other things I heard and read about it. I expected it would change due to opposition, so I did not look much further into it. When the Liberals decided they would support the bill I was suprised, but was busy with midterms, so did not get a chance to look more deeply into the content of the bill. But I couldn’t help but be reminded of what Trudeau said...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="26 February 2015">26 February 2015</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#personal">Personal</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2015/02/23/raft-update-3/">Raft: A First Prototype</a></h2>
+          <section class="excerpt">
+              <p>As you may have previously read, I’ve been working on implementing the Raft Distributed Consensus Algorithm in Rust for my classes (and fun!). Current Status I’m proud to say I have the first (fragile) prototype of the library working (most of the time) as I type this. But with that said, the work has only really just begun. Currently: Elections: Works (most of the time)! There are corner cases where two nodes will contend for votes and occasionally lock up. I haven’t managed to track this down yet. Replicating Logs: Works, but isn’t ideal! As I wrote about in my...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="23 February 2015">23 February 2015</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#raft">Raft</a></span>
+                
+              
+                
+                  
+                       and
+                  
+                  <span><a href="/tags/#rust">Rust</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2015/02/18/raft-update-2/">Raft: Progress on the Log</a></h2>
+          <section class="excerpt">
+              <p>I’ve spent the majority of my free time this last week working on Raft. As you can see from this issue I’ve been mostly working on the idea of transactions. A lot has taken shape in the codebase. It still will panic at unimplemented!() about 300ms after you start a node, but “That’s a feature!” Note: All interfaces and code are not final, and are for educational and interest purposes. Hacking up a Persistent Log Probably one of the coolest little projects I worked on was writing the persistent_state of a RaftNode. This is the data that the Raft protocol...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="18 February 2015">18 February 2015</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#raft">Raft</a></span>
+                
+              
+                
+                  
+                       and
+                  
+                  <span><a href="/tags/#rust">Rust</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2015/02/11/capn-proto-in-rust/">First look at Cap'n Proto in Rust</a></h2>
+          <section class="excerpt">
+              <p>So, I found this (this, and this) Cap’n Proto library for Rust and wanted to explore it a bit. Unfortunately the documentation is sparse for the library, and I haven’t played with Cap’n Proto before. Cap’n Proto is what’s billed as a ‘Data Interchange Format’ and ‘Capability-Based RPC System’. Or a ‘Cerealization Protocol’. The concept for working with Cap’n Proto is: Build schemas out of it’s schema language which define the data you’re working with. Compile them into code structures for your preferred language using using capnpc. Code your application (optimally, using an RPC-style system, I won’t be exploring that...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="11 February 2015">11 February 2015</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#raft">Raft</a></span>
+                
+              
+                
+                  
+                       and
+                  
+                  <span><a href="/tags/#rust">Rust</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2015/02/05/raft-update-1/">Raft Experiences and Repo Made Public!</a></h2>
+          <section class="excerpt">
+              <p>TL;DR: I’ve made Hoverbear/raft publicly available (It’s still not ready)! Feel encouraged to contribute feedback or code via Github or email! Progress I’ve been working hard on building a sane, reasonable scaffolding for the codebase. Last post I talked about my first ‘go’ at designing the data structures and interfaces for the library, here I’ll talk a bit about what’s changed and why. Data Interchange Probably one of the most interesting (and meaningful) changes I’ve made was moving my previous enum structs into seperate enums and structs. Simply, this: enum ClientRequest&lt;T&gt; { IndexRange { start_index: u64, end_index: u64, }, AppendEntries...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="05 February 2015">05 February 2015</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#raft">Raft</a></span>
+                
+              
+                
+                  
+                       and
+                  
+                  <span><a href="/tags/#rust">Rust</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2015/01/25/raft-so-far/">Raft So Far</a></h2>
+          <section class="excerpt">
+              <p>I’ve been working quite a bit on my Raft implementation over the last few days and I must say it’s been quite a pleasure to work in Rust, which recently released it’s 1.0.0-alpha. It takes the work out of needing to serialize and deserialize data, it enforces data safety, and it’s type checking is incredible. I’m very quickly able to make a change, build it, fix the errors the compiler catches for me, and build again, then test. So far the only times my tests have failed after a successful build was when I was accidently disgarding one of my...</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="25 January 2015">25 January 2015</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#raft">Raft</a></span>
+                
+              
+                
+                  
+                       and
+                  
+                  <span><a href="/tags/#rust">Rust</a></span>
+                
+              .
+          </div>
+        
+          <hr>
+        
+    
+          <h2><a href="/2015/01/21/raft/">Raft in Rust</a></h2>
+          <section class="excerpt">
+              <p>I’m currently working on implementing the Raft Distributed Consensus protocol in Rust.
+
+This is a project I’m doing for my CSC466 class at the University of Victoria, and I’m hoping to use it as part of one of my projects for CSC462.
+
+At the end of the project I plan to release it as MIT licensed code. Please stay tuned…
+
+Interesting Links
+
+
+  The Raft site
+  The Secret Lives of Data - Raft
+  Raft Paper
+  Raft Dissertation
+
+</p>
+          </section>
+
+          <div class="post-meta">
+              Posted on
+              <time datetime="21 January 2015">21 January 2015</time>
+              
+                
+                  , into
+                  
+                  <span><a href="/tags/#raft">Raft</a></span>
+                
+              
+                
+                  
+                       and
+                  
+                  <span><a href="/tags/#rust">Rust</a></span>
+                
+              .
+          </div>
+        
+    
+</main>
+
+<hr>
+
+<nav id="pagination">
+    
+        <a href="/archive/6/">&larr; Older posts</a>
+    
+    <span class="page-number">Page 5 of 7</span>
+    
+        
+            <a href="/archive/4/">Newer posts &rarr;</a>
+        
+    
+</nav>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>

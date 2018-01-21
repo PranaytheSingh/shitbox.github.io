@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>Rust, Travis, and Github Pages</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/cover.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="Rust, Travis, and Github Pages">
+    
+    
+        <meta name="twitter:description" content="&lt;p&gt;&lt;a href=&quot;http://rust-lang.org/&quot;&gt;Rust&lt;/a&gt; is probably my favorite programming language (as the contents of this site suggests). My interests in networks, development operations, and systems programming align strongly with Rust. They’re pursuing the trifecta: &lt;em&gt;Safe, Fast, Concurrent.&lt;/em&gt; It’s been a great learning journey for me so far and I learnt to write better code in &lt;strong&gt;all&lt;/strong&gt; languages.&lt;/p&gt;
+
+">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/cover.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">Rust, Travis, and Github Pages</a></h1>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main>
+    <article>
+        <p><a href="http://rust-lang.org/">Rust</a> is probably my favorite programming language (as the contents of this site suggests). My interests in networks, development operations, and systems programming align strongly with Rust. They’re pursuing the trifecta: <em>Safe, Fast, Concurrent.</em> It’s been a great learning journey for me so far and I learnt to write better code in <strong>all</strong> languages.</p>
+
+<p><a href="https://pages.github.com/">Github Pages</a> is Github’s very generous offering of web hosting to your projects. Basically, you create a branch <code class="highlighter-rouge">gh-pages</code> and push it to Github, then browse to <a href="https://hoverbear.github.io/raft"><code class="highlighter-rouge">https://$USERNAME.github.io/$REPOSITORY</code></a>.</p>
+
+<p><a href="https://travis-ci.org/">TravisCI</a> offers free continuous integration for open-source projects. It’s even integrated with <a href="http://www.rust-ci.org/">rust-ci</a>. I’ve had a great experience with the service. They’re also the source of the little build status buttons like this one <a href="https://travis-ci.org/Hoverbear/raft"><img src="https://travis-ci.org/Hoverbear/raft.svg?branch=master" alt="Build Status" /></a>.</p>
+
+<p>Today, we’ll talk about how to set up your very own Rust project to:</p>
+
+<ul>
+  <li>Automagically build and test your project.</li>
+  <li>On a successful test push a new version of your documentation onto a <code class="highlighter-rouge">gh-pages</code> branch, as provided by <code class="highlighter-rouge">rustdoc</code>.</li>
+</ul>
+
+<h2 id="making-a-demo-project">Making a Demo Project</h2>
+
+<p>Let’s make a demo repository to play.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cargo new travis-demo
+cd travis-demo
+</code></pre></div></div>
+
+<p>For simplicity, we’ll replace the contents of <code class="highlighter-rouge">src/lib.rs</code> with the following:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#![crate_name = "travis-demo"]
+#![crate_type = "lib"]
+
+//! This is a comment.
+
+/// This function always returns true. It's very useful!
+pub fn always_true() -&gt; bool { true }
+
+#[test]
+fn it_works() {
+    assert_eq!(always_true(), true);
+}
+</code></pre></div></div>
+
+<blockquote>
+  <p>If you haven’t had a chance to learn about <code class="highlighter-rouge">rustdoc</code> you can read about it <a href="http://doc.rust-lang.org/book/documentation.html">here</a>.</p>
+</blockquote>
+
+<p>Now you can run <code class="highlighter-rouge">cargo doc</code> and visit a url like <code class="highlighter-rouge">file:///Users/hoverbear/travis-demo/target/doc/travis-demo/</code> to view the generated documentation.</p>
+
+<p><img src="/assets/images/2015/03/docs.png" alt="Our Documentation" /></p>
+
+<p>Finally, push this project up to Github (You’ll need to make it on Github!):</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git add Cargo.toml src .gitignore
+git commit -m "Initial commit."
+git remote add origin git@github.com:Hoverbear/travis-demo.git
+git push -u origin master
+</code></pre></div></div>
+
+<h2 id="starting-with-travis">Starting with Travis</h2>
+
+<p>First, you’ll need to sign up with Travis. This is trivially done by visiting <a href="https://travis-ci.org/">TravisCI</a> and signing in with Github.</p>
+
+<p>Then, visit your profile by clicking on your name in the top right corner.</p>
+
+<p><img src="/assets/images/2015/03/profile.png" alt="How to get to your profile." /></p>
+
+<p>On this page, in the “Repositories” tab, you’ll see a list of all your public repositories. If you <em>just</em> made your repository you might need to tell Travis to <strong>Sync Now</strong>.</p>
+
+<blockquote>
+  <p>Travis has a <code class="highlighter-rouge">.com</code> for your private repositories.</p>
+</blockquote>
+
+<p>Now enable our demo repository by flipping the switch.</p>
+
+<p><img src="/assets/images/2015/03/switch.png" alt="Flip that switch" /></p>
+
+<p>Feel encouraged to take a moment to click on the wrench and explore the options Travis offers. We’ll play with them in a minute!</p>
+
+<h2 id="set-up-your-repository">Set up your Repository</h2>
+
+<blockquote>
+  <p>KMC offers us a <a href="https://github.com/kmcallister/travis-doc-upload/blob/master/README.md">more secure approach</a> for users who do not wish to permit Travis to push to their repositories.</p>
+</blockquote>
+
+<p>Travis uses a <code class="highlighter-rouge">.travis.yml</code> to configure how it works. You can read more about it <a href="http://docs.travis-ci.com/user/build-configuration/">here</a>.</p>
+
+<p>We can add the following to ours:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>language: rust
+after_success: |
+  [ $TRAVIS_BRANCH = master ] &amp;&amp;
+  [ $TRAVIS_PULL_REQUEST = false ] &amp;&amp;
+  cargo doc &amp;&amp;
+  echo "&lt;meta http-equiv=refresh content=0;url=`echo $TRAVIS_REPO_SLUG | cut -d '/' -f 2`/index.html&gt;" &gt; target/doc/index.html &amp;&amp;
+  sudo pip install ghp-import &amp;&amp;
+  ghp-import -n target/doc &amp;&amp;
+  git push -fq https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git gh-pages
+</code></pre></div></div>
+
+<p><code class="highlighter-rouge">language:</code> lets us specify <code class="highlighter-rouge">rust</code>, which for now defaults to the latest nightly.</p>
+
+<p><code class="highlighter-rouge">after_success:</code> lets us declare a script to run after a successful build. I found this series of steps <em>somewhere</em>, modified them a bit, and they work fantastic. The script basically does the following:</p>
+
+<ul>
+  <li>If it’s <em>not</em> a push to <code class="highlighter-rouge">master</code> finish.</li>
+  <li>Otherwise, run <code class="highlighter-rouge">cargo doc</code></li>
+  <li>Make a redirect in the <code class="highlighter-rouge">index.html</code> to the proper location. (This assumes your repository name is the same as your crate, feel free to change it.)</li>
+  <li>Pushes the new copy of documentation to Github using a secure token. (More on that in a second.)</li>
+</ul>
+
+<p><strong>But wait!</strong> Where do we get the Token?</p>
+
+<h2 id="giving-travis-permissions">Giving Travis Permissions</h2>
+
+<p>Since it would be positively outrageous to give Travis your Github password or private key, we’ll use what’s called an “access token”. To get one of these, go to your Github settings and hit the “Applictions” tab.</p>
+
+<p><img src="/assets/images/2015/03/token1.png" alt="Getting a token" /></p>
+
+<p><img src="/assets/images/2015/03/token2.png" alt="Token Creation Screen" /></p>
+
+<p>Once you hit “Generate Token” you’ll return to the previous page and see a green highlighted key. <strong>Copy that, you won’t see it again!</strong></p>
+
+<p>Now, install the <a href="https://github.com/travis-ci/travis.rb#installation">Travis Gem</a>. Then you need to authenticate using <code class="highlighter-rouge">travis login</code> using your Github credentials.</p>
+
+<p>Once Travis is installed and logged in, you can run this, where <code class="highlighter-rouge">$YOUR_TOKEN</code> is the one we copied earlier.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>travis encrypt GH_TOKEN=$YOUR_TOKEN --add env.global
+</code></pre></div></div>
+
+<p>This command should automatically add a few lines to your <code class="highlighter-rouge">.travis.yml</code>.</p>
+
+<blockquote>
+  <p><strong>Why encrypt?</strong> Because it’s probably a bad idea to store an access token for your Github account in the clear.</p>
+</blockquote>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git add .travis.yml
+git commit -m "Add Travis"
+git push
+</code></pre></div></div>
+
+<p>Now if you visit <a href="https://travis-ci.org/repositories"><code class="highlighter-rouge">https://travis-ci.org/repositories</code></a> you should, eventually, see your build pop up! Note that Travis can take a moment to start a build.</p>
+
+<p>Your build should look similar to the following:</p>
+
+<p><img src="/assets/images/2015/03/build.png" alt="Example Build" /></p>
+
+<h2 id="tinkering-with-the-crate">Tinkering with the Crate</h2>
+
+<p>Unfortunately, the first build of a <code class="highlighter-rouge">gh-pages</code> branch can take awhile to become available. <em>So just relax, and lets tinker with things a bit.</em></p>
+
+<p>Let’s go back to your <code class="highlighter-rouge">src/lib.rs</code> and add a couple more declarations.</p>
+
+<p><strong>To set a base URL</strong> you can add this:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#![doc(html_root_url = "https://hoverbear.github.io/travis-demo/")]
+</code></pre></div></div>
+
+<p><strong>To set an image for the documentation</strong> you can add an image to your Github repository and do something like the following:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#![doc(html_logo_url = "https://raw.githubusercontent.com/Hoverbear/travis-demo/master/demo.png")]
+</code></pre></div></div>
+
+<p>Once you change those, commit them, push it to <code class="highlighter-rouge">origin master</code>, and visit Travis again. You can see Travis will take the new revision and test it as well. (You can see there is even a “Build Log”) Once the test succeeds you’ll see, again, how it builds docs and sets them up.</p>
+
+<blockquote>
+  <p>If you create a pull request or branch, you’ll notice that the Travis builds don’t push new documentation except to commits on <code class="highlighter-rouge">master</code>.</p>
+</blockquote>
+
+<h2 id="tinkering-with-travis">Tinkering with Travis</h2>
+
+<p>Travis offers us some great options for configuring our output during tests.</p>
+
+<p>The first is <code class="highlighter-rouge">RUST_BACKTRACE</code>, we can set it to <code class="highlighter-rouge">1</code> to make Rust print out a stacktrace on a panic. This is particularly useful combined with <code class="highlighter-rouge">panic!()</code>, <code class="highlighter-rouge">unreachable!()</code> and <code class="highlighter-rouge">unimplemented!()</code> which you can use to structure failure modes in your programs.</p>
+
+<p>If you use <a href="https://github.com/rust-lang/log"><code class="highlighter-rouge">log</code> and <code class="highlighter-rouge">env-logger</code></a> you also might want to set <code class="highlighter-rouge">RUST_LOG</code>. I would definitely suggest limiting the logging to a specific crate as otherwise <code class="highlighter-rouge">rustc</code> and other libs will spout a considerable amount of output.</p>
+
+<p><img src="/assets/images/2015/03/ENV.png" alt="Setting ENV Variables" /></p>
+
+<h2 id="a-while-later">A While Later…</h2>
+
+<p>Try visiting <a href="https://hoverbear.github.io/raft/"><code class="highlighter-rouge">https://$YOUR_GITHUB_USER.github.io/$YOUR_REPO</code></a>. Did it work? Awesome!</p>
+
+<p>Don’t forget to add it to the repository page on Github!</p>
+
+<p><img src="/assets/images/2015/03/Screen-Shot-2015-03-06-at-7-03-22-PM.png" alt="Our new Repo" /></p>
+
+<p>Enjoy your new documentation! Your users will appreciate your documentation being up to date, you don’t need to do it yourself, and later on you can hack this method to only handle commits to <code class="highlighter-rouge">stable</code> or other tags.</p>
+
+    </article>
+
+    <aside class="post-meta">
+  
+    Posted on
+    <time datetime="2015-03-07T00:00:00-08:00">07 Mar 2015</time>
+  
+
+  
+    
+      
+        , into
+        
+        <span><a href="/tags/#rust">Rust</a></span>
+      
+    
+      
+        
+             and
+        
+        <span><a href="/tags/#tooling">Tooling</a></span>
+      
+    .
+  
+
+  
+</aside>
+
+</main>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>

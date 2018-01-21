@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>Command Execution in Rust</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/cover.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="Command Execution in Rust">
+    
+    
+        <meta name="twitter:description" content="&lt;p&gt;One of my projects over the upcoming semester is to explore the Linux boot process and the job of the init (initialization) system. The init system is considered &lt;strong&gt;PID 1&lt;/strong&gt; and is responsible for a significant portion of userspace functionality. Common init systems on Linux are OpenRC and systemd. One of the key parts of an init system is to spawn new processes, like in command shell.&lt;/p&gt;
+
+">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/cover.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">Command Execution in Rust</a></h1>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main>
+    <article>
+        <p>One of my projects over the upcoming semester is to explore the Linux boot process and the job of the init (initialization) system. The init system is considered <strong>PID 1</strong> and is responsible for a significant portion of userspace functionality. Common init systems on Linux are OpenRC and systemd. One of the key parts of an init system is to spawn new processes, like in command shell.</p>
+
+<p>Executing child processes may be useful to any number of programs, but common applications include:</p>
+
+<ul>
+  <li>Shells</li>
+  <li>Init systems</li>
+  <li>Launchers</li>
+  <li>Interfacing with command line applications</li>
+</ul>
+
+<h1 id="using-libc">Using libc</h1>
+
+<p>If you are familiar with C/C++, or other languages, you may have used one of the following functions:</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="kt">int</span> <span class="n">execl</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">path</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="p">...);</span>
+ <span class="kt">int</span> <span class="n">execlp</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">file</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="p">...);</span>
+ <span class="kt">int</span> <span class="n">execle</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">path</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">arg</span> <span class="p">,</span> <span class="p">...,</span> <span class="kt">char</span> <span class="o">*</span> <span class="k">const</span> <span class="n">envp</span><span class="p">[]);</span>
+ <span class="kt">int</span> <span class="n">execv</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">path</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="k">const</span> <span class="n">argv</span><span class="p">[]);</span>
+ <span class="kt">int</span> <span class="n">execvp</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">file</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="k">const</span> <span class="n">argv</span><span class="p">[]);</span>
+</code></pre></div></div>
+
+<p>Each of these functions provide some variant of process spawning. Most of these are still available in Rust if you so desire. They can be accessed in <a href="http://doc.rust-lang.org/libc/funcs/posix88/unistd/index.html"><code class="highlighter-rouge">libc</code></a>. Note these are unsafe C bindings.</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">pub</span> <span class="k">unsafe</span> <span class="k">fn</span> <span class="nf">execv</span><span class="p">(</span><span class="n">prog</span><span class="p">:</span> <span class="o">*</span><span class="k">const</span> <span class="nb">c_char</span><span class="p">,</span> <span class="n">argv</span><span class="p">:</span> <span class="o">*</span><span class="k">mut</span> <span class="o">*</span><span class="k">const</span> <span class="nb">c_char</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">c_int</span>
+<span class="k">pub</span> <span class="k">unsafe</span> <span class="k">fn</span> <span class="nf">execve</span><span class="p">(</span><span class="n">prog</span><span class="p">:</span> <span class="o">*</span><span class="k">const</span> <span class="nb">c_char</span><span class="p">,</span> <span class="n">argv</span><span class="p">:</span> <span class="o">*</span><span class="k">mut</span> <span class="o">*</span><span class="k">const</span> <span class="nb">c_char</span><span class="p">,</span> <span class="n">envp</span><span class="p">:</span> <span class="o">*</span><span class="k">mut</span> <span class="o">*</span><span class="k">const</span> <span class="nb">c_char</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">c_int</span>
+<span class="k">pub</span> <span class="k">unsafe</span> <span class="k">fn</span> <span class="nf">execvp</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="o">*</span><span class="k">const</span> <span class="nb">c_char</span><span class="p">,</span> <span class="n">argv</span><span class="p">:</span> <span class="o">*</span><span class="k">mut</span> <span class="o">*</span><span class="k">const</span> <span class="nb">c_char</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">c_int</span>
+</code></pre></div></div>
+
+<p>This <code class="highlighter-rouge">unsafe</code> access is exactly what it says on the box, unsafe. We’ll be forced to use C constructs directly and manipulate raw pointers, this is not an ideal scenario. In order to properly use this code we’d need to construct safe wrappers. But surely there is a better way?</p>
+
+<h1 id="using-stdioprocess">Using std::io::process</h1>
+
+<p>The <a href="http://doc.rust-lang.org/std/io/process/index.html"><code class="highlighter-rouge">std::io::process</code></a> module provides robust facilities for spawning child processes. In particular <code class="highlighter-rouge">Command</code> allows us to build and spawn processes easily.</p>
+
+<h2 id="introducing-command">Introducing <code class="highlighter-rouge">Command</code></h2>
+
+<p><code class="highlighter-rouge">std::io::process::Command</code>, aliased as <code class="highlighter-rouge">std::io::Command</code>, is a type that acts as a process builder. The <a href="http://doc.rust-lang.org/std/io/process/struct.Command.html#method.new"><code class="highlighter-rouge">Command::new()</code></a> command sets up several sane defaults for the program for you.</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">fn</span> <span class="n">new</span><span class="o">&lt;</span><span class="n">T</span><span class="p">:</span> <span class="n">ToCStr</span><span class="o">&gt;</span><span class="p">(</span><span class="n">program</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">Command</span>
+</code></pre></div></div>
+
+<p>The various builder functions allow for customization over the defaults, which are:</p>
+
+<ul>
+  <li>No arguments to the program</li>
+  <li>Inherit the current process’s environment</li>
+  <li>Inherit the current process’s working directory</li>
+  <li>A readable pipe for stdin (file descriptor 0)</li>
+  <li>A writeable pipe for stdout and stderr (file descriptors 1 and 2)</li>
+</ul>
+
+<h2 id="in-and-out">In and Out</h2>
+
+<p>In  a simple example, lets collect the output of <code class="highlighter-rouge">ps aux</code>:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">io</span><span class="p">::</span><span class="n">Command</span><span class="p">;</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c">// Spawn a process, wait for it to finish, and collect it's output</span>
+    <span class="k">let</span> <span class="n">the_output</span> <span class="o">=</span> <span class="nn">Command</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="s">"ps"</span><span class="p">)</span><span class="nf">.arg</span><span class="p">(</span><span class="s">"aux"</span><span class="p">)</span><span class="nf">.output</span><span class="p">()</span>
+        <span class="nf">.ok</span><span class="p">()</span><span class="nf">.expect</span><span class="p">(</span><span class="s">"Failed to execute."</span><span class="p">);</span>
+    <span class="c">// Encode the resulting data.</span>
+    <span class="k">let</span> <span class="n">encoded</span> <span class="o">=</span> <span class="nn">String</span><span class="p">::</span><span class="nf">from_utf8_lossy</span><span class="p">(</span><span class="n">the_output</span><span class="py">.output</span><span class="nf">.as_slice</span><span class="p">());</span>
+    <span class="nd">print!</span><span class="p">(</span><span class="s">"{}"</span><span class="p">,</span> <span class="n">encoded</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>It should be noted that this is a blocking call, meaning the current task will halt until the completion of the process. This is acceptable for simple calls to the underlying operating system. <code class="highlighter-rouge">.output()</code> will handle all the tasks related to piping and spawning for you.</p>
+
+<p>If you’re dealing with multiple arguments, you can pass a slice, like so:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">let</span> <span class="n">the_output</span> <span class="o">=</span> <span class="nn">Command</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="s">"ps"</span><span class="p">)</span><span class="nf">.args</span><span class="p">([</span><span class="s">"a"</span><span class="p">,</span> <span class="s">"u"</span><span class="p">,</span> <span class="s">"x"</span><span class="p">])</span><span class="nf">.output</span><span class="p">()</span>
+    <span class="nf">.ok</span><span class="p">()</span><span class="nf">.expect</span><span class="p">(</span><span class="s">"Failed to execute."</span><span class="p">);</span>
+</code></pre></div></div>
+
+<h2 id="spawning-and-managing-the-children">Spawning and managing the Children</h2>
+
+<p>Waiting for the command to <strong>completely</strong> return is kind of lame. What would be better some way to keep track of the process and communicate with it.</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">fn</span> <span class="nf">spawn</span><span class="p">(</span><span class="o">&amp;</span><span class="k">self</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">IoResult</span><span class="o">&lt;</span><span class="n">Process</span><span class="o">&gt;</span>
+</code></pre></div></div>
+
+<p>The <a href="http://doc.rust-lang.org/std/io/process/struct.Process.html"><code class="highlighter-rouge">Process</code></a> type returned by <code class="highlighter-rouge">.spawn()</code> does just this.</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">io</span><span class="p">::</span><span class="n">Command</span><span class="p">;</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c">// Spawn a process. Do not wait for it to return.</span>
+    <span class="c">// Process should be mutable if we want to signal it later.</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">the_process</span> <span class="o">=</span> <span class="nn">Command</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="s">"curl"</span><span class="p">)</span>
+        <span class="nf">.arg</span><span class="p">(</span><span class="s">"http://www.hoverbear.org"</span><span class="p">)</span>
+        <span class="nf">.spawn</span><span class="p">()</span><span class="nf">.ok</span><span class="p">()</span><span class="nf">.expect</span><span class="p">(</span><span class="s">"Failed to execute."</span><span class="p">);</span>
+    <span class="c">// Do things with `the_process`</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>We can get the <a href="http://doc.rust-lang.org/std/io/process/struct.Process.html#method.id">PID</a> of the child:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">// Get the PID of the process.</span>
+<span class="nd">println!</span><span class="p">(</span><span class="s">"The PID is: {}"</span><span class="p">,</span> <span class="n">the_process</span><span class="nf">.id</span><span class="p">());</span>
+</code></pre></div></div>
+
+<p>Or <a href="http://doc.rust-lang.org/std/io/process/struct.Process.html#method.signal">signal</a> the process:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">// Signal the process.</span>
+<span class="c">// 0 is interpreted as a poll check.</span>
+<span class="k">match</span> <span class="n">the_process</span><span class="nf">.signal</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nf">Ok</span><span class="p">(</span><span class="n">_</span><span class="p">)</span>  <span class="k">=&gt;</span> <span class="nd">println!</span><span class="p">(</span><span class="s">"Process still alive!"</span><span class="p">),</span>
+    <span class="nf">Err</span><span class="p">(</span><span class="n">_</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="nd">println!</span><span class="p">(</span><span class="s">"Process dead."</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p><em>Note</em>: <code class="highlighter-rouge">.signal_exit()</code> and <code class="highlighter-rouge">.signal_kill()</code> are also available.</p>
+
+<p><a href="http://doc.rust-lang.org/std/io/process/struct.Process.html#method.wait">Wait</a> for the process before returning, receiving it’s status:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">// Wait for the process to exit.</span>
+<span class="k">match</span> <span class="n">the_process</span><span class="nf">.wait</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nf">Ok</span><span class="p">(</span><span class="n">status</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="nd">println!</span><span class="p">(</span><span class="s">"Finished, status of {}"</span><span class="p">,</span> <span class="n">status</span><span class="p">),</span>
+    <span class="nf">Err</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>     <span class="k">=&gt;</span> <span class="nd">println!</span><span class="p">(</span><span class="s">"Failed, error: {}"</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p><em>Gotcha</em>: Some processes will not exit until you drain their STDOUT.</p>
+
+<p>Retrieve STDOUT, interacting with it like any <a href="http://doc.rust-lang.org/std/io/trait.Reader.html">Reader</a>:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">// Get a Pipestream, which implements the Reader trait.</span>
+<span class="k">let</span> <span class="n">the_stdout_stream</span> <span class="o">=</span> <span class="n">the_process</span><span class="py">.stdout</span><span class="nf">.as_mut</span><span class="p">()</span>
+    <span class="nf">.expect</span><span class="p">(</span><span class="s">"Couldn't get mutable Pipestream."</span><span class="p">);</span>
+<span class="c">// Drain it into a &amp;mut [u8].</span>
+<span class="k">let</span> <span class="n">the_stdout</span> <span class="o">=</span> <span class="n">the_stdout_stream</span><span class="nf">.read_to_end</span><span class="p">()</span>
+    <span class="nf">.expect</span><span class="p">(</span><span class="s">"Couldn't read from Pipestream."</span><span class="p">);</span>
+
+</code></pre></div></div>
+
+<p>Pipe into STDIN, also, <a href="http://doc.rust-lang.org/std/io/process/struct.Process.html#method.wait_with_output">wait for output</a> and exit:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">io</span><span class="p">::</span><span class="n">Command</span><span class="p">;</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">the_process</span> <span class="o">=</span> <span class="nn">Command</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="s">"grep"</span><span class="p">)</span><span class="nf">.arg</span><span class="p">(</span><span class="s">"foo"</span><span class="p">)</span>
+        <span class="nf">.spawn</span><span class="p">()</span><span class="nf">.ok</span><span class="p">()</span><span class="nf">.expect</span><span class="p">(</span><span class="s">"Failed to execute."</span><span class="p">);</span>
+    <span class="c">// Get a Pipestream which implements the writer trait.</span>
+    <span class="c">// Scope, to ensure the borrow ends.</span>
+    <span class="k">let</span> <span class="n">_</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">the_stdin_stream</span> <span class="o">=</span> <span class="n">the_process</span><span class="py">.stdin</span><span class="nf">.as_mut</span><span class="p">()</span>
+            <span class="nf">.expect</span><span class="p">(</span><span class="s">"Couldn't get mutable Pipestream."</span><span class="p">);</span>
+        <span class="c">// Write to it in binary.</span>
+        <span class="n">the_stdin_stream</span><span class="nf">.write_int</span><span class="p">(</span><span class="mi">123456</span><span class="p">)</span>
+            <span class="nf">.ok</span><span class="p">()</span><span class="nf">.expect</span><span class="p">(</span><span class="s">"Couldn't write to stream."</span><span class="p">);</span>
+        <span class="n">the_stdin_stream</span><span class="nf">.write</span><span class="p">(</span><span class="n">b</span><span class="s">"Foo this, foo that!"</span><span class="p">)</span>
+            <span class="nf">.ok</span><span class="p">()</span><span class="nf">.expect</span><span class="p">(</span><span class="s">"Couldn't write to stream."</span><span class="p">);</span>
+        <span class="c">// Flush the output so it ends.</span>
+        <span class="n">the_stdin_stream</span><span class="nf">.flush</span><span class="p">()</span>
+            <span class="nf">.ok</span><span class="p">()</span><span class="nf">.expect</span><span class="p">(</span><span class="s">"Couldn't flush the stream."</span><span class="p">);</span>
+    <span class="p">};</span>
+    <span class="c">// Wait on output.</span>
+    <span class="k">match</span> <span class="n">the_process</span><span class="nf">.wait_with_output</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nf">Ok</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>    <span class="k">=&gt;</span> <span class="nd">print!</span><span class="p">(</span><span class="s">"{}"</span><span class="p">,</span> <span class="n">out</span><span class="py">.output</span><span class="nf">.into_ascii</span><span class="p">()</span>
+                          <span class="nf">.into_string</span><span class="p">()),</span>
+        <span class="nf">Err</span><span class="p">(</span><span class="n">error</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="nd">print!</span><span class="p">(</span><span class="s">"{}"</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<blockquote>
+  <p>Rust’s borrow check ensures that the process cannot be closed until it is safe to.</p>
+</blockquote>
+
+<p>Without the scope, the lifetime of the <code class="highlighter-rouge">the_stdin_stream</code> would still exist when we try to call <code class="highlighter-rouge">the_process.wait_with_output()</code>. If it was the case that this wasn’t tracked, it’s possible that <code class="highlighter-rouge">the_stdin_stream</code> might be used even after the process is closed, something unsafe. We use a scope to limit the lifetime of <code class="highlighter-rouge">the_stdin_stream</code>, a function could also accomplish this. <a href="http://doc.rust-lang.org/guide-lifetimes.html">More info on lifetimes.</a></p>
+
+<h2 id="inits-perspective">Init’s Perspective</h2>
+
+<p>An init system concerned about more then just the output of a process. It’s concerned about the entire lifetime, which user ID runs it, what kind of ENV is exposed to it, what other processes depend on it, and where its STDOUT and STDERR go. So what would a full call to <code class="highlighter-rouge">Command</code> look like for an init system?</p>
+
+<p>Lets say we want to spawn <code class="highlighter-rouge">curl</code>, a very long running process, and map it’s STDOUT and STDERR to files. We’ll also explicitly declare which user and group it should run as, as well as it’s CWD and ENV variables.</p>
+
+<p>In it’s simplest form:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">extern</span> <span class="n">crate</span> <span class="n">native</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">crate</span> <span class="n">rustrt</span><span class="p">;</span>
+
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">io</span><span class="p">::{</span><span class="n">process</span><span class="p">,</span> <span class="n">Command</span><span class="p">};</span>
+<span class="k">use</span> <span class="nn">native</span><span class="p">::</span><span class="nn">io</span><span class="p">::</span><span class="n">file</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">rustrt</span><span class="p">::</span><span class="n">rtio</span><span class="p">;</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c">// Open a stdout file. Note this is using the native runtime.</span>
+    <span class="c">// The native runtime will allow us to retrieve a file descriptor.</span>
+    <span class="k">let</span> <span class="n">stdout_file</span> <span class="o">=</span> <span class="nn">file</span><span class="p">::</span><span class="nf">open</span><span class="p">(</span><span class="o">&amp;</span><span class="s">"stdout_log"</span><span class="nf">.to_c_str</span><span class="p">(),</span>
+                                 <span class="nn">rtio</span><span class="p">::</span><span class="n">Open</span><span class="p">,</span>
+                                 <span class="nn">rtio</span><span class="p">::</span><span class="n">ReadWrite</span><span class="p">)</span>
+        <span class="nf">.ok</span><span class="p">()</span><span class="nf">.expect</span><span class="p">(</span><span class="s">"Couldn't open STDOUT file."</span><span class="p">);</span>
+    <span class="c">// The same with stderr.</span>
+    <span class="k">let</span> <span class="n">stderr_file</span> <span class="o">=</span> <span class="nn">file</span><span class="p">::</span><span class="nf">open</span><span class="p">(</span><span class="o">&amp;</span><span class="s">"stderr_log"</span><span class="nf">.to_c_str</span><span class="p">(),</span>
+                                 <span class="nn">rtio</span><span class="p">::</span><span class="n">Open</span><span class="p">,</span>
+                                 <span class="nn">rtio</span><span class="p">::</span><span class="n">ReadWrite</span><span class="p">)</span>
+        <span class="nf">.ok</span><span class="p">()</span><span class="nf">.expect</span><span class="p">(</span><span class="s">"Couldn't open STDERR file."</span><span class="p">);</span>
+    <span class="c">// Generate the process very explicitly.</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">the_process</span> <span class="o">=</span> <span class="nn">Command</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="s">"curl"</span><span class="p">)</span>
+        <span class="c">// Slice of arguments.</span>
+        <span class="nf">.args</span><span class="p">([</span><span class="s">"hoverbear.org"</span><span class="p">])</span>
+        <span class="c">// Set User/Group.</span>
+        <span class="nf">.uid</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="c">// Don't know it? Check that user's $UID</span>
+        <span class="nf">.gid</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
+        <span class="c">// Set STDOUT</span>
+        <span class="nf">.stdout</span><span class="p">(</span><span class="nn">process</span><span class="p">::</span><span class="nf">InheritFd</span><span class="p">(</span><span class="n">stdout_file</span><span class="nf">.fd</span><span class="p">()))</span>
+        <span class="c">// Set STDERR</span>
+        <span class="nf">.stderr</span><span class="p">(</span><span class="nn">process</span><span class="p">::</span><span class="nf">InheritFd</span><span class="p">(</span><span class="n">stderr_file</span><span class="nf">.fd</span><span class="p">()))</span>
+        <span class="c">// Set the CWD.</span>
+        <span class="nf">.cwd</span><span class="p">(</span><span class="o">&amp;</span><span class="nn">Path</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="s">"/home/hoverbear"</span><span class="p">))</span>
+        <span class="c">// Set ENV variables.</span>
+        <span class="nf">.env</span><span class="p">(</span><span class="s">"IS_EXAMPLE"</span><span class="p">,</span> <span class="s">"true"</span><span class="p">)</span>
+        <span class="c">// Or remove ENV variables.</span>
+        <span class="nf">.env_remove</span><span class="p">(</span><span class="s">"PRIVATE_VARIABLE"</span><span class="p">)</span>
+        <span class="c">// Spawn</span>
+        <span class="nf">.spawn</span><span class="p">()</span><span class="nf">.ok</span><span class="p">()</span><span class="nf">.expect</span><span class="p">(</span><span class="s">"Failed to execute"</span><span class="p">);</span>
+    <span class="c">// ...</span>
+    <span class="c">// Do stuff</span>
+    <span class="c">// ...</span>
+
+    <span class="c">// Wait for the process.</span>
+    <span class="k">let</span> <span class="n">the_status</span> <span class="o">=</span> <span class="n">the_process</span><span class="nf">.wait</span><span class="p">()</span>
+        <span class="nf">.ok</span><span class="p">()</span><span class="nf">.expect</span><span class="p">(</span><span class="s">"Couldn't wait for process."</span><span class="p">);</span>
+    <span class="c">// Output some exit information.</span>
+    <span class="k">match</span> <span class="n">the_status</span> <span class="p">{</span>
+        <span class="nn">process</span><span class="p">::</span><span class="nf">ExitStatus</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="nd">println!</span><span class="p">(</span><span class="s">"Exited with status {}"</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span>
+        <span class="nn">process</span><span class="p">::</span><span class="nf">ExitSignal</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="nd">println!</span><span class="p">(</span><span class="s">"Exited from signal {}"</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+    <span class="p">};</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>An init system often tracks many processes, how could you use the above code in a setting where multiple processes are needed? How could we utilize various constructs to monitor and augment the capabilities of a system?</p>
+
+<p>This is only the humble beginning.</p>
+
+    </article>
+
+    <aside class="post-meta">
+  
+    Posted on
+    <time datetime="2014-09-07T00:00:00-07:00">07 Sep 2014</time>
+  
+
+  
+    
+      
+        , into
+        
+        <span><a href="/tags/#rust">Rust</a></span>
+      
+    
+      
+        ,
+        
+        <span><a href="/tags/#tutorials">Tutorials</a></span>
+      
+    
+      
+        
+            , and
+        
+        <span><a href="/tags/#uvic">UVic</a></span>
+      
+    .
+  
+
+  
+</aside>
+
+</main>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>

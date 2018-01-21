@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>Projects</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/cover.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="Projects">
+    
+    
+        <meta name="twitter:description" content="Exploring, fascinating and amusing">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/cover.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">Projects</a></h1>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="active" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main>
+    <article>
+        <p>Maintaining projects is no small task, as my experience has taught me. Working with others (and their code) teaches you much though, and helps you become a better person yourself.</p>
+
+<p>I hope to add to this list in the future.</p>
+
+<h2 id="raft-rs"><a href="https://github.com/hoverbear/raft-rs">Raft-rs</a></h2>
+
+<p>Started as a result of a final project for a Distributed Systems class, our <code class="highlighter-rouge">raft-rs</code> library has been one of my greatest learning experiences. Indeed, there has been quite a <a href="/tag/raft/">story</a> attached to it! It’s been truly an honor and pleasure to work with the members of the Rust networking community since the early 0.7 Rust nightly builds up until the current version of Rust.</p>
+
+<p>Raft itself is an algorithm enabling replicated state machines, and is highly useful in a distributed systems context. Our implementation is highly faithful to the algorithm defined in the original paper. We took the opportunity to experiment with technologies such as the <a href="https://github.com/carllerche/mio"><code class="highlighter-rouge">mio</code></a> asynchronous event loop and <a href="https://github.com/dwrensha/capnproto-rust">Cap’n Proto</a> which was highly rewarding.</p>
+
+<p>I’m looking forward to improving the library and helping it become a well regarded package in the community.</p>
+
+<h2 id="rust-rosetta"><a href="https://github.com/Hoverbear/rust-rosetta">Rust-Rosetta</a></h2>
+
+<p><a href="http://rosettacode.org/">Rosetta Code</a> maintains a gigantic list of common tasks and problems to be solved in different programming languages. Inspired by <a href="https://github.com/rust-lang/rust/issues/10513">this issue</a> myself and some other community members have been working to implement these problems in a way that allows them to be tested and maintained cleanly.</p>
+
+<h2 id="heroku-buildpack-rust"><a href="https://github.com/Hoverbear/heroku-buildpack-rust">Heroku-buildpack-rust</a></h2>
+
+<p>Realizing the need for a way to deploy Rust applications to <a href="http://heroku.com/">Heroku</a> I went about assembling a proper, well tested build pack. The experience taught me much about the inner workings of various cloud services. I also had the opportunity to interface with some (fantastic) people at Heroku.</p>
+
+<h2 id="the-gathering-our-voices-system"><a href="https://github.com/BCAAFC/Gathering-Our-Voices">The Gathering Our Voices System</a></h2>
+
+<p>The <a href="http://bcaafc.com/">BCAAFC</a> hosts an annual Aboriginal Youth Conference which I have been involved with since the 2012 event. Built almost entirely by me the site features a basic CMS and full workflow and management systems for volunteers, delegates, and facilitators.</p>
+
+<p>These events brought together (in some cases) over 2000 attendees and impacted many lives. There are some <a href="/tag/bcaafc/">posts</a> about the events.</p>
+
+<h2 id="badssl"><a href="http://badssl.com/">BadSSL</a></h2>
+
+<p>I became involved with the BadSSL project through Mozilla’s Winter of Security and really enjoy working with April King and Lucas Garron on it. BadSSL has a sort of menagerie of both naught and nice SSL certificates that allows for users to test their implementations against.</p>
+
+    </article>
+
+    <aside class="post-meta">
+  
+
+  
+
+  
+</aside>
+
+</main>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>

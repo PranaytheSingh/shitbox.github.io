@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Fun compatability things -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- (1) Optimize for mobile versions: http://goo.gl/EOpFl -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">                  <!-- (1) force latest IE rendering engine: bit.ly/1c8EiC9 -->
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+
+    <!-- Information about this site -->
+    <title>A Rust Heroku Buildpack</title>
+    <meta name="description" content="Exploring, fascinating and amusing" />
+
+    <!-- Various Twitter related content. -->
+    
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:image" content="http://0.0.0.0:4000/assets/images/2016/01/clouds.jpg">
+    
+    <meta name="twitter:site" content="@">
+    <meta name="twitter:creator" content="@">
+    
+        <meta name="twitter:title" content="A Rust Heroku Buildpack">
+    
+    
+        <meta name="twitter:description" content="&lt;p&gt;I’m happy to introduce the first stable version of my Rust Heroku Buildpack!&lt;/p&gt;
+
+">
+    
+
+    <!-- Talk about the homepage and the rss feed. -->
+    <link rel="canonical" href="http://0.0.0.0:4000">
+    <link rel="alternate" type="application/rss+xml" href="/feed.xml">
+
+    <!-- Stylesheets are fun -->
+    <link rel="stylesheet" href="/assets/font/fira_code.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/main.css" />
+
+    <!-- Include Katex if it's necessary. -->
+    
+
+    <script defer>
+        // Create captions from Alt tags
+        document.addEventListener("DOMContentLoaded", function(event) {
+            Array.from(document.querySelectorAll("main img")).forEach(function (item) {
+                if (item.attributes['alt']) {
+                    var caption = document.createElement("figcaption");
+                    caption.innerHTML = item.attributes['alt'].value;
+                    item.outerHTML = "<figure>" + item.outerHTML + caption.outerHTML + "</figure>";
+                }
+            });
+        });
+    </script>
+</head>
+
+
+    <body>
+        <header>
+  <div id="cover-wrapper">
+    
+      <img id="cover" src="/assets/images/2016/01/clouds.jpg">
+    
+  </div>
+
+  <div class="title">
+    
+      <h1><a href="/">A Rust Heroku Buildpack</a></h1>
+    
+  </div>
+
+
+  <nav id="pages">
+    <ul>
+      <li><a href="/">Index</a></li>
+      
+        
+          <li>
+            <a class="" href="/about/">
+              About
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          <li>
+            <a class="" href="/projects/">
+              Projects
+            </a>
+          </li>
+        
+      
+        
+          <li>
+            <a class="" href="/tags/">
+              Tags
+            </a>
+          </li>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </ul>
+  </nav>
+</header>
+
+
+<main>
+    <article>
+        <p>I’m happy to introduce the first stable version of my Rust Heroku Buildpack!</p>
+
+<blockquote>
+  <p>Just looking to get your hands dirty? Look <a href="https://github.com/Hoverbear/heroku-buildpack-rust"><strong>here</strong></a>.</p>
+</blockquote>
+
+<p>The project was a really interesting learning experience about how <a href="http://heroku.com/">Heroku</a> does things, on <code class="highlighter-rouge">bash</code> scripting, and about <a href="https://github.com/brson/multirust/"><code class="highlighter-rouge">multirust</code></a>, which I’d not used before but now am quite a fan of! (I previously just <code class="highlighter-rouge">rustup</code>‘d the newest nightly every few days.)</p>
+
+<h3 id="features">Features</h3>
+
+<ul>
+  <li>Cached <code class="highlighter-rouge">multirust</code>, Rust toolchain.</li>
+  <li>Caching of previous build artifacts to (potentially dramatically) speed up similar builds.</li>
+  <li>Configurable version selection inside of the Cargo.toml.</li>
+</ul>
+
+<p>It’s unit tested using Heroku’s official <a href="https://github.com/heroku/heroku-buildpack-testrunner">testrunner</a> every commit (using <a href="http://homu.io/">homu</a>) and includes a <code class="highlighter-rouge">Makefile</code> which executes a docker based test locally.</p>
+
+<h3 id="development-story">Development Story</h3>
+
+<p>I am a huge fan of Heroku, they’re were I hosted my first web app, they are where <a href="http://gatheringourvoices.bcaafc.com/">Gathering Our Voices</a> hosted our website for two years, and I have several friends who work there. While I was in San Fransisco for our <a href="/2015/08/27/meetup/"><code class="highlighter-rouge">raft-rs</code> meetup</a> they even invited me to come visit and meet some of their team.</p>
+
+<p>There was, however, one sore point with Heroku for me: There were no Rust buildpacks I was happy with! There was <a href="https://github.com/emk/heroku-buildpack-rust">emk’s</a> and <a href="https://github.com/chrisumbel/heroku-buildpack-rust">chrisumbel’s</a> but I wasn’t particularly happy with either. There wasn’t a ton of flexibility with them and they were both only manually tested with <code class="highlighter-rouge">vagrant</code> VMs. The last update to either was in March, which was still around the time when Rust was rapidly changing and maturing. (Though, it still is, but more conservatively!)</p>
+
+<p>Originally my plan had been to issue a PR to one of them, but by the time I started digging into how things worked I realized <strong>I wanted to make my own buildpack</strong>. So I did. At first I used <code class="highlighter-rouge">rustup</code> and tried to handle detecting when to update myself, but eventually realized <code class="highlighter-rouge">multirust</code> was a more straightforward way to go.</p>
+
+<p>I made the mistake of starting it right before both exams and the holidays, so things went slower than I anticipated. Along the way I got to learn several neat lessons which I’ve shared below. I’m looking forward to playing more with Rust on Heroku and would some day like to see <code class="highlighter-rouge">raft-rs</code> based applications on their infrastructure.</p>
+
+<blockquote>
+  <p>A special thanks to my friends at Heroku, Peter and Joe, for helping me work out a few kinks and showing me the test-runner (which showed me the <code class="highlighter-rouge">cedar</code> docker images as well!)</p>
+</blockquote>
+
+<h3 id="lessons-learned">Lessons Learned</h3>
+
+<ul>
+  <li>
+    <p><strong>Rust has no posted version strings for <code class="highlighter-rouge">nightly</code> and <code class="highlighter-rouge">beta</code></strong>, unlike stable which you can get the current versions with <code class="highlighter-rouge">curl https://static.rust-lang.org/dist/channel-rust-stable</code>, you cannot use a similar method to detect for <code class="highlighter-rouge">beta</code> and <code class="highlighter-rouge">nightly</code>. While I was using <code class="highlighter-rouge">rustup</code> at one point I resorted to using <code class="highlighter-rouge">curl -s https://doc.rust-lang.org/$RUSTC_CHANNEL/index.html | grep -hE "class=\"hash" | grep -ohE "\w{9}"</code> to detect the version! I didn’t like that, it was dirty.</p>
+  </li>
+  <li>
+    <p><strong>Heroku doesn’t let buildpacks do anything more than applications really.</strong> Really, thinking about it, this makes sense, but I was initially really surprised that I couldn’t (easily) use tools like <code class="highlighter-rouge">apt-get</code> to fetch packages.</p>
+  </li>
+  <li>
+    <p><strong><code class="highlighter-rouge">grep</code>’s options are vaster in number than I first realized.</strong> I love <code class="highlighter-rouge">grep</code> and use it with regexs all the time, but in my exploration I actually found some really interesting flags, including one that <code class="highlighter-rouge">null</code>s out newlines for multiline matching. Crazy stuff!</p>
+  </li>
+  <li>
+    <p><strong><code class="highlighter-rouge">multirust</code> doesn’t seem to allow you to configure where it puts the <code class="highlighter-rouge">.multirust</code> directory.</strong> While I tried several promising sounding flags (<code class="highlighter-rouge">--prefix</code>, <code class="highlighter-rouge">--destdir</code>) I didn’t find anything of the sort. I ended up just setting <code class="highlighter-rouge">$HOME</code> myself, but I don’t think this is the best idea.</p>
+  </li>
+</ul>
+
+    </article>
+
+    <aside class="post-meta">
+  
+    Posted on
+    <time datetime="2016-01-04T00:00:00-08:00">04 Jan 2016</time>
+  
+
+  
+    
+      
+        , into
+        
+        <span><a href="/tags/#rust">Rust</a></span>
+      
+    .
+  
+
+  
+</aside>
+
+</main>
+
+<footer class="post-footer">
+    <h4>By Pranay Singh</h4>
+
+    Connect through
+    
+        <a href="mailto:zeppez@protonmail.com">zeppez@protonmail.com</a>,
+    
+
+    
+        <a href="https://github.com/shitbox">@shitbox</a> on Github,
+    
+
+    
+
+    or track via <a class="subscribe" href="/feed.xml">RSS Feed</a>.
+</footer>
+
+
+    </body>
+
+</html>
