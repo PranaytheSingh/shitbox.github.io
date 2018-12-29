@@ -1,1 +1,1 @@
-Personal blog. Template lovingly 'borrowed' from hoverbear
+Work in progress (personal blog). Template belongs to hoverbear
